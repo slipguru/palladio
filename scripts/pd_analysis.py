@@ -167,10 +167,15 @@ def plotting(v_regular, v_permutation, base_folder):
     # print (mu, sigma)
     
     kstest = stats.kstest(v_regular*100, 'norm', args=(mu, sigma))
-    print kstest
-    
     rstest = stats.ranksums(v_regular, v_permutation)
-    print rstest
+    
+    with open(os.path.join(base_folder, 'stats.txt'), 'w')  as f:
+        
+        f.write("Kolmogorov-Smirnov test: {}\n".format(kstest))
+        f.write("Wilcoxon Rank-Sum test: {}\n".format(rstest))
+    
+    print("Kolmogorov-Smirnov test: {}".format(kstest))
+    print("Wilcoxon Rank-Sum test: {}".format(rstest))
     
     
     plt.xlabel("Balanced Accuracy (%)", fontsize="large")
@@ -200,20 +205,27 @@ def main():
     sorted_keys_regular = sorted(selected_regular, key=selected_regular.__getitem__)
     sorted_keys_permutation = sorted(selected_permutation, key=selected_permutation.__getitem__)
     
+    threshold = 75
+    
     with open(os.path.join(base_folder, 'signature_regular.txt'), 'w') as f:
+        line_drawn = False
         for k in reversed(sorted_keys_regular):
-            # print("{} : {}".format(k,selected_regular[k]))
+            if not line_drawn and selected_regular[k] < threshold:
+                line_drawn = True
+                f.write("="*40)
+                f.write("\n")
             f.write("{} : {}\n".format(k,selected_regular[k]))
             
     with open(os.path.join(base_folder, 'signature_permutation.txt'), 'w') as f:
+        line_drawn = False
         for k in reversed(sorted_keys_permutation):
+            if not line_drawn and selected_permutation[k] < threshold:
+                line_drawn = True
+                f.write("="*40)
+                f.write("\n")
             f.write("{} : {}\n".format(k,selected_permutation[k]))
-    
-    
-    
+            
     plotting(v_regular, v_permutation, base_folder)
-    
-    
     
     
     pass
