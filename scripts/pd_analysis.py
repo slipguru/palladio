@@ -21,7 +21,6 @@ def analyze_experiment(exp_folder, config):
         
     # result['prediction_ts_list'] # one element for each value of mu
     
-    
     Y_ts = result['labels_ts'] # the actual labels
     
     analysis_results = dict()
@@ -35,9 +34,7 @@ def analyze_experiment(exp_folder, config):
         Y_lr = np.sign(aux_y.ravel())
         # Y_lr = np.sign(Y_lr-0.1)
         
-        
         analysis_results['accuracy'].append((Y_ts == Y_lr).sum()/float(len(Y_ts)))
-        
         
         TP = np.sum((Y_lr == 1) * (Y_ts == Y_lr))
         FP = np.sum((Y_lr == 1) * (Y_ts != Y_lr))
@@ -144,9 +141,24 @@ def analyze_experiments(base_folder):
     
     return out
 
-def plotting(v_regular, v_permutation, base_folder):
+def plot_distributions(v_regular, v_permutation, base_folder):
+    """
+    Create a plot of the distributions of accuracies for both "regular" experiments and permutation tests
     
-    nbins = 15
+    Parameters
+    ----------
+    
+    v_regular : numpy.array
+        The accuracy values for all regular experiments
+       
+    v_permutation : numpy.array
+        The accuracy values for permutation tests
+       
+    base_folder : string
+        The folder where the plot will be saved
+    """
+    
+    # nbins = 15
     
     fig, ax = plt.subplots()
     
@@ -192,6 +204,67 @@ def plotting(v_regular, v_permutation, base_folder):
 
     plt.savefig(os.path.join(base_folder, 'permutation_acc_distribution.pdf'))
 
+def plot_feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 75):
+    """
+    Plot a bar chart of the first 2 x M features in a signature,
+    where M is the number of features whose frequencies is over a given threshold
+    
+    Parameters
+    ----------
+    
+    sorted_keys : list
+    
+    frequencies : dict
+    """
+    
+    x = list()
+    y = list()
+    
+    M = 0
+    
+    r_sorted_keys = reversed(sorted_keys)
+    
+    for k in r_sorted_keys:
+        
+        if frequencies[k] >= threshold:
+            
+            M += 1
+            
+        else:
+            break
+        
+    # print "M = {}".format(M)
+        
+    N = 2*M
+    r_sorted_keys = reversed(sorted_keys)
+    for k in r_sorted_keys:
+        
+        if N == 0:
+            break
+        
+        x.append(k)
+        y.append(frequencies[k])
+        
+        N -= 1
+    
+    plt.figure()
+    
+    ax = sns.barplot(x = x, y = y, color = '#AFFC62', alpha = 0.9)
+    
+    plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
+    ### plot a horizontal line at the height of the selected threshold
+    plt.axhline(y=threshold, ls = '--', lw = 0.5, color = 'k')
+
+    ### plot a vertical line which separates selected features from those not selected
+    xmin, xmax = ax.get_xbound()
+    mid = float(xmax + xmin)/2
+    plt.axvline(x=mid, ls = '-', lw = 1, color = 'r')
+    
+    plt.xlabel("Feature names", fontsize="large")
+    plt.ylabel("Absolute Frequency", fontsize="large")
+    
+    plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
+    
 def main():
     
     base_folder = sys.argv[1]
@@ -225,7 +298,9 @@ def main():
                 f.write("\n")
             f.write("{} : {}\n".format(k,selected_permutation[k]))
             
-    plotting(v_regular, v_permutation, base_folder)
+    plot_distributions(v_regular, v_permutation, base_folder)
+    
+    plot_feature_frequencies(sorted_keys_regular, selected_regular, base_folder, threshold = threshold)
     
     
     pass
