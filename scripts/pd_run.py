@@ -42,34 +42,33 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
     
     return type_vector
 
-def modelselection_job(Xtr, Ytr, Xts, Yts, tau_range, mu_range, lambda_range, config, result_dir, random_seed = None):
-    """
-    A single model selection job
-    """
-
-    sparse, regularized, return_predictions = (True, False, True)
-    
-    # Parameters
-    
-    int_k = config.internal_k
-    ms_split = config.cv_splitting(Ytr, int_k) # args[3]=k -> splits
-    
-    # Execution
-    result = l1l2py.model_selection(
-                    Xtr, Ytr, Xts, Yts, 
-                    mu_range, tau_range, lambda_range,
-                    ms_split, config.cv_error, config.error,
-                    config.data_normalizer, config.labels_normalizer,
-                    sparse=sparse, regularized=regularized, return_predictions=return_predictions
-                    )
-
-
-    out = {
-        'result' : result,
-        'ms_split' : ms_split
-    }
-
-    return out
+# def modelselection_job(Xtr, Ytr, Xts, Yts, tau_range, mu_range, lambda_range, config, result_dir, random_seed = None):
+#     """
+#     A single model selection job
+#     """
+# 
+#     sparse, regularized, return_predictions = (True, False, True)
+#     
+#     # Parameters
+#     
+#     int_k = config.internal_k
+#     ms_split = config.cv_splitting(Ytr, int_k) # args[3]=k -> splits
+#     
+#     # Execution
+#     result = l1l2py.model_selection(
+#                     Xtr, Ytr, Xts, Yts, 
+#                     mu_range, tau_range, lambda_range,
+#                     ms_split, config.cv_error, config.error,
+#                     config.data_normalizer, config.labels_normalizer,
+#                     sparse=sparse, regularized=regularized, return_predictions=return_predictions
+#                     )
+# 
+#     out = {
+#         'result' : result,
+#         'ms_split' : ms_split
+#     }
+# 
+#     return out
 
     
 def run_experiment(data, labels, config_dir, config, is_permutation_test, custom_name):
@@ -94,24 +93,54 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     labels_ts = labels[idx_ts]
     
     ### Compute the ranges of the parameters using only the learning set
+    ### TODO FIX
     if is_permutation_test:
         labels_perm = labels_lr.copy()
         np.random.shuffle(labels_perm)
+        
+    # if is_permutation_test:
+    #     out = modelselection_job(data_lr, labels_perm, data_ts, labels_ts, tau_range, mu_range, lambda_range, config, result_dir, random_seed = None)
+    # else:
+    #     out = modelselection_job(data_lr, labels_lr, data_ts, labels_ts, tau_range, mu_range, lambda_range, config, result_dir, random_seed = None)
+
+    Xtr = data_lr
+    Ytr = labels_perm if is_permutation_test else labels_lr
+    Xts = data_ts
+    Yts = labels_ts
+
+    int_k = config.internal_k
+    ms_split = config.cv_splitting(Ytr, int_k) # args[3]=k -> splits
+    
+    # Parameters
+    ### TODO FIX MODEL DEPENDENT
+    if is_permutation_test:
         rs = l1l2_utils.RangesScaler(data_lr, labels_perm, config.data_normalizer,
                                                config.labels_normalizer)
     else:
         rs = l1l2_utils.RangesScaler(data_lr, labels_lr, config.data_normalizer,
                                                config.labels_normalizer)
-    
+        
     tau_range = rs.tau_range(config.tau_range)
     mu_range = rs.mu_range(config.mu_range)
     lambda_range = np.sort(config.lambda_range)
     
-    if is_permutation_test:
-        out = modelselection_job(data_lr, labels_perm, data_ts, labels_ts, tau_range, mu_range, lambda_range, config, result_dir, random_seed = None)
-    else:
-        out = modelselection_job(data_lr, labels_lr, data_ts, labels_ts, tau_range, mu_range, lambda_range, config, result_dir, random_seed = None)
-    result = out['result']
+    sparse, regularized, return_predictions = (True, False, True)
+    
+    # Execution
+    result = l1l2py.model_selection(
+                    Xtr, Ytr, Xts, Yts, 
+                    mu_range, tau_range, lambda_range,
+                    ms_split, config.cv_error, config.error,
+                    config.data_normalizer, config.labels_normalizer,
+                    sparse=sparse, regularized=regularized, return_predictions=return_predictions
+                    )
+
+    # out = {
+    #     'result' : result,
+    #     'ms_split' : ms_split
+    # }
+
+    # result = out['result']
     result['labels_ts'] = labels_ts ### also save labels
     
     # save results 
@@ -119,7 +148,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
         pkl.dump(result, f, pkl.HIGHEST_PROTOCOL)
         
     in_split = {
-        'ms_split': out['ms_split'],
+        'ms_split': ms_split,
         'outer_split': aux_splits[0]
     }
         
@@ -129,27 +158,11 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     return
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 # def main(config_path, custom_name = None):
 def main(config_path):
     
-    
-    
     # Configuration File
     config_dir = os.path.dirname(config_path)
-
 
     imp.acquire_lock()
     config = imp.load_source('config', config_path)
@@ -259,36 +272,6 @@ def main(config_path):
 
 
     return    
-
-
-
-
-# def main2():
-#     
-#     import numpy.distutils.system_info as sysinfo
-#     
-#     import time
-#     
-#     # print sysinfo.get_info('atlas')
-#     # print sysinfo.get_info('blas')
-#     # print sysinfo.get_info('openblas')
-#     
-#     
-#     print os.environ['PYTHONPATH']
-#     
-#     A = np.random.normal(size = (5000, 5000))
-#     
-#     tic = time.time()
-#     
-#     A.dot(A)
-#     
-#     tac = time.time()
-#     
-#     dt = tac - tic
-#     
-#     print("Elapsed time = {}".format(dt))
-    
-    
 
         
 
