@@ -1,5 +1,7 @@
 import l1l2py
 
+import numpy as np
+
 from l1l2signature import utils as l1l2_utils
 
 class l1l2Classifier:

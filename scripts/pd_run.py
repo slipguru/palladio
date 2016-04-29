@@ -78,9 +78,9 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     sparse, regularized, return_predictions = (True, False, True)
     
     params = {
-        'mu_range' : mu_range,
-        'tau_range' : tau_range,
-        'lambda_range' : lambda_range,
+        'mu_range' : config.mu_range,
+        'tau_range' : config.tau_range,
+        'lambda_range' : config.lambda_range,
         'data_normalizer' : config.data_normalizer,
         'ms_split' : ms_split,
         'cv_error' : config.cv_error,
