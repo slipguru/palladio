@@ -13,10 +13,9 @@ import numpy as np
 
 from mpi4py import MPI
 
-import l1l2py
-
 from l1l2signature import internals as l1l2_core
-from l1l2signature import utils as l1l2_utils
+
+from .wrappers.l1l2 import l1l2Classifier
 
 ### Initialize MPI variables
 ### THESE ARE GLOBALS
@@ -42,35 +41,6 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
     
     return type_vector
 
-# def modelselection_job(Xtr, Ytr, Xts, Yts, tau_range, mu_range, lambda_range, config, result_dir, random_seed = None):
-#     """
-#     A single model selection job
-#     """
-# 
-#     sparse, regularized, return_predictions = (True, False, True)
-#     
-#     # Parameters
-#     
-#     int_k = config.internal_k
-#     ms_split = config.cv_splitting(Ytr, int_k) # args[3]=k -> splits
-#     
-#     # Execution
-#     result = l1l2py.model_selection(
-#                     Xtr, Ytr, Xts, Yts, 
-#                     mu_range, tau_range, lambda_range,
-#                     ms_split, config.cv_error, config.error,
-#                     config.data_normalizer, config.labels_normalizer,
-#                     sparse=sparse, regularized=regularized, return_predictions=return_predictions
-#                     )
-# 
-#     out = {
-#         'result' : result,
-#         'ms_split' : ms_split
-#     }
-# 
-#     return out
-
-    
 def run_experiment(data, labels, config_dir, config, is_permutation_test, custom_name):
     
     result_path = os.path.join(config_dir, config.result_path) #result base dir
@@ -98,11 +68,6 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
         labels_perm = labels_lr.copy()
         np.random.shuffle(labels_perm)
         
-    # if is_permutation_test:
-    #     out = modelselection_job(data_lr, labels_perm, data_ts, labels_ts, tau_range, mu_range, lambda_range, config, result_dir, random_seed = None)
-    # else:
-    #     out = modelselection_job(data_lr, labels_lr, data_ts, labels_ts, tau_range, mu_range, lambda_range, config, result_dir, random_seed = None)
-
     Xtr = data_lr
     Ytr = labels_perm if is_permutation_test else labels_lr
     Xts = data_ts
@@ -111,34 +76,29 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     int_k = config.internal_k
     ms_split = config.cv_splitting(Ytr, int_k) # args[3]=k -> splits
     
-    # Parameters
-    ### TODO FIX MODEL DEPENDENT
-    if is_permutation_test:
-        rs = l1l2_utils.RangesScaler(data_lr, labels_perm, config.data_normalizer,
-                                               config.labels_normalizer)
-    else:
-        rs = l1l2_utils.RangesScaler(data_lr, labels_lr, config.data_normalizer,
-                                               config.labels_normalizer)
-        
-    tau_range = rs.tau_range(config.tau_range)
-    mu_range = rs.mu_range(config.mu_range)
-    lambda_range = np.sort(config.lambda_range)
-    
     sparse, regularized, return_predictions = (True, False, True)
     
-    # Execution
-    result = l1l2py.model_selection(
-                    Xtr, Ytr, Xts, Yts, 
-                    mu_range, tau_range, lambda_range,
-                    ms_split, config.cv_error, config.error,
-                    config.data_normalizer, config.labels_normalizer,
-                    sparse=sparse, regularized=regularized, return_predictions=return_predictions
-                    )
+    params = {
+        'mu_range' : mu_range,
+        'tau_range' : tau_range,
+        'lambda_range' : lambda_range,
+        'data_normalizer' : config.data_normalizer,
+        'ms_split' : ms_split,
+        'cv_error' : config.cv_error,
+        'error' : config.error,
+        'labels_normalizer' : config.labels_normalizer,
+        'sparse' : sparse,
+        'regularized' : regularized,
+        'return_predictions' : return_predictions
+    }
 
-    # out = {
-    #     'result' : result,
-    #     'ms_split' : ms_split
-    # }
+    ### Create the object that will actually perform the classification/feature selection
+    clf = l1l2Classifier(params)
+    
+    ### Set the actual data and perform additional steps such as rescaling parameters etc.
+    clf.setup(Xtr, Ytr, Xts, Yts)
+    
+    result = clf.run()
 
     # result = out['result']
     result['labels_ts'] = labels_ts ### also save labels
@@ -244,36 +204,7 @@ def main(config_path):
         
         print("[{}_{}] finished experiment {}".format(name, rank, i))
         
-        pass
-        
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     return    
-
-        
 
 # Script entry ----------------------------------------------------------------
 if __name__ == '__main__':
