@@ -14,6 +14,7 @@ import numpy as np
 from mpi4py import MPI
 
 from palladio.wrappers.l1l2 import l1l2Classifier
+from l1l2signature import utils as l1l2_utils
 
 ### Initialize MPI variables
 ### THESE ARE GLOBALS
@@ -209,9 +210,8 @@ if __name__ == '__main__':
     
     # main2()
     
-    
     if len(sys.argv) != 2:
-        parser.error('incorrect number of arguments')
+        print('incorrect number of arguments')
     config_file_path = sys.argv[1]
     
     main(os.path.abspath(config_file_path))
