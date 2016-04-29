@@ -13,9 +13,7 @@ import numpy as np
 
 from mpi4py import MPI
 
-from l1l2signature import internals as l1l2_core
-
-from .wrappers.l1l2 import l1l2Classifier
+from palladio.wrappers.l1l2 import l1l2Classifier
 
 ### Initialize MPI variables
 ### THESE ARE GLOBALS
