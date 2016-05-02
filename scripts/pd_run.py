@@ -1,7 +1,4 @@
 #!/usr/bin/python -u
-'''
-#!/usr/bin/env python -u
-'''
 # -*- coding: utf-8 -*-
 import os, sys
 import imp
