@@ -232,6 +232,8 @@ def features_manhattan_plot(sorted_keys, frequencies_true, frequencies_perm, bas
     
     s_t = plt.scatter(fake_x, y_true, marker = 'h', alpha = 0.8, s = 10, color = 'g')
     s_p = plt.scatter(fake_x, y_perm, marker = 'h', alpha = 0.8, s = 10, color = 'r')
+    threshold_line = plt.axhline(y=threshold, ls = '--', lw = 0.5, color = 'k')
+    
     plt.xlim([-5,len(sorted_keys) + 5])
     plt.ylim([-5,105])
     
@@ -242,8 +244,8 @@ def features_manhattan_plot(sorted_keys, frequencies_true, frequencies_perm, bas
     top='off',         # ticks along the top edge are off
     labelbottom='off') # labels along the bottom edge are off
     
-    plt.legend((s_t, s_p),
-           ('Real signature', 'Permutation signature'),
+    plt.legend((s_t, s_p, threshold_line),
+           ('Real signature', 'Permutation signature', 'Threshold'),
            scatterpoints=1,
            loc='upper right',
            ncol=1,
@@ -254,8 +256,6 @@ def features_manhattan_plot(sorted_keys, frequencies_true, frequencies_perm, bas
     
     plt.savefig(os.path.join(base_folder, 'manhattan_plot.pdf'))
     
-    pass
-
 def plot_feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 75):
     """
     Plot a bar chart of the first 2 x M features in a signature,
@@ -312,7 +312,14 @@ def plot_feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 
     
     plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
     ### plot a horizontal line at the height of the selected threshold
-    plt.axhline(y=threshold, ls = '--', lw = 0.5, color = 'k')
+    threshold_line = plt.axhline(y=threshold, ls = '--', lw = 0.5, color = 'k')
+    
+    plt.legend((threshold_line, ),
+           ('Threshold',),
+           scatterpoints=1,
+           loc='upper right',
+           ncol=1,
+           fontsize=8)
 
     ### plot a vertical line which separates selected features from those not selected
     xmin, xmax = ax.get_xbound()
@@ -363,7 +370,5 @@ def main():
     
     features_manhattan_plot(sorted_keys_regular, selected_regular, selected_permutation, base_folder, threshold = threshold)
     
-    pass
-
 if __name__ == '__main__':
     main()
