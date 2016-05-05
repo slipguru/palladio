@@ -1,6 +1,6 @@
 from sklearn.linear_model import SGDClassifier
 
-class svmClassifier:
+class svmClassification:
     
     def __init__(self, params):
         

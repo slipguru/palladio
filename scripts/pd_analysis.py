@@ -168,12 +168,12 @@ def plot_distributions(v_regular, v_permutation, base_folder):
         'norm_hist' : False,
         'kde' : False,
         # 'bins' : np.arange(0,1.05,0.05)
-        'bins' : np.arange(0,105,5)
-        
+        'bins' : np.arange(0,105,5),
+        # hist_kws : {'alpha' : 0.8}
     }
     
-    sns.distplot(v_permutation*100, label = 'Permutation tests', color = 'r', ax = ax, **args)
-    sns.distplot(v_regular*100, label = 'Regular experiments', color = 'b', ax = ax, **args)
+    sns.distplot(v_permutation*100, label = 'Permutation tests', color = 'r', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
+    sns.distplot(v_regular*100, label = 'Regular experiments', color = '#99cc00', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
     
     ### Fit a gaussian with permutation data
     (mu, sigma) = stats.norm.fit(v_permutation*100)
@@ -230,7 +230,7 @@ def features_manhattan_plot(sorted_keys, frequencies_true, frequencies_perm, bas
     
     plt.figure()
     
-    s_t = plt.scatter(fake_x, y_true, marker = 'h', alpha = 0.8, s = 10, color = 'g')
+    s_t = plt.scatter(fake_x, y_true, marker = 'h', alpha = 0.8, s = 10, color = '#99cc00')
     s_p = plt.scatter(fake_x, y_perm, marker = 'h', alpha = 0.8, s = 10, color = 'r')
     threshold_line = plt.axhline(y=threshold, ls = '--', lw = 0.5, color = 'k')
     
@@ -304,7 +304,7 @@ def plot_feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 
     
     plt.figure()
     
-    ax = sns.barplot(x = x, y = y, color = '#AFFC62', alpha = 0.9)
+    ax = sns.barplot(x = x, y = y, color = '#99cc00', alpha = 0.9)
     
     ### Rotate x ticks
     for item in ax.get_xticklabels():

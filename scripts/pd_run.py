@@ -6,12 +6,16 @@ import shutil
 import cPickle as pkl
 import random
 
+import time
+
 import numpy as np
 
 from mpi4py import MPI
 
 from palladio.wrappers.l1l2 import l1l2Classifier
 from l1l2signature import utils as l1l2_utils
+
+from palladio.utils import sec_to_timestring
 
 ### Initialize MPI variables
 ### THESE ARE GLOBALS
@@ -117,6 +121,9 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
 # def main(config_path, custom_name = None):
 def main(config_path):
     
+    if rank == 0:
+        t0 = time.time()
+    
     # Configuration File
     config_dir = os.path.dirname(config_path)
 
@@ -199,6 +206,16 @@ def main(config_path):
         run_experiment(data, labels, config_dir, config, is_permutation_test, custom_name)
         
         print("[{}_{}] finished experiment {}".format(name, rank, i))
+        
+        
+    if rank == 0:
+        t100 = time.time()
+        
+    if rank == 0:
+        
+        with open(os.path.join(result_path, 'report.txt'), 'w') as rf:
+            
+            rf.write("Total elapsed time: {}".format(sec_to_timestring(t100-t0)))
         
     return    
 
