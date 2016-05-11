@@ -1,4 +1,31 @@
 class Classification(object):
+
+    def __init__(self, params = None):
+        
+        self._params = params
+        
+        self._data_normalizer = None
+        self._labels_normalizer = None
+        
+    def setup(self, Xtr, Ytr, Xts, Yts):
+        
+        self._Xtr = Xtr
+        self._Ytr = Ytr
+        
+        self._Xts = Xts
+        self._Yts = Yts
+        
+    def getXtr(self):
+        return self._Xtr
+    
+    def getXts(self):
+        return self._Xts
+    
+    def getYtr(self):
+        return self._Ytr
+    
+    def getYts(self):
+        return self._Yts
     
     def run(self):
         """

@@ -1,49 +1,67 @@
 import numpy as np
 
-from .sgd import SGDClassification
+from sklearn.linear_model import SGDClassifier, LinearRegression, SGDRegressor
 
-class OLSClassification(SGDClassification):
+from .classification import Classification
+
+from ..preprocessing import Center
+
+class OLSClassification(Classification):
+    """
     
-    def __init__(self, params):
-        
-        self._params = params
-        
+    """
+    
     def setup(self, Xtr, Ytr, Xts, Yts):
+        """
+        Parameters
+        ----------
         
-        self._Xtr = Xtr
-        self._Ytr = Ytr
+        Xtr : ndarray
+            The trainig samples
+        """
         
-        self._Xts = Xts
-        self._Yts = Yts
+        Classification.setup(self, Xtr, Ytr, Xts, Yts)
         
-        rs = l1l2_utils.RangesScaler(Xtr, Ytr, self._params['data_normalizer'], self._params['labels_normalizer'])
+        ### Is this mandatory?
+        self._data_normalizer = Center(Xtr)
+        self._labels_normalizer = Center(Ytr)
         
-        self._tau_range = rs.tau_range(self._params['tau_range'])
-        self._mu_range = rs.mu_range(self._params['mu_range'])
-        self._lambda_range = np.sort(self._params['lambda_range'])
+        # self._clf = SGDClassifier(loss = 'squared_loss', penalty = 'none', n_iter = 500, verbose = 250)
+        # self._clf = SGDRegressor(loss = 'squared_loss', penalty = 'none', n_iter = 500, verbose = 250)
+        self._clf = LinearRegression(fit_intercept = False)
         
-        pass
         
     def run(self):
         
         n, p = self._Xtr.shape
         
-        selected_list = np.array(p*[True])
+        ### Fit the model, possibly normalizing data and labels
+        self._clf.fit(
+            self._data_normalizer.center(self._Xtr),
+            # self._labels_normalizer.center(self._Ytr)
+            self._Ytr
+        )
+        
+        prediction_ts_list = self._clf.predict(
+            self._data_normalizer.center(self._Xts)
+        )
+        
+        prediction_tr_list = self._clf.predict(
+            self._data_normalizer.center(self._Xtr)
+        )
+        
+        beta = self._clf.coef_
         
         result = {}
         
+        selected_list = np.array(p*[True])
         result['selected_list'] = selected_list
+        result['model'] = beta
         
-        # Execution
-        result = l1l2py.model_selection(
-            self._Xtr, self._Ytr, self._Xts, self._Yts, 
-            self._mu_range, self._tau_range, self._lambda_range,
-            self._params['ms_split'], self._params['cv_error'], self._params['error'],
-            self._params['data_normalizer'], self._params['labels_normalizer'],
-            self._params['sparse'], self._params['regularized'], self._params['return_predictions']
-            )
-
+        # result['prediction_tr_list'] = prediction_tr_list
+        # result['prediction_ts_list'] = prediction_ts_list
+        
+        result['prediction_tr_list'] = np.sign(prediction_tr_list)
+        result['prediction_ts_list'] = np.sign(prediction_ts_list)
+        
         return result
-    
-    
-    pass
