@@ -12,7 +12,6 @@ import numpy as np
 
 from mpi4py import MPI
 
-from palladio.wrappers.l1l2 import l1l2Classifier
 from l1l2signature import utils as l1l2_utils
 
 from palladio.utils import sec_to_timestring
@@ -73,27 +72,13 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     Xts = data_ts
     Yts = labels_ts
 
+    ### Setup the internal splitting for model selection
     int_k = config.internal_k
-    ms_split = config.cv_splitting(Ytr, int_k) # args[3]=k -> splits
-    
-    sparse, regularized, return_predictions = (True, False, True)
-    
-    params = {
-        'mu_range' : config.mu_range,
-        'tau_range' : config.tau_range,
-        'lambda_range' : config.lambda_range,
-        'data_normalizer' : config.data_normalizer,
-        'ms_split' : ms_split,
-        'cv_error' : config.cv_error,
-        'error' : config.error,
-        'labels_normalizer' : config.labels_normalizer,
-        'sparse' : sparse,
-        'regularized' : regularized,
-        'return_predictions' : return_predictions
-    }
+    ms_split = config.cv_splitting(Ytr, int_k) # since it requires the labels, it can't be done before those are loaded
+    config.params['ms_split'] = ms_split
 
     ### Create the object that will actually perform the classification/feature selection
-    clf = l1l2Classifier(params)
+    clf = config.learner_class(config.params)
     
     ### Set the actual data and perform additional steps such as rescaling parameters etc.
     clf.setup(Xtr, Ytr, Xts, Yts)
