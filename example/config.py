@@ -9,10 +9,10 @@ from palladio.wrappers.l1l2 import l1l2Classifier
 # * Data assumed csv with samples and features labels
 # * All the path are w.r.t. config file path
 data_matrix = 'data/gedm.csv'
-labels = 'data/Y_MTC_VS_CTRL.csv'
+labels = 'data/labels'
 delimiter = ','
 samples_on = 'col' # or 'row': samples on cols or rows
-result_path = 'snp_mtc_experiments'
+result_path = 'golub_palladio_test'
 
 N_jobs_regular = 100 # The number of "regular" experiment (actual labels used)
 N_jobs_permutation = 100 # The number of instances for the permutation tests (labels are randomly shuffled)

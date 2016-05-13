@@ -6,6 +6,8 @@ import shutil
 import cPickle as pkl
 import random
 
+import pandas as pd
+
 import time
 
 import numpy as np
@@ -142,14 +144,58 @@ def main(config_path):
         print("") #--------------------------------------------------------------------
         print('Reading data... ')
         
-    br = l1l2_utils.BioDataReader(data_path, labels_path,
-                                  config.sample_remover,
-                                  config.variable_remover,
-                                  config.delimiter,
-                                  config.samples_on,
-                                  config.positive_label)
-    data = br.data
-    labels = br.labels
+    # br = l1l2_utils.BioDataReader(data_path, labels_path,
+    #                               config.sample_remover,
+    #                               config.variable_remover,
+    #                               config.delimiter,
+    #                               config.samples_on,
+    #                               config.positive_label)
+    # 
+    # data = br.data
+    # labels = br.labels
+    
+    ### Read data
+    pd_data = pd.read_csv(data_path)
+    
+    if config.samples_on == 'col':
+        pd_data.index = pd_data[pd_data.columns[0]] # Correctly use the first column as index 
+        pd_data =  pd_data.iloc[:,1:] # and remove it from the actual data
+    
+    
+    
+    pd_labels = pd.read_csv(labels_path)
+    pd_labels.index = pd_labels[pd_labels.columns[0]] # Correctly use the first column as index 
+    pd_labels =  pd_labels.iloc[:,1:] # and remove it from labels
+    
+    if not config.positive_label is None:
+        poslab = config.positive_label
+    else:
+        uv = np.sort(np.unique(pd_labels.values))
+        
+        if len(uv) != 2:
+            raise Exception("More than two unique values in the labels array")
+        
+        poslab = uv[0]
+    
+    def _toPlusMinus(x) :
+        """
+        Converts the values in the labels
+        """
+        if x == poslab:
+            return +1.0
+        else:
+            return -1.0
+    
+    pd_labels_mapped = pd_labels.applymap(_toPlusMinus)
+    
+    data = pd_data.as_matrix().T
+    labels = pd_labels_mapped.as_matrix().ravel()
+    
+    # print data.shape
+    # print labels.shape
+    # 
+    # return
+    
 
     if rank == 0:
         print('  * Data shape:', data.shape)
