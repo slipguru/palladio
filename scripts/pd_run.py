@@ -162,6 +162,9 @@ def main(config_path):
         pd_data =  pd_data.iloc[:,1:] # and remove it from the actual data
     
     
+    if not config.data_preprocessing is None:
+        config.data_preprocessing.load_data(data)
+        pd_data = config.data_preprocessing.process()
     
     pd_labels = pd.read_csv(labels_path)
     pd_labels.index = pd_labels[pd_labels.columns[0]] # Correctly use the first column as index 
@@ -190,12 +193,6 @@ def main(config_path):
     
     data = pd_data.as_matrix().T
     labels = pd_labels_mapped.as_matrix().ravel()
-    
-    # print data.shape
-    # print labels.shape
-    # 
-    # return
-    
 
     if rank == 0:
         print('  * Data shape:', data.shape)

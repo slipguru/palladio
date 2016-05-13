@@ -30,7 +30,54 @@ class Center(Preproc):
     def center(self, X):
         
         return X - self.get_mean()
+
+class DataPreprocessing:
+    
+    def process(self):
+        
+        raise Exception("Stub method")
+        pass
+    
+    def load_data(self, data):
+        """
+        
+        Parameters
+        ----------
+        
+        data : pandas.core.frame.DataFrame
+          the X matrix
+        """
+        self._data = data
+    
+    pass
+    
+
+class FeatureChooser(DataPreprocessing):
+    """
+    """
+    
+    def __init__(self, data, id_list):
+        """
+        
+        Parameters
+        ----------
+        
+        data : pandas.core.frame.DataFrame
+          the X matrix
+        """
+        
+        self._id_list = id_list
+    
+    def process(self):
+        """
+        Choose features based on the id
+        """
+        
+        return self._data.loc[self._id_list]
+    
+    pass
     
 class Scale(Preproc):
     
     pass
+

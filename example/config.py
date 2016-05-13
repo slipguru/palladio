@@ -22,10 +22,13 @@ N_jobs_permutation = 100 # The number of instances for the permutation tests (la
 test_set_ratio = float(1)/4
 
 #~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sample_remover = None # removes samples with this label value
-variable_remover = 'affx' # remove vars where name starts with (not case-sens.)
-data_normalizer = l1l2py.tools.center
-labels_normalizer = None
+#sample_remover = None # removes samples with this label value
+#variable_remover = 'affx' # remove vars where name starts with (not case-sens.)
+#data_normalizer = l1l2py.tools.center
+#labels_normalizer = None
+
+data_preprocessing = None
+
 
 #~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # * See l1l2py.tools.{kfold_splits, stratified_kfold_splits}
