@@ -56,14 +56,14 @@ class FeatureChooser(DataPreprocessing):
     """
     """
     
-    def __init__(self, data, id_list):
+    def __init__(self, id_list):
         """
         
         Parameters
         ----------
         
-        data : pandas.core.frame.DataFrame
-          the X matrix
+        id_list : list
+          The list of ids of the feature to keep
         """
         
         self._id_list = id_list

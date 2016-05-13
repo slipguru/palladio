@@ -163,12 +163,14 @@ def main(config_path):
     
     
     if not config.data_preprocessing is None:
+        if rank == 0:
+            print("Preprocessing data...")
         config.data_preprocessing.load_data(data)
         pd_data = config.data_preprocessing.process()
     
     pd_labels = pd.read_csv(labels_path)
     pd_labels.index = pd_labels[pd_labels.columns[0]] # Correctly use the first column as index 
-    pd_labels =  pd_labels.iloc[:,1:] # and remove it from labels
+    pd_labels = pd_labels.iloc[:,1:] # and remove it from labels
     
     if not config.positive_label is None:
         poslab = config.positive_label
