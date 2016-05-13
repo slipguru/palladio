@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 import os, sys, imp
 
+import pandas as pd
+
 import matplotlib
 
 matplotlib.use('Agg')
@@ -79,16 +81,56 @@ def analyze_experiments(base_folder):
     data_path = os.path.join(base_folder, 'data_file')
     labels_path = os.path.join(base_folder, 'labels_file')
     
-    br = l1l2_utils.BioDataReader(data_path, labels_path,
-                                  config.sample_remover,
-                                  config.variable_remover,
-                                  config.delimiter,
-                                  config.samples_on)
+    # br = l1l2_utils.BioDataReader(data_path, labels_path,
+    #                               config.sample_remover,
+    #                               config.variable_remover,
+    #                               config.delimiter,
+    #                               config.samples_on)
+    # 
+    # data = br.data
+    # labels = br.labels
+    # sample_names = br.samples
+    # probeset_names = br.variables
     
-    data = br.data
-    labels = br.labels
-    sample_names = br.samples
-    probeset_names = br.variables
+    pd_data = pd.read_csv(data_path)
+    
+    if config.samples_on == 'col':
+        pd_data.index = pd_data[pd_data.columns[0]] # Correctly use the first column as index 
+        pd_data =  pd_data.iloc[:,1:] # and remove it from the actual data
+    
+    probeset_names = pd_data.index
+    
+    if not config.data_preprocessing is None:
+        config.data_preprocessing.load_data(pd_data)
+        pd_data = config.data_preprocessing.process()
+    
+    pd_labels = pd.read_csv(labels_path)
+    pd_labels.index = pd_labels[pd_labels.columns[0]] # Correctly use the first column as index 
+    pd_labels = pd_labels.iloc[:,1:] # and remove it from labels
+    
+    if not config.positive_label is None:
+        poslab = config.positive_label
+    else:
+        uv = np.sort(np.unique(pd_labels.values))
+        
+        if len(uv) != 2:
+            raise Exception("More than two unique values in the labels array")
+        
+        poslab = uv[0]
+    
+    def _toPlusMinus(x) :
+        """
+        Converts the values in the labels
+        """
+        if x == poslab:
+            return +1.0
+        else:
+            return -1.0
+    
+    pd_labels_mapped = pd_labels.applymap(_toPlusMinus)
+    
+    data = pd_data.as_matrix().T
+    labels = pd_labels_mapped.as_matrix().ravel()
     
     # print len(probeset_names)
     
@@ -107,7 +149,9 @@ def analyze_experiments(base_folder):
             
             analysis_result = analyze_experiment(exp_folder, config)
             
-            selected_probesets = probeset_names[analysis_result['selected_list'][0]]
+            print analysis_result['selected_list']
+            
+            selected_probesets = probeset_names[analysis_result['selected_list']]
             
             if exp_folder.split('/')[1].startswith('regular'):
                 
@@ -172,8 +216,15 @@ def plot_distributions(v_regular, v_permutation, base_folder):
         # hist_kws : {'alpha' : 0.8}
     }
     
-    sns.distplot(v_permutation*100, label = 'Permutation tests', color = 'r', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
-    sns.distplot(v_regular*100, label = 'Regular experiments', color = '#99cc00', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
+    reg_mean = np.mean(v_regular)
+    reg_std = np.std(v_regular)
+    
+    perm_mean = np.mean(v_permutation)
+    perm_std = np.std(v_permutation)
+    
+    
+    sns.distplot(v_permutation*100, label = "Permutation tests \nMean = {}, STD = {}".format(perm_mean, perm_std), color = 'r', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
+    sns.distplot(v_regular*100, label = "Regular experiments \nMean = {}, STD = {}".format(reg_mean, reg_std), color = '#99cc00', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
     
     ### Fit a gaussian with permutation data
     (mu, sigma) = stats.norm.fit(v_permutation*100)
