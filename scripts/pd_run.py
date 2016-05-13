@@ -165,7 +165,7 @@ def main(config_path):
     if not config.data_preprocessing is None:
         if rank == 0:
             print("Preprocessing data...")
-        config.data_preprocessing.load_data(data)
+        config.data_preprocessing.load_data(pd_data)
         pd_data = config.data_preprocessing.process()
     
     pd_labels = pd.read_csv(labels_path)
