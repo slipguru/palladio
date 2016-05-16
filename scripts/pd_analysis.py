@@ -18,42 +18,73 @@ from scipy import stats
 
 import cPickle as pkl
 
+# def analyze_experiment(exp_folder, config):
+#     
+#     with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
+#         result = pkl.load(f)
+#         
+#     Y_ts = result['labels_ts'] # the actual labels
+#     
+#     analysis_results = dict()
+#     analysis_results['summaries'] = list()
+#     analysis_results['accuracy'] = list()
+#     analysis_results['balanced_accuracy'] = list()
+#     
+#     for aux_y in result['prediction_ts_list']:
+#         
+#         ### XXX TODO fix cases in which Y_lr = 0
+#         Y_lr = np.sign(aux_y.ravel())
+#         # Y_lr = np.sign(Y_lr-0.1)
+#         
+#         analysis_results['accuracy'].append((Y_ts == Y_lr).sum()/float(len(Y_ts)))
+#         
+#         TP = np.sum((Y_lr == 1) * (Y_ts == Y_lr))
+#         FP = np.sum((Y_lr == 1) * (Y_ts != Y_lr))
+#         TN = np.sum((Y_lr == -1) * (Y_ts == Y_lr))
+#         FN = np.sum((Y_lr == -1) * (Y_ts != Y_lr))
+#         
+#         # print TP, TN, FP, FN
+#         
+#         balanced_accuracy = 0.5 * ( (TP / float(TP + FN)) + (TN / float(TN + FP)) )
+#         
+#         analysis_results['balanced_accuracy'].append(balanced_accuracy)
+#         
+#         analysis_results['selected_list'] = result['selected_list']
+#         
+#         # summary['MCC']
+#         
+#     return analysis_results
+
 def analyze_experiment(exp_folder, config):
     
     with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
         result = pkl.load(f)
         
-    # result['prediction_ts_list'] # one element for each value of mu
-    
     Y_ts = result['labels_ts'] # the actual labels
     
     analysis_results = dict()
-    analysis_results['summaries'] = list()
-    analysis_results['accuracy'] = list()
-    analysis_results['balanced_accuracy'] = list()
+    # analysis_results['summary']
+    # analysis_results['accuracy']
+    # analysis_results['balanced_accuracy']
     
-    for aux_y in result['prediction_ts_list']:
+    aux_y = result['prediction_ts_list']
         
-        ### XXX TODO fix cases in which Y_lr = 0
-        Y_lr = np.sign(aux_y.ravel())
-        # Y_lr = np.sign(Y_lr-0.1)
-        
-        analysis_results['accuracy'].append((Y_ts == Y_lr).sum()/float(len(Y_ts)))
-        
-        TP = np.sum((Y_lr == 1) * (Y_ts == Y_lr))
-        FP = np.sum((Y_lr == 1) * (Y_ts != Y_lr))
-        TN = np.sum((Y_lr == -1) * (Y_ts == Y_lr))
-        FN = np.sum((Y_lr == -1) * (Y_ts != Y_lr))
-        
-        # print TP, TN, FP, FN
-        
-        balanced_accuracy = 0.5 * ( (TP / float(TP + FN)) + (TN / float(TN + FP)) )
-        
-        analysis_results['balanced_accuracy'].append(balanced_accuracy)
-        
-        analysis_results['selected_list'] = result['selected_list']
-        
-        # summary['MCC']
+    ### XXX TODO fix cases in which Y_lr = 0
+    Y_lr = np.sign(aux_y.ravel())
+    # Y_lr = np.sign(Y_lr-0.1)
+    
+    analysis_results['accuracy'] = (Y_ts == Y_lr).sum()/float(len(Y_ts))
+    
+    TP = np.sum((Y_lr == 1) * (Y_ts == Y_lr))
+    FP = np.sum((Y_lr == 1) * (Y_ts != Y_lr))
+    TN = np.sum((Y_lr == -1) * (Y_ts == Y_lr))
+    FN = np.sum((Y_lr == -1) * (Y_ts != Y_lr))
+    
+    balanced_accuracy = 0.5 * ( (TP / float(TP + FN)) + (TN / float(TN + FP)) )
+    
+    analysis_results['balanced_accuracy'] = balanced_accuracy
+    
+    analysis_results['selected_list'] = result['selected_list']
         
     return analysis_results
 
@@ -98,11 +129,11 @@ def analyze_experiments(base_folder):
         pd_data.index = pd_data[pd_data.columns[0]] # Correctly use the first column as index 
         pd_data =  pd_data.iloc[:,1:] # and remove it from the actual data
     
-    probeset_names = pd_data.index
-    
     if not config.data_preprocessing is None:
         config.data_preprocessing.load_data(pd_data)
         pd_data = config.data_preprocessing.process()
+        
+    probeset_names = pd_data.index
     
     pd_labels = pd.read_csv(labels_path)
     pd_labels.index = pd_labels[pd_labels.columns[0]] # Correctly use the first column as index 
@@ -149,28 +180,18 @@ def analyze_experiments(base_folder):
             
             analysis_result = analyze_experiment(exp_folder, config)
             
-            print analysis_result['selected_list']
-            
             selected_probesets = probeset_names[analysis_result['selected_list']]
             
             if exp_folder.split('/')[1].startswith('regular'):
                 
-                # MCC_regular.append(analysis_result['summaries'][0]['MCC'])
-                # acc_regular.append(analysis_result['summaries'][0]['balanced_accuracy'])
-                # acc_regular.append(analysis_result['summaries'][0]['accuracy'])
-                # acc_regular.append(analysis_result['accuracy'][0])
-                acc_regular.append(analysis_result['balanced_accuracy'][0])
+                acc_regular.append(analysis_result['balanced_accuracy'])
                 
                 for p in selected_probesets:
                     selected_regular[p] += 1
                 
             elif exp_folder.split('/')[1].startswith('permutation'):
                 
-                # MCC_permutation.append(analysis_result['summaries'][0]['MCC'])
-                # acc_permutation.append(analysis_result['summaries'][0]['balanced_accuracy'])
-                # acc_permutation.append(analysis_result['summaries'][0]['accuracy'])
-                # acc_permutation.append(analysis_result['accuracy'][0])
-                acc_permutation.append(analysis_result['balanced_accuracy'][0])
+                acc_permutation.append(analysis_result['balanced_accuracy'])
                 
                 for p in selected_probesets:
                     selected_permutation[p] += 1
@@ -206,7 +227,7 @@ def plot_distributions(v_regular, v_permutation, base_folder):
     
     # nbins = 15
     
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(18, 10))
     
     args = {
         'norm_hist' : False,
@@ -222,9 +243,8 @@ def plot_distributions(v_regular, v_permutation, base_folder):
     perm_mean = np.mean(v_permutation)
     perm_std = np.std(v_permutation)
     
-    
-    sns.distplot(v_permutation*100, label = "Permutation tests \nMean = {}, STD = {}".format(perm_mean, perm_std), color = 'r', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
-    sns.distplot(v_regular*100, label = "Regular experiments \nMean = {}, STD = {}".format(reg_mean, reg_std), color = '#99cc00', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
+    sns.distplot(v_permutation*100, label = "Permutation tests \nMean = {0:.2f}, STD = {1:.2f}".format(perm_mean, perm_std), color = 'r', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
+    sns.distplot(v_regular*100, label = "Regular experiments \nMean = {0:.2f}, STD = {1:.2f}".format(reg_mean, reg_std), color = '#99cc00', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
     
     ### Fit a gaussian with permutation data
     (mu, sigma) = stats.norm.fit(v_permutation*100)
@@ -234,10 +254,12 @@ def plot_distributions(v_regular, v_permutation, base_folder):
     kstest = stats.kstest(v_regular*100, 'norm', args=(mu, sigma))
     rstest = stats.ranksums(v_regular, v_permutation)
     
+    
+    
     with open(os.path.join(base_folder, 'stats.txt'), 'w')  as f:
         
-        f.write("Kolmogorov-Smirnov test: {}\n".format(kstest))
-        f.write("Wilcoxon Rank-Sum test: {}\n".format(rstest))
+        f.write("Kolmogorov-Smirnov test p-value: {0:.3e}\n".format(kstest[1]))
+        f.write("Wilcoxon Rank-Sum test p-value: {0:.3e}\n".format(rstest[1]))
     
     print("Kolmogorov-Smirnov test: {}".format(kstest))
     print("Wilcoxon Rank-Sum test: {}".format(rstest))
@@ -246,15 +268,21 @@ def plot_distributions(v_regular, v_permutation, base_folder):
     plt.xlabel("Balanced Accuracy (%)", fontsize="large")
     plt.ylabel("Absolute Frequency", fontsize="large")
     
+    plt.title("Distribution of accuracies", fontsize = 20)
+    
+    
     ### Determine limits for the x axis
     x_min = v_permutation.min() - v_permutation.mean()/10
     x_max = v_regular.max() + v_regular.mean()/10
     
     plt.xlim([x_min*100,x_max*100])
     
-    plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+    plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='upper right',
            ncol=2, mode="expand", borderaxespad=0., fontsize="large")
-
+    
+    # fig.text(0.1, 0.01, "Kolmogorov-Smirnov test p-value: {0:.3e}\n".format(kstest[1]), fontsize=18)
+    fig.text(0.1, 0.005, "Wilcoxon Rank-Sum test p-value: {0:.3e}\n".format(rstest[1]), fontsize=18)
+    
     plt.savefig(os.path.join(base_folder, 'permutation_acc_distribution.pdf'))
 
 def features_manhattan_plot(sorted_keys, frequencies_true, frequencies_perm, base_folder, threshold = 75):
@@ -353,7 +381,9 @@ def plot_feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 
         
         N -= 1
     
-    plt.figure()
+    plt.figure(figsize=(18, 10))
+    
+    plt.title("Manhattan plot - top features detail", fontsize = 20)
     
     ax = sns.barplot(x = x, y = y, color = '#99cc00', alpha = 0.9)
     
@@ -370,7 +400,7 @@ def plot_feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 
            scatterpoints=1,
            loc='upper right',
            ncol=1,
-           fontsize=8)
+           fontsize=12)
 
     ### plot a vertical line which separates selected features from those not selected
     xmin, xmax = ax.get_xbound()
