@@ -37,6 +37,18 @@ class l1l2Classifier:
             self._params['sparse'], self._params['regularized'], self._params['return_predictions']
             )
 
+        ### Return only the first element of the list, which is the one related to the smallest value of mu
+        ### BEGIN
+        result['selected_list'] = result['selected_list'][0]
+        result['beta_list'] = result['beta_list'][0]
+        
+        result['prediction_ts_list'] = result['prediction_ts_list'][0]
+        if 'prediction_tr_list' in result.keys():
+            result['prediction_tr_list'] = result['prediction_tr_list'][0]
+            
+        ### END
+        
+        
         return result
     
     
