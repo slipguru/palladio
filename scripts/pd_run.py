@@ -132,7 +132,6 @@ def main(config_path):
         os.link(data_path, os.path.join(result_path, 'data_file'))
         os.link(labels_path, os.path.join(result_path, 'labels_file'))
         
-            
     ### Wait for the folder to be created and files to be copied
     comm.barrier()
     

@@ -29,7 +29,6 @@ test_set_ratio = float(1)/4
 
 data_preprocessing = None
 
-
 #~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # * See l1l2py.tools.{kfold_splits, stratified_kfold_splits}
 external_k = 4   # (None means Leave One Out)
@@ -68,4 +67,4 @@ params = {
 }
 
 #~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-frequency_threshold = 0.5
+frequency_threshold = 0.75
