@@ -42,9 +42,9 @@ class l1l2Classifier:
         result['selected_list'] = result['selected_list'][0]
         result['beta_list'] = result['beta_list'][0]
         
-        result['prediction_ts_list'] = result['prediction_ts_list'][0]
+        result['prediction_ts_list'] = result['prediction_ts_list'][0].ravel()
         if 'prediction_tr_list' in result.keys():
-            result['prediction_tr_list'] = result['prediction_tr_list'][0]
+            result['prediction_tr_list'] = result['prediction_tr_list'][0].ravel()
             
         ### END
         
