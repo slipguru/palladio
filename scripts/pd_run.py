@@ -102,7 +102,8 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
         
     in_split = {
         'ms_split': ms_split,
-        'outer_split': aux_splits[0]
+        # 'outer_split': aux_splits[0]
+        'outer_split': (idx_lr, idx_ts)
     }
         
     with open(os.path.join(result_dir, 'in_split.pkl'), 'w') as f:

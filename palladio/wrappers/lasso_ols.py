@@ -47,12 +47,13 @@ class lasso_olsClassifier(Classification):
                 clf = Lasso(alpha = tau)
                 clf.fit(Xk_tr, Yk_tr) # fit the model
                 
-                selected_features = np.argwhere(clf.coef_)[0] # extract only nonzero coefficients
+                # selected_features = np.argwhere(clf.coef_)[0] # extract only nonzero coefficients
+                selected_features = np.argwhere(clf.coef_).ravel() # extract only nonzero coefficients
                 
                 Xk_tr2 = Xk_tr[:, selected_features]
                 Xk_ts2 = Xk_ts[:, selected_features]
                 
-                clf = LinearRegression()
+                clf = LinearRegression(normalize = False)
                 clf.fit(Xk_tr2, Yk_tr) # fit the model
                 Yk_lr = clf.predict(Xk_ts2) # predict test data
                 Yk_lr = np.sign(Yk_lr) # take the sign
@@ -63,12 +64,13 @@ class lasso_olsClassifier(Classification):
             
         ### Final train with the best choice for tau
         best_tau_idx = np.argmax(acc_list)
-        best_tau = tau_range[best_tau_idx]
+        best_tau = self._params['tau_range'][best_tau_idx]
         
         clf = Lasso(alpha = best_tau)
         clf.fit(self._Xtr, self._Ytr) # fit the model
         
-        selected_features = np.argwhere(clf.coef_)[0] # extract only nonzero coefficients
+        # selected_features = np.argwhere(clf.coef_)[0] # extract only nonzero coefficients
+        selected_features = np.argwhere(clf.coef_).ravel() # extract only nonzero coefficients
         
         X_tr2 = self._Xtr[:, selected_features]
         X_ts2 = self._Xts[:, selected_features]
@@ -81,6 +83,8 @@ class lasso_olsClassifier(Classification):
         
         Y_lr_tr = clf.predict(X_tr2) # predict training data
         Y_lr_tr = np.sign(Y_lr_tr) # take the sign
+        
+        result = {}
         
         result['selected_list'] = selected_features
         #result['beta_list'] = result['beta_list'][0]
