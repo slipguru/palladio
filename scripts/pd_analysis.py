@@ -88,7 +88,7 @@ def analyze_experiment(exp_folder, config):
         
     return analysis_results
 
-def analyze_experiments(base_folder):
+def analyze_experiments(base_folder, config):
     """
     Perform a preliminar analysis on all experiments producing a summary
     for each experiment that will be subsequently used for the aggregate analysis
@@ -104,24 +104,11 @@ def analyze_experiments(base_folder):
     from l1l2signature import internals as l1l2_core
     from l1l2signature import utils as l1l2_utils
     
-    config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
-
     print("#--------------------------------------------------------------------")
     print('Reading data... ')
 
     data_path = os.path.join(base_folder, 'data_file')
     labels_path = os.path.join(base_folder, 'labels_file')
-    
-    # br = l1l2_utils.BioDataReader(data_path, labels_path,
-    #                               config.sample_remover,
-    #                               config.variable_remover,
-    #                               config.delimiter,
-    #                               config.samples_on)
-    # 
-    # data = br.data
-    # labels = br.labels
-    # sample_names = br.samples
-    # probeset_names = br.variables
     
     pd_data = pd.read_csv(data_path)
     
@@ -416,7 +403,11 @@ def main():
     
     base_folder = sys.argv[1]
     
-    out = analyze_experiments(base_folder)
+    config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
+    
+    threshold = int(config.N_jobs_regular * config.frequency_threshold)
+    
+    out = analyze_experiments(base_folder, config)
     
     v_regular, v_permutation = out['v_regular'], out['v_permutation']
     selected_regular, selected_permutation = out['selected_regular'], out['selected_permutation']
@@ -425,7 +416,7 @@ def main():
     sorted_keys_regular = sorted(selected_regular, key=selected_regular.__getitem__)
     sorted_keys_permutation = sorted(selected_permutation, key=selected_permutation.__getitem__)
     
-    threshold = 75
+    
     
     with open(os.path.join(base_folder, 'signature_regular.txt'), 'w') as f:
         line_drawn = False

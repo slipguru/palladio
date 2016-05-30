@@ -236,6 +236,8 @@ def main(config_path):
         
         print("[{}_{}] finished experiment {}".format(name, rank, i))
         
+    ### Wait for all experiments to finish before taking the time
+    comm.barrier()
         
     if rank == 0:
         t100 = time.time()

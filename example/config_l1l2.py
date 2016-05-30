@@ -12,7 +12,7 @@ data_matrix = 'data/gedm.csv'
 labels = 'data/labels'
 delimiter = ','
 samples_on = 'col' # or 'row': samples on cols or rows
-result_path = 'golub_palladio_test'
+result_path = 'golub_palladio_test_l1l2'
 
 N_jobs_regular = 100 # The number of "regular" experiment (actual labels used)
 N_jobs_permutation = 100 # The number of instances for the permutation tests (labels are randomly shuffled)
