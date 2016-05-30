@@ -18,43 +18,6 @@ from scipy import stats
 
 import cPickle as pkl
 
-# def analyze_experiment(exp_folder, config):
-#     
-#     with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
-#         result = pkl.load(f)
-#         
-#     Y_ts = result['labels_ts'] # the actual labels
-#     
-#     analysis_results = dict()
-#     analysis_results['summaries'] = list()
-#     analysis_results['accuracy'] = list()
-#     analysis_results['balanced_accuracy'] = list()
-#     
-#     for aux_y in result['prediction_ts_list']:
-#         
-#         ### XXX TODO fix cases in which Y_lr = 0
-#         Y_lr = np.sign(aux_y.ravel())
-#         # Y_lr = np.sign(Y_lr-0.1)
-#         
-#         analysis_results['accuracy'].append((Y_ts == Y_lr).sum()/float(len(Y_ts)))
-#         
-#         TP = np.sum((Y_lr == 1) * (Y_ts == Y_lr))
-#         FP = np.sum((Y_lr == 1) * (Y_ts != Y_lr))
-#         TN = np.sum((Y_lr == -1) * (Y_ts == Y_lr))
-#         FN = np.sum((Y_lr == -1) * (Y_ts != Y_lr))
-#         
-#         # print TP, TN, FP, FN
-#         
-#         balanced_accuracy = 0.5 * ( (TP / float(TP + FN)) + (TN / float(TN + FP)) )
-#         
-#         analysis_results['balanced_accuracy'].append(balanced_accuracy)
-#         
-#         analysis_results['selected_list'] = result['selected_list']
-#         
-#         # summary['MCC']
-#         
-#     return analysis_results
-
 def analyze_experiment(exp_folder, config):
     
     with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
