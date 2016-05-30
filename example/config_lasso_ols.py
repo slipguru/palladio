@@ -1,7 +1,7 @@
-# Configuration file example for L1L2Signature
-# version: '0.2.2'
+# Configuration file example for Lasso/OLS
 
 import numpy as np
+from sklearn.cross_validation import StratifiedKFold
 
 from palladio.wrappers.lasso_ols import lasso_olsClassifier
 
@@ -21,11 +21,13 @@ N_jobs_permutation = 100 # The number of instances for the permutation tests (la
 ### It should be of the form 1/B
 test_set_ratio = float(1)/4
 
+positive_label = None
+
 data_preprocessing = None
 
 #~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 internal_k = 3
-
+cv_splitting = StratifiedKFold
 
 #~~ L1 regularization parameter
 tau_range = 0.75*np.logspace(-3, 0, num=20)

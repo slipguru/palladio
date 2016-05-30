@@ -52,10 +52,16 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     
     ### Split the dataset in learning and test set
     ### Use a trick to keep the original splitting strategy
-    aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))), rseed = None)
+    # aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))), rseed = None)
+    aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))))
     
-    idx_lr = aux_splits[0][0]
-    idx_ts = aux_splits[0][1]
+    # idx_lr = aux_splits[0][0]
+    # idx_ts = aux_splits[0][1]
+    
+    for idx_tr, idx_ts in aux_splits:
+        idx_lr = idx_tr
+        idx_ts = idx_ts
+        break
     
     data_lr = data[idx_lr, :]
     labels_lr = labels[idx_lr]
