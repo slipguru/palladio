@@ -132,14 +132,14 @@ def analyze_experiments(base_folder, config):
             
             selected_probesets = probeset_names[analysis_result['selected_list']]
             
-            if exp_folder.split('/')[1].startswith('regular'):
+            if exp_folder.split('/')[-1].startswith('regular'):
                 
                 acc_regular.append(analysis_result['balanced_accuracy'])
                 
                 for p in selected_probesets:
                     selected_regular[p] += 1
                 
-            elif exp_folder.split('/')[1].startswith('permutation'):
+            elif exp_folder.split('/')[-1].startswith('permutation'):
                 
                 acc_permutation.append(analysis_result['balanced_accuracy'])
                 
