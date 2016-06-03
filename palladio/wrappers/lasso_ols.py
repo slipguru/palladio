@@ -21,6 +21,53 @@ class lasso_olsClassifier(Classification):
         
         Classification.setup(self, Xtr, Ytr, Xts, Yts)
         
+    def get_l1_bound(self):
+        r"""Estimation of an useful maximum bound for the `l1` penalty term.
+    
+        For each value of ``tau`` smaller than the maximum bound the solution vector
+        contains at least one non zero element.
+    
+        .. warning
+    
+            That is, bounds are right if you run the `l1l2` regularization
+            algorithm with the same data matrices.
+    
+        Parameters
+        ----------
+        data : (N, P) ndarray
+            Data matrix.
+        labels : (N,)  or (N, 1) ndarray
+            Labels vector.
+    
+        Returns
+        -------
+        tau_max : float
+            Maximum ``tau``.
+    
+        Examples
+        --------
+        >>> X = numpy.array([[0.1, 1.1, 0.3], [0.2, 1.2, 1.6], [0.3, 1.3, -0.6]])
+        >>> beta = numpy.array([0.1, 0.1, 0.0])
+        >>> Y = numpy.dot(X, beta)
+        >>> tau_max = l1l2py.algorithms.l1_bound(X, Y)
+        >>> l1l2py.algorithms.l1l2_regularization(X, Y, 0.0, tau_max).T
+        array([[ 0.,  0.,  0.]])
+        >>> beta = l1l2py.algorithms.l1l2_regularization(X, Y, 0.0, tau_max - 1e-5)
+        >>> len(numpy.flatnonzero(beta))
+        1
+    
+        """
+        
+        data = self._Xtr
+        labels = self._Ytr
+        
+        n = data.shape[0]
+        corr = np.abs(np.dot(data.T, labels))
+    
+        tau_max = (corr.max() * (2.0/n))
+    
+        return tau_max    
+    
     def run(self):
         
         ##############################
@@ -32,7 +79,11 @@ class lasso_olsClassifier(Classification):
         
         acc_list = np.empty((len(self._params['tau_range']),)) # store the mean accuracies for each model
         
-        for i, tau in enumerate(self._params['tau_range']):
+        TAU_MAX = self.get_l1_bound()
+        
+        for i, tau_scaling in enumerate(self._params['tau_range']):
+            
+            tau = TAU_MAX * tau_scaling
             
             acc = 0
             

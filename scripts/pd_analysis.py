@@ -331,6 +331,9 @@ def plot_feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 
         
         N -= 1
     
+    x = np.array(x)
+    y = np.array(y)
+    
     plt.figure(figsize=(18, 10))
     
     plt.title("Manhattan plot - top features detail", fontsize = 20)
