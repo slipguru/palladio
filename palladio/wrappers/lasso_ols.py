@@ -74,18 +74,27 @@ class lasso_olsClassifier(Classification):
         ### Model selection phase
         ##############################
         
+        internal_k = self._params['internal_k']
+        
         ### Perform k splits once
-        skf = StratifiedKFold(self._Ytr, n_folds = self._params['internal_k'])
+        skf = StratifiedKFold(self._Ytr, n_folds = internal_k)
         
         acc_list = np.empty((len(self._params['tau_range']),)) # store the mean accuracies for each model
         
         TAU_MAX = self.get_l1_bound()
         
+        # print("TAU_MAX = {}".format(TAU_MAX))
+        
         for i, tau_scaling in enumerate(self._params['tau_range']):
             
             tau = TAU_MAX * tau_scaling
             
+            # print("{}-th value of tau ({})".format(i+1, tau))
+            
             acc = 0
+            
+            N_allzeros = 0 # number of solutions which consisted of only zeros (early stopping for too big tau)
+            
             
             for idx_tr, idx_ts in skf:
                 
@@ -98,24 +107,41 @@ class lasso_olsClassifier(Classification):
                 clf = Lasso(alpha = tau)
                 clf.fit(Xk_tr, Yk_tr) # fit the model
                 
-                # selected_features = np.argwhere(clf.coef_)[0] # extract only nonzero coefficients
                 selected_features = np.argwhere(clf.coef_).ravel() # extract only nonzero coefficients
                 
-                Xk_tr2 = Xk_tr[:, selected_features]
-                Xk_ts2 = Xk_ts[:, selected_features]
+                # print("Selected {} features".format(len(selected_features)))
                 
-                clf = LinearRegression(normalize = False)
-                clf.fit(Xk_tr2, Yk_tr) # fit the model
-                Yk_lr = clf.predict(Xk_ts2) # predict test data
-                Yk_lr = np.sign(Yk_lr) # take the sign
+                if len(selected_features) == 0:
+                    ### If no features are selected, just assign all samples to the most common class (in the training set)
+                    
+                    N_allzeros += 1
+                    Yk_lr = np.ones((len(Yk_ts),)) * np.sign(Yk_tr.sum() + 0.1)
+                    
+                else:
+                    ### Else, run OLS and get weights for coefficients NOT affected by shrinking
+                
+                    Xk_tr2 = Xk_tr[:, selected_features]
+                    Xk_ts2 = Xk_ts[:, selected_features]
+                    
+                    clf = LinearRegression(normalize = False)
+                    clf.fit(Xk_tr2, Yk_tr) # fit the model
+                    Yk_lr = clf.predict(Xk_ts2) # predict test data
+                    Yk_lr = np.sign(Yk_lr) # take the sign
                 
                 acc += accuracy_score(Yk_ts, Yk_lr)
                 
-            acc_list[i] = acc
+            acc_list[i] = acc/internal_k
+            
+            if N_allzeros == internal_k:
+                ### All k-fold splits returned empty solutions, stop here as bigger values
+                ### of tau would return empty solutions as well
+                print("The {}-th value of tau ({}) returned only empty solutions".format(i+1, tau))
+                break
             
         ### Final train with the best choice for tau
         best_tau_idx = np.argmax(acc_list)
-        best_tau = self._params['tau_range'][best_tau_idx]
+        #best_tau = self._params['tau_range'][best_tau_idx]
+        best_tau = self._params['tau_range'][best_tau_idx] * TAU_MAX
         
         clf = Lasso(alpha = best_tau)
         clf.fit(self._Xtr, self._Ytr) # fit the model
@@ -123,17 +149,26 @@ class lasso_olsClassifier(Classification):
         # selected_features = np.argwhere(clf.coef_)[0] # extract only nonzero coefficients
         selected_features = np.argwhere(clf.coef_).ravel() # extract only nonzero coefficients
         
-        X_tr2 = self._Xtr[:, selected_features]
-        X_ts2 = self._Xts[:, selected_features]
+        if len(selected_features) == 0:
+            
+            print("WARNING: the allegedly best solution (tau = {}) was empty".format(best_tau))
+            
+            Y_lr = np.ones((len(self._Yts)),) * np.sign(np.sum(self._Ytr) + 0.1)
+            Y_lr_tr = np.ones((len(self._Ytr)),) * np.sign(np.sum(self._Ytr) + 0.1)
+            
+        else:
         
-        clf = LinearRegression()
-        clf.fit(X_tr2, self._Ytr) # fit the model
-        
-        Y_lr = clf.predict(X_ts2) # predict test data
-        Y_lr = np.sign(Y_lr) # take the sign
-        
-        Y_lr_tr = clf.predict(X_tr2) # predict training data
-        Y_lr_tr = np.sign(Y_lr_tr) # take the sign
+            X_tr2 = self._Xtr[:, selected_features]
+            X_ts2 = self._Xts[:, selected_features]
+            
+            clf = LinearRegression()
+            clf.fit(X_tr2, self._Ytr) # fit the model
+            
+            Y_lr = clf.predict(X_ts2) # predict test data
+            Y_lr = np.sign(Y_lr) # take the sign
+            
+            Y_lr_tr = clf.predict(X_tr2) # predict training data
+            Y_lr_tr = np.sign(Y_lr_tr) # take the sign
         
         result = {}
         
@@ -146,5 +181,3 @@ class lasso_olsClassifier(Classification):
         result['labels_ts'] = self._Yts
             
         return result
-        
-    
