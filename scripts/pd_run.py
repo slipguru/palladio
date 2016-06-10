@@ -50,10 +50,12 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     result_dir = os.path.join(result_path, custom_name)
     os.mkdir(result_dir)
     
+    print time.clock()
+    
     ### Split the dataset in learning and test set
     ### Use a trick to keep the original splitting strategy
-    # aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))), rseed = None)
-    aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))))
+    aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))), rseed = time.clock())
+    # aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))))
     
     # idx_lr = aux_splits[0][0]
     # idx_ts = aux_splits[0][1]
@@ -82,7 +84,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
 
     ### Setup the internal splitting for model selection
     int_k = config.internal_k
-    ms_split = config.cv_splitting(Ytr, int_k) # since it requires the labels, it can't be done before those are loaded
+    ms_split = config.cv_splitting(Ytr, int_k, rseed = time.clock()) # since it requires the labels, it can't be done before those are loaded
     config.params['ms_split'] = ms_split
 
     ### Create the object that will actually perform the classification/feature selection
