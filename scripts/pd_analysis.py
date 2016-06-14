@@ -220,7 +220,6 @@ def plot_distributions(v_regular, v_permutation, base_folder):
     
     plt.title("Distribution of accuracies", fontsize = 20)
     
-    
     ### Determine limits for the x axis
     x_min = v_permutation.min() - v_permutation.mean()/10
     x_max = v_regular.max() + v_regular.mean()/10
@@ -282,6 +281,8 @@ def features_manhattan_plot(sorted_keys, frequencies_true, frequencies_perm, bas
     
     plt.xlabel('Features')
     plt.ylabel('Absolute frequencies')
+    
+    plt.title("Feature frequencies")
     
     plt.savefig(os.path.join(base_folder, 'manhattan_plot.pdf'))
     
