@@ -29,24 +29,31 @@ def beta_average():
                 res = pkl.load(f)
                 
             if beta is None:
-                beta = res['model']
+                beta = np.array(res['model'])
+                betas = beta[:,np.newaxis]
             else:
-                beta += res['model']
+                tmp = np.array(res['model'])
+                beta += tmp
+                betas = np.hstack((betas, tmp[:,np.newaxis]))
                 
             if intercept is None:
                 intercept = res['intercept']
+                intercepts = [intercept]
             else:
                 intercept += res['intercept']
+                intercepts.append(intercept)
                 
             i += 1
             
     
+    
+    intercepts = np.array(intercepts)
+    
     beta = beta/i
     intercept = intercept/i
-            
-    print beta
-    print intercept
     
+    print betas.mean(1)
+    print intercept.mean()
     
 def check_splits():
     
@@ -73,6 +80,6 @@ def check_splits():
     
 
 if __name__ == '__main__':
-    # beta_average()
+    beta_average()
     
-    check_splits()
+    # check_splits()
