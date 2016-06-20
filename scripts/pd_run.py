@@ -6,6 +6,8 @@ import shutil
 import cPickle as pkl
 import random
 
+from hashlib import sha512
+
 import pandas as pd
 
 import time
@@ -50,11 +52,21 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     result_dir = os.path.join(result_path, custom_name)
     os.mkdir(result_dir)
     
-    print time.clock()
+    ### Produce a seed for the pseudo random generator
+    rseed = 0
+    aux = sha512(name).digest() # hash the machine's name
+    # extract integers from the sha
+    for c in aux:
+        try:
+            rseed += int(c)
+        except ValueError:
+            pass
+    rseed = time.time()
+    rseed += rank
     
     ### Split the dataset in learning and test set
     ### Use a trick to keep the original splitting strategy
-    aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))), rseed = time.clock())
+    aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))), rseed = rseed)
     # aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))))
     
     # idx_lr = aux_splits[0][0]
