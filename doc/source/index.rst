@@ -1,33 +1,28 @@
-.. adenine documentation master file, created by
-   sphinx-quickstart on Fri May 22 12:31:54 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. palladio documentation master file
 
-=====================================
+=================================================
 PALLADIO (ParALleL frAmework for moDel selectIOn)
-=====================================
+=================================================
 
-**ADENINE** is a machine learning and data mining Python pipeline that helps you to answer this tedious question: are my data relevant with the problem I'm dealing with?
+**PALLADIO** is a machine learning framework whose purpose is to provide robust and reproducible results when dealing with data where the signal to noise ratio is low; it also provides tools to determine whether the dataset being analyzed contains any signal at all.
+**PALLADIO** works by repeating the same experiment many times, each time resampling the training and the test set so that the outcome is reliable as it is not determined by a single partition of the dataset. Besides, using permutation tests, a measure of how much experiments produce a reliable result is provided.
+Since all experiments performed are independent, PALLADIO is designed so that it can exploit a cluster where it is available.
 
-The main structure of adenine can be summarized in the following 4 steps.
+The final output of **PALLADIO** consists of:
 
-1. **Imputing:** Does your dataset have missing entries? In the first step you can fill the missing values choosing between different strategies: feature-wise median, mean and most frequent value or a more stable k-NN imputing.
+* A plot showing the absolute frequencies of features for both *regular* experiments and permutation tests. Another plot shows in more detail the selection frequency for the most frequently selected features (i.e., those above the *selection threshold* defined in the configuration file).
+* A plot showing the distribution of accuracies achieved by *regular* experiments and permutation tests.
+* Two text files listing the features together with their absolute selection frequency, one for regular experiments and the other for permutation tests.
 
-2. **Preprocessing:** Have you ever wondered what would have changed if only  your data have been preprocessed in a different way? Or is it data preprocessing a good idea after all? ADENINE offers several preprocessing procedures, such as: data recentering, Min-Max scaling, standardization or normalization and allows you to compare the results of the analysis made with different preprocessing step as starting point.
-
-3. **Dimensionality Reduction:** In the context of data exploration, this phase becomes particularly helpful for high dimensional data. This step includes some manifold learning (such as isomap, multidimensional scaling, etc) and unsupervised dimensionality reduction (principal component analysis, kernel PCA) techniques.
-
-4. **Clustering:** This step aims at grouping data into clusters in an unsupervised manner. Several techniques such as k-means, spectral or hierarchical clustering are offered.
-
-The final output of adenine is a compact and textual representation of the results obtained from the pipelines made with each possible combination of the algorithms implemented at each step.
 
 User documentation
 ==================
 .. toctree::
    :maxdepth: 2
 
- tutorial.rst
+ introduction.rst
 
+ tutorial.rst
 .. _api:
 
 ***********************
@@ -41,7 +36,7 @@ API
 Pipeline utilities
 -----------------------------
 
-.. automodule:: adenine.core.define_pipeline
+.. .. automodule:: adenine.core.define_pipeline
    :members:
 
 .. automodule:: adenine.core.pipelines
@@ -55,8 +50,8 @@ Input Data
 
 .. automodule:: adenine.utils.data_source
    :members:
-   
-   
+
+
 Plotting functions
 -----------------------------
 
@@ -77,4 +72,3 @@ Extra tools
 .. * :ref:`genindex`
 .. * :ref:`modindex`
 .. * :ref:`search`
-

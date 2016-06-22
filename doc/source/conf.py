@@ -62,8 +62,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'ADENINE'
-copyright = u'2016, Samuele Fiorini - Federico Tomasi - Annalisa Barla'
+project = u'PALLADIO'
+copyright = u'2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla'
 #modindex_common_prefix = ['adenine.']
 
 # The version info for the project you're documenting, acts as replacement for
@@ -219,8 +219,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'adenine.tex', u'adenine Documentation',
-   u'Samuele Fiorini - Federico Tomasi - Annalisa Barla', 'manual'),
+  ('index', 'palladio.tex', u'PALLADIO Documentation',
+   u'Matteo Barbieri \\and Samuele Fiorini \\and Federico Tomasi \\and Annalisa Barla', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -249,8 +249,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'adenine', u'adenine Documentation',
-     [u'Samuele Fiorini - Federico Tomasi - Annalisa Barla'], 1)
+    ('index', 'palladio', u'palladio Documentation',
+     [u'Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -263,8 +263,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'adenine', u'adenine Documentation',
-   u'Samuele Fiorini - Federico Tomasi - Annalisa Barla', 'adenine', 'One line description of project.',
+  ('index', 'palladio', u'palladio Documentation',
+   u'Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla', 'palladio', 'Parallel framework for model selection.',
    'Miscellaneous'),
 ]
 
