@@ -104,16 +104,28 @@ The ``pd_analysis.py`` script reads the results from all experiments and produce
 
     $ pd_analysis.py path/to/results_dir
 
-The following plot shows the absolute feature selection frequency in both *regular* experiments and permutation tests; each tick on the horizontal axis represents a different feature, whose position on the vertical axis is the number of times it was selected in an experiment. Features are sorted based on the selection frequency relative to *regular* experiments; green dots are frequencies for *regular* experiments, red ones for permutation tests.
+:numref:`manhattan_plot` shows the absolute feature selection frequency in both *regular* experiments and permutation tests; each tick on the horizontal axis represents a different feature, whose position on the vertical axis is the number of times it was selected in an experiment. Features are sorted based on the selection frequency relative to *regular* experiments; green dots are frequencies for *regular* experiments, red ones for permutation tests.
 
-.. image:: signature_frequencies.pdf
+.. _manhattan_plot:
+.. figure:: manhattan_plot.pdf
    :scale: 80 %
    :align: center
    :alt: broken link
 
-.. .. image:: kpca.png
-   :scale: 80 %
-   :alt: broken link
+:numref:`signature_frequencies` shows a detail of the frequeny of the top :math:`2 \times p_{\rm rel}` selected features, where :math:`p_{\rm rel}` is the number of features identified as *relevant* by the framework, i.e. those which have been selected enough times according to the selection threshold defined in the configuration file. Seeing how
+
+
+.. _signature_frequencies:
+.. figure:: signature_frequencies.pdf
+  :scale: 80 %
+  :align: center
+  :alt: broken link
+
+.. figure:: permutation_acc_distribution.pdf
+  :scale: 80 %
+  :align: center
+  :alt: broken link
+
 
 
 .. Example dataset

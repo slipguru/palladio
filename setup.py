@@ -1,0 +1,46 @@
+#!/usr/bin/python
+# palladio setup script
+
+from distutils.core import setup
+
+# Package Version
+from palladio import __version__ as version
+
+setup(
+    name='palladio',
+    version=version,
+
+    description=('ParALleL frAmework for moDel selectIOn'),
+    long_description=open('README.md').read(),
+    author='Matteo Barbieri, Samuele Fiorini, Federico Tomasi',
+    author_email='{samuele.fiorini, federico.tomasi}@dibris.unige.it',
+    maintainer='Matteo Barbieri, Samuele Fiorini, Federico Tomasi',
+    maintainer_email='{matteo.barbieri, samuele.fiorini, federico.tomasi}@dibris.unige.it',
+    url='https://github.com/slipguru/palladio',
+    download_url = 'https://github.com/slipguru/palladio/tarball/'+version,
+    classifiers=[
+	'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Intended Audience :: Science/Research',
+        'Intended Audience :: Developers',
+        'Programming Language :: Python',
+        'License :: OSI Approved :: BSD License',
+        'Topic :: Software Development',
+        'Topic :: Scientific/Engineering :: Bio-Informatics',
+        'Operating System :: POSIX',
+        'Operating System :: Unix',
+        'Operating System :: MacOS'
+    ],
+    license = 'FreeBSD',
+
+    packages=['palladio'],
+    requires=['numpy (>=1.10.1)',
+              'scipy (>=0.16.1)',
+              'sklearn (>=0.17)',
+              'matplotlib (>=1.5.1)',
+              'seaborn (>=0.7.0)',
+              'L1L2py (>=1.0.5)','
+              'mpi4py (>=2.0.0)'
+              ],
+    scripts=['scripts/pd_run.py','scripts/pd_analysis.py'],
+)
