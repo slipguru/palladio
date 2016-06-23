@@ -47,13 +47,26 @@ source package which contains a ``examples\data`` directory with some data files
 * ``n_samples x 1`` labels vector
 * ``configuration`` file
 
+.. _input-data-format:
+
 Input data format
 -----------------
-Input data are assumed to be:
+Input data (gene expression matrix and labels) are assumed to be textual ad
+separated by a char (delimiter).
+For example, the given data matrix (of Leukemia gene expressions) is a text file
+where samples are organized by columns and microarray probes by row and gene
+expressions values are separated by a comma (``','``).
 
-.. * ``numpy`` array stored in ``.npy`` files organized with a row for each sample and a column for each feature,
-* tabular data stored in comma separated ``.csv`` files presenting the variables header on the first row and the sample indexes on the first column,
-.. * toy examples available from ``adenine.utils.data_source`` function.
+.. literalinclude:: ../../example/data/gedm.csv
+   :lines: 1, 150-160
+   :append: ...
+
+Labels contains information about the given samples, indicated if they belong
+to the ALL (Acute Lymphoblastic Leukemia) or AML (Acute Myeloid Leukemia) group:
+
+.. literalinclude:: ../../example/data/labels.csv
+   :lines: 1-6, 29-34
+   :append: ...
 
 .. _configuration:
 
@@ -65,7 +78,7 @@ imported as a module, then all the code is executed. In this file the user can d
 .. literalinclude:: ../../example/config_l1l2.py
    :language: python
 
-.. _experiment:
+.. _cluster-setup:
 
 Cluster setup
 -----------------------
@@ -81,6 +94,8 @@ The content of the home folder once all required objects have been transfered to
     $ ls experiment_folder
     data_file.csv labels_file.csv config.py
 
+.. _running-experiments:
+
 Running the experiments
 -----------------------
 
@@ -92,7 +107,7 @@ Here ``N_JOBS`` obviously determines how many parallel jobs will be spawned and 
 
 Take into account that if optimized linear algebra libraries are present on the nodes (as it is safe to assume for most clusters) you should tune the number of jobs so that cores are optimally exploited: since those libraries already parallelize operations, it is useless to assign too many slots for each node.
 
-.. _analysis:
+.. _results-analysis:
 
 Results analysis
 ----------------
