@@ -1,5 +1,5 @@
-# Configuration file example for L1L2Signature
-# version: '0.2.2'
+# Configuration file example for PALLADIO
+# version: '0.1.1
 
 import l1l2py
 
@@ -18,20 +18,16 @@ N_jobs_regular = 100 # The number of "regular" experiment (actual labels used)
 N_jobs_permutation = 100 # The number of instances for the permutation tests (labels are randomly shuffled)
 
 ### The ratio of the dataset held out for model assessment
-### It should be of the form 1/B
+### It should be of the form 1/M
 test_set_ratio = float(1)/4
 
 #~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#sample_remover = None # removes samples with this label value
-#variable_remover = 'affx' # remove vars where name starts with (not case-sens.)
-#data_normalizer = l1l2py.tools.center
-#labels_normalizer = None
+data_normalizer = l1l2py.tools.center
+labels_normalizer = None
 
 data_preprocessing = None
 
 #~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# * See l1l2py.tools.{kfold_splits, stratified_kfold_splits}
-external_k = 4   # (None means Leave One Out)
 internal_k = 3
 cv_splitting = l1l2py.tools.stratified_kfold_splits
 
