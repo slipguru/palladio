@@ -39,7 +39,7 @@ setup(
               'sklearn (>=0.17)',
               'matplotlib (>=1.5.1)',
               'seaborn (>=0.7.0)',
-              'L1L2py (>=1.0.5)','
+              'L1L2py (>=1.0.5)',
               'mpi4py (>=2.0.0)'
               ],
     scripts=['scripts/pd_run.py','scripts/pd_analysis.py'],
