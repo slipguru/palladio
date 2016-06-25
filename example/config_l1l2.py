@@ -9,7 +9,7 @@ from palladio.wrappers.l1l2 import l1l2Classifier
 # * Data assumed csv with samples and features labels
 # * All the path are w.r.t. config file path
 data_matrix = 'data/gedm.csv'
-labels = 'data/labels'
+labels = 'data/labels.csv'
 delimiter = ','
 samples_on = 'col' # or 'row': samples on cols or rows
 result_path = 'golub_palladio_test_l1l2'
