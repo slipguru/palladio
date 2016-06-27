@@ -57,7 +57,7 @@ For example, the given data matrix (of Leukemia gene expressions) is a text file
 where samples are organized by columns and microarray probes by row and gene
 expressions values are separated by a comma (``','``).
 
-.. literalinclude:: ../../example/data/gedm.csv
+.. literalinclude:: ./gedm_trunc.csv
    :lines: 1, 150-160
    :append: ...
 
@@ -93,6 +93,14 @@ The content of the home folder once all required objects have been transfered to
 
     $ ls experiment_folder
     data_file.csv labels_file.csv config.py
+
+.. _quick-setup:
+
+Besides, a script is provided to speed up the deployment process. Simply run::
+
+    $ python palladio-release-folder/scripts/deploy.py [--sample-data] [DESTINATION_FOLDER]
+
+This script will automatically copy all required files and libraries in the user home folder or ``DESTINATION_FOLDER`` if specified. The ``--sample-data`` option also copies a sample dataset in the home folder, to check if the installation was successful.
 
 .. _running-experiments:
 
