@@ -1,5 +1,37 @@
 import numpy as np
 
+import os, sys
+import imp
+import shutil
+import cPickle as pkl
+import random
+
+from hashlib import sha512
+
+import pandas as pd
+
+import time
+
+### Iniziatlize GLOBAL MPI variables (or dummy ones for the single process case)
+try:
+    from mpi4py import MPI
+    
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    rank = comm.Get_rank()
+    name = MPI.Get_processor_name()
+    
+    IS_MPI_JOB = True
+    
+except:
+    
+    comm = None
+    size = 1
+    rank = 1
+    name = 'localhost'
+    
+    IS_MPI_JOB = False
+
 def generate_job_list(N_jobs_regular, N_jobs_permutation):
     """Generates a vector used to distribute jobs among nodes
     
@@ -39,7 +71,7 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
     
     return type_vector
 
-def run_experiment(data, labels, config_dir, config, is_permutation_test, custom_name, size, rank, name, comm):
+def run_experiment(data, labels, config_dir, config, is_permutation_test, custom_name):
     
     result_path = os.path.join(config_dir, config.result_path) #result base dir
     
@@ -120,7 +152,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     
     return
 
-def main(config_path, size, rank, name, comm):
+def main(config_path):
     
     if rank == 0:
         t0 = time.time()
@@ -237,7 +269,7 @@ def main(config_path, size, rank, name, comm):
         ### the process' rank and a sequential number
         custom_name = "{}_p_{}_i_{}".format(("permutation" if is_permutation_test else "regular"), rank, i)
         
-        run_experiment(data, labels, config_dir, config, is_permutation_test, custom_name, size, rank, name, comm)
+        run_experiment(data, labels, config_dir, config, is_permutation_test, custom_name)
         
         print("[{}_{}] finished experiment {}".format(name, rank, i))
     
