@@ -3,29 +3,28 @@
 Introduction
 ============
 
-The issue of reproducibility of experiments is of paramount importance in scientific studies, as it influences the reliability of published findings. However when dealing with biological data, especially genomic data such as gene expression or SNP microarrays, it is not uncommon to have a very limited number of samples available, and these are usually represented by a huge number of *features*.
+The issue of reproducibility of experiments is of paramount importance in scientific studies, as it influences the reliability of published findings. However when dealing with biological data, especially genomic data such as gene expression or SNP microarrays, it is not uncommon to have a very limited number of samples available, and these are usually represented by a huge number of measurements.
 
-Machine Learning (ML) techniques work by learning a model, i.e. some kind of *function* that is able to recognize patterns in the data, using only *part* of the available samples (the *training set*), so that the remaining ones (the *test set*) can be used to determine how well the model is able to describe the data. This is done, roughly speaking, to ensure that the function is able to capture some real characteristics of the data and not simply fitting the training data, which is trivial.
+A common scenario is the so called *case-control study*: some quantities (e.g., gene expression levels, presence of alterations in key *loci* in the genome) are measured in a number of individuals who may be divided in two groups, or classes, depending whether they are affected by some kind of disease or not; the goal of the study is to find **which ones**, if any, among the possibly many measurements, or *features*, taken from the individuals (*samples*), can be used to define a *function* able to *predict*, to some extent, to which *class* (in this case, a diseased individual or a healthy one) an individual belongs.
 
-In the aforementioned scenario, having only few samples available means that the learned model may be highly dependent on how the dataset was split; a common solution to this issue is to perform *K-fold cross validation* (KCV) which means splitting the dataset in :math:`K` chunks and performing the experiment :math:`K` times, each time leaving out a different chunk to be used as test set; this reduces the risk that the results are dependent on a particular split. The :math:`K` parameter usually is chosen between 3 and 10, depending on the dataset.
+Machine Learning (ML) techniques work by *learning* such function using only *part* of the available samples (the *training set*), so that the remaining ones (the *test set*) can be used to determine how well the function is able to predict the class of **new** samples; this is done, roughly speaking, to ensure that the function is able to capture some real characteristics of the data and not simply fitting the training data, which is trivial.
+This is referred to in ML literature as *binary classification scenario*.
 
-This is the idea behind `L1L2Signature <http://slipguru.disi.unige.it/Software/L1L2Signature/>`_ , a framework specifically designed with this issue in mind. The output of ``L1L2Signature`` consists of a *signature*, that is a list of features considered *relevant* for the problem (as in, useful to describe the phenomenon being studied), and an estimate of how well the learned model would perform on new data.
+In the aforementioned scenario, having only few samples available means that the learned function may be highly dependent on how the dataset was split; a common solution to this issue is to perform *K-fold cross validation* (KCV) which means splitting the dataset in :math:`K` chunks and performing the experiment :math:`K` times, each time leaving out a different chunk to be used as test set; this reduces the risk that the results are dependent on a particular split. The :math:`K` parameter usually is chosen between 3 and 10, depending on the dataset.
+
+This is the idea behind `L1L2Signature <http://slipguru.disi.unige.it/Software/L1L2Signature/>`_ , a framework specifically designed with this issue in mind.
+``L1L2Signature`` performs *feature selection* while learning the function, that is it tries to identify which ones among the available features are actually *relevant* for the problem, that is *which are actually used* in the learned function.
+The output of ``L1L2Signature`` consists of a *signature*, that is a list of relevant features, as well as a measure of *prediction accuracy*, that is the ratio of correctly classified samples in the test set, averaged over all splits.
 
 There are however cases where it is hard to tell whether this procedure actually yielded a meaningful result: for instance, the fact that the accuracy measure is only *slightly* higher than chance can indicate two very different things:
 
 * The available features can only describe the phenomenon to a limited extent.
-* There is actually no pattern in the data, and getting a result better than chance was just a matter of luck in the subdivision of the dataset.
+* There is actually no relationship between features and output class, and getting a result better than chance was just a matter of luck in the subdivision of the dataset.
 
 In order to tackle this issue, **PALLADIO** repeats the experiment many times (:math:`\sim 100`), each time using a different training and test set by randomly sampling from the whole original dataset (without replacement).
-The experiment is also repeated the same number of times in a similar setting with a difference: in the training set, the data is processed so that any pattern which might have been present in the first place is destroyed.
+The experiment is also repeated the same number of times in a similar setting with a difference: in training sets, the labels are randomly shuffled, therefore destroying any connection between features and output class.
 
-The output of this procedure is not a single value, possibly averaged, for the accuracy, but instead *two distributions of values* (one for each of the two settings described above) which, in case of datasets where the pattern is not clearly visible, allows users to distinguish between the two aforementioned scenarios: in facts, if the available features are able to describe some kind of pattern in the data, even a small one, then the two distributions will be significantly different; if on the other hand *there simply is no pattern in the data*, the two distributions will be indistinguishable, and therefore it will be safe to conclude that there is no detectable pattern.
-
-
-.. However that framework proves ineffective in cases where the pattern in the data is not well recognizable. This may happen for a number of reasons, such as the amount of noise or an insufficient number of available samples. In these cases it
-
-.. Using Machine Learning for the analysis of data means using part of the dataset (called *training set*) to fit a model, i.e. a function which takes an element from the input matrix and *predicts* the corresponding output value (for the binary classification case, the class to which that sample belongs).
-
+The output of this procedure is not a single value, possibly averaged, for the accuracy, but instead *two distributions of values* (one for each of the two settings described above) which, in case of datasets where the relationship between features and output class is at most faint, allows users to distinguish between the two scenarios mentioned above: in facts, if the available features are somehow connected with the outcome class, even weakly, then the two distributions will be  different enough to be distinguished; if on the other hand features and class are not related in any way, the two distributions will be indistinguishable, and it will be safe to draw that conclusion.
 
 .. _framework:
 
