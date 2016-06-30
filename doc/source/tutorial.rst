@@ -63,9 +63,12 @@ The content of the home folder once all required objects have been transfered to
     $ ls experiment_folder
     data_file.csv labels_file.csv config.py
 
-.. _deployment-script:
+.. _quick-deployment:
 
-Besides, a script is provided to speed up the deployment process. Simply run::
+Quick deployment
+^^^^^^^^^^^^^^^^
+
+Moreover, a script is provided to speed up the deployment process. Simply run::
 
     $ python palladio-release-folder/scripts/deploy.py [--sample-data] [DESTINATION_FOLDER]
 

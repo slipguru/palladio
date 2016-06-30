@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# adenine documentation build configuration file, created by
+# palladio documentation build configuration file, created by
 # sphinx-quickstart on Fri May 22 12:31:54 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -142,7 +142,8 @@ html_theme_path = ['.']
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'ade_logo_bitmap.png'
+# html_logo = 'palladio_logo_bitmap.png'
+html_logo = 'palladio_logo_npbg.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -152,7 +153,10 @@ html_logo = 'ade_logo_bitmap.png'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
+html_static_path = ['slipGURUTheme/static']
+
+
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -201,7 +205,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'adeninedoc'
+htmlhelp_basename = 'palladiodoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -228,6 +232,7 @@ latex_documents = [
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
 #latex_logo = None
+latex_logo = 'palladio_logo_npbg.png'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
