@@ -1,0 +1,390 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Quick start tutorial &mdash; PALLADIO 0.3 documentation</title>
+    
+    <link rel="stylesheet" href="_static/slipGuru.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="PALLADIO 0.3 documentation" href="index.html" />
+    <link rel="next" title="API" href="api.html" />
+    <link rel="prev" title="The framework" href="framework.html" />
+<meta name="keywords"
+      content="SlipGuru, 'University of Genoa', statistical learning,
+      computational biology, Python, distributed, computing, parallel" />
+<map id="logosmap" name="logosmap">
+    <area shape="rect" alt="SlipGURU" title="SlipGURU" coords="0,0,89,112"
+          href="http://slipguru.disi.unige.it/" />
+    <area shape="rect" alt="Dipartimento di Informatica e Scienze dell'Informazione"
+          title="Dipartimento di Informatica e Scienze dell'Informazione"
+          coords="95,4,200,34" href="http://www.disi.unige.it/" />
+    <area shape="rect" alt="Università Degli Studi di Genova"
+          title="Università Degli Studi di Genova" coords="124,48,171,107"
+          href="http://www.unige.it/" />
+</map>
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="framework.html" title="The framework"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 0.3 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="quick-start-tutorial">
+<span id="tutorial"></span><h1>Quick start tutorial<a class="headerlink" href="#quick-start-tutorial" title="Permalink to this headline">¶</a></h1>
+<p><strong>PALLADIO</strong> may be installed using standard Python tools (with
+administrative or sudo permissions on GNU-Linux platforms):</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>$ pip install palladio
+
+or
+
+$ easy_install palladio
+</pre></div>
+</div>
+<div class="section" id="installation-from-sources">
+<h2>Installation from sources<a class="headerlink" href="#installation-from-sources" title="Permalink to this headline">¶</a></h2>
+<p>If you like to manually install <strong>PALLADIO</strong>, download the .zip or .tar.gz archive
+from <a class="reference external" href="http://slipguru.github.io/palladio/">http://slipguru.github.io/palladio/</a>. Then extract it and move into the root directory:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>$ unzip slipguru-palladio-|release|.zip
+$ cd palladio-|release|/
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>$ tar xvf slipguru-palladio-|release|.tar.gz
+$ cd palladio-|release|/
+</pre></div>
+</div>
+<p>Otherwise you can clone our <a class="reference external" href="https://github.com/slipguru/palladio">GitHub repository</a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>$ git clone https://github.com/slipguru/palladio.git
+</pre></div>
+</div>
+<p>From here, you can follow the standard Python installation step:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>$ python setup.py install
+</pre></div>
+</div>
+<p>After <strong>PALLADIO</strong> installation, you should have access to two scripts,
+named with a common <code class="docutils literal"><span class="pre">pd_</span></code> prefix:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>$ pd_&lt;TAB&gt;
+pd_analysis.py    pd_run.py
+</pre></div>
+</div>
+<p>This tutorial assumes that you downloaded and extracted <strong>PALLADIO</strong>
+source package which contains a <code class="docutils literal"><span class="pre">examples\data</span></code> directory with some data files (<code class="docutils literal"><span class="pre">.npy</span></code> or <code class="docutils literal"><span class="pre">.csv</span></code>) which will be used to show <strong>PALLADIO</strong> functionalities.</p>
+<p><strong>PALLADIO</strong> needs only 3 ingredients:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">n_samples</span> <span class="pre">x</span> <span class="pre">n_variables</span></code> input matrix</li>
+<li><code class="docutils literal"><span class="pre">n_samples</span> <span class="pre">x</span> <span class="pre">1</span></code> labels vector</li>
+<li>a <code class="docutils literal"><span class="pre">configuration</span></code> file</li>
+</ul>
+</div>
+<div class="section" id="cluster-setup">
+<span id="id1"></span><h2>Cluster setup<a class="headerlink" href="#cluster-setup" title="Permalink to this headline">¶</a></h2>
+<p>Since all experiments performed during a run are independent from one another, <strong>PALLADIO</strong> has been designed specifically to work in a cluster environment.
+It is fairly easy to prepare the cluster for the experiments: assuming a standard configuration for the nodes (a shared home folder and a python installation which includes standard libraries for scientific computation, namely <code class="docutils literal"><span class="pre">numpy</span></code>, <code class="docutils literal"><span class="pre">scipy</span></code> and <code class="docutils literal"><span class="pre">sklearn</span></code>, as well as of course the <code class="docutils literal"><span class="pre">mpi4py</span></code> library for the MPI infrastructure), it is sufficient to transfer on the cluster a folder containing the dataset (data matrix and labels) and the configuration file and all additional libraries required by <strong>PALLADIO</strong> (<code class="docutils literal"><span class="pre">l1l2py</span></code>, available <a class="reference external" href="http://slipguru.disi.unige.it/Software/L1L2Py/">here</a>), together with <strong>PALLADIO</strong> itself of course (copying the package folders should be enough).</p>
+<p>The content of the home folder once all required objects have been transfered to the cluster should look like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>$ ls
+pd_run.py experiment_folder l1l2py palladio
+
+$ ls experiment_folder
+data_file.csv labels_file.csv config.py
+</pre></div>
+</div>
+<div class="section" id="quick-deployment">
+<span id="id2"></span><h3>Quick deployment<a class="headerlink" href="#quick-deployment" title="Permalink to this headline">¶</a></h3>
+<p>Moreover, a script is provided to speed up the deployment process. Simply run:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>$ python palladio-release-folder/scripts/deploy.py [--sample-data] [DESTINATION_FOLDER]
+</pre></div>
+</div>
+<p>This script will automatically copy all required files and libraries in the user home folder or <code class="docutils literal"><span class="pre">DESTINATION_FOLDER</span></code> if specified. The <code class="docutils literal"><span class="pre">--sample-data</span></code> option also copies a sample dataset in the home folder, to check if the installation was successful.</p>
+</div>
+</div>
+<div class="section" id="input-data-format">
+<span id="id3"></span><h2>Input data format<a class="headerlink" href="#input-data-format" title="Permalink to this headline">¶</a></h2>
+<p>Input data (gene expression matrix and labels) are assumed to be textual ad
+separated by a char (delimiter).
+For example, the given data matrix (of Leukemia gene expressions) is a text file
+where samples are organized by columns and microarray probes by row and gene
+expressions values are separated by a comma (<code class="docutils literal"><span class="pre">','</span></code>).</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>Gene Accession Number,1,2,3,4,5,6,7,8,9,10,11,12,13,…
+AF009426_at,36,58,63,38,120,92,16,169,43,-18,26,-81,123,…
+AF009674_at,-66,-239,-328,307,212,314,-653,332,221,-106,-169,-446,-93,…
+AF010193_at,87,548,93,-31,159,101,119,589,245,451,91,484,458,…
+AF012270_at,-12,139,237,104,29,-8,223,416,10,59,29,91,-14,…
+AF014958_at,318,243,19,108,40,112,329,166,110,159,96,-71,139,…
+AF015910_at,1219,1055,1820,1074,822,394,1154,1763,1157,902,837,178,1077,…
+AF015913_at,476,611,850,691,1304,346,653,550,826,472,439,239,1558,…
+AF015950_at,-466,-49,-277,-670,-180,-453,-700,-191,-163,-183,-329,-431,-43,…
+AJ000480_at,895,749,1049,1016,634,752,920,254,934,536,607,456,617,…
+AJ001047_at,-451,-108,-265,-378,-171,-257,-514,-250,-291,-218,-129,-137,-146,…
+AJ001421_at,687,829,914,982,1294,743,680,527,1352,675,383,616,1071,…
+...
+</pre></div>
+</div>
+<p>Labels contains information about the given samples, indicated if they belong
+to the ALL (Acute Lymphoblastic Leukemia) or AML (Acute Myeloid Leukemia) group:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sample</span><span class="p">,</span><span class="n">status</span>
+<span class="mi">1</span><span class="p">,</span><span class="n">ALL</span>
+<span class="mi">2</span><span class="p">,</span><span class="n">ALL</span>
+<span class="mi">3</span><span class="p">,</span><span class="n">ALL</span>
+<span class="mi">4</span><span class="p">,</span><span class="n">ALL</span>
+<span class="mi">5</span><span class="p">,</span><span class="n">ALL</span>
+<span class="mi">28</span><span class="p">,</span><span class="n">AML</span>
+<span class="mi">29</span><span class="p">,</span><span class="n">AML</span>
+<span class="mi">30</span><span class="p">,</span><span class="n">AML</span>
+<span class="mi">31</span><span class="p">,</span><span class="n">AML</span>
+<span class="mi">32</span><span class="p">,</span><span class="n">AML</span>
+<span class="mi">33</span><span class="p">,</span><span class="n">AML</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuration-file">
+<span id="configuration"></span><h2>Configuration File<a class="headerlink" href="#configuration-file" title="Permalink to this headline">¶</a></h2>
+<p><strong>PALLADIO</strong> configuration file is a standard Python script. It is
+imported as a module, then all the code is executed. In this file the user can define all the options needed to setup the experiment.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Configuration file example for PALLADIO</span>
+<span class="c1"># version: &#39;0.1.1</span>
+
+<span class="kn">import</span> <span class="nn">l1l2py</span>
+
+<span class="kn">from</span> <span class="nn">palladio.wrappers.l1l2</span> <span class="kn">import</span> <span class="n">l1l2Classifier</span>
+
+<span class="c1">#~~ Data Input/Output ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="c1"># * Data assumed csv with samples and features labels</span>
+<span class="c1"># * All the path are w.r.t. config file path</span>
+<span class="n">data_matrix</span> <span class="o">=</span> <span class="s1">&#39;data/gedm.csv&#39;</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="s1">&#39;data/labels.csv&#39;</span>
+<span class="n">delimiter</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span>
+<span class="n">samples_on</span> <span class="o">=</span> <span class="s1">&#39;col&#39;</span> <span class="c1"># or &#39;row&#39;: samples on cols or rows</span>
+<span class="n">result_path</span> <span class="o">=</span> <span class="s1">&#39;golub_palladio_test_l1l2&#39;</span>
+
+<span class="c1"># The number of &quot;regular&quot; experiment</span>
+<span class="n">N_jobs_regular</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="c1"># The number of instances for the permutation tests</span>
+<span class="c1"># (labels in the test sets are randomly shuffled)</span>
+<span class="n">N_jobs_permutation</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="c1">### The ratio of the dataset held out for model assessment</span>
+<span class="c1">### It should be of the form 1/M</span>
+<span class="n">test_set_ratio</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
+
+<span class="c1">#~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="n">data_normalizer</span> <span class="o">=</span> <span class="n">l1l2py</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">center</span>
+<span class="n">labels_normalizer</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="n">data_preprocessing</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="c1">#~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="n">internal_k</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">cv_splitting</span> <span class="o">=</span> <span class="n">l1l2py</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">stratified_kfold_splits</span>
+
+<span class="c1">#~~ Errors functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="c1"># * See l1l2py.tools.{regression_error, classification_error,</span>
+<span class="c1">#                     balanced_classification_error}</span>
+<span class="n">cv_error</span> <span class="o">=</span> <span class="n">l1l2py</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">regression_error</span>
+<span class="n">error</span> <span class="o">=</span> <span class="n">l1l2py</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">balanced_classification_error</span>
+<span class="n">positive_label</span> <span class="o">=</span> <span class="bp">None</span> <span class="c1"># Indicates the positive class in case of 2-class task</span>
+
+<span class="c1">#~~ L1l2 Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="c1"># * Ranges will be sorted from smaller to bigger value!</span>
+<span class="c1"># * See l1l2py.tools.{geometric_range, linear_range}</span>
+<span class="n">tau_range</span> <span class="o">=</span> <span class="n">l1l2py</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">geometric_range</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span> <span class="c1"># * MAX_TAU</span>
+<span class="n">mu_range</span> <span class="o">=</span> <span class="n">l1l2py</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">geometric_range</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>   <span class="c1"># * CORRELATION_FACTOR</span>
+<span class="n">lambda_range</span> <span class="o">=</span> <span class="n">l1l2py</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">geometric_range</span><span class="p">(</span><span class="mf">1e0</span><span class="p">,</span> <span class="mf">1e4</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="n">sparse</span><span class="p">,</span> <span class="n">regularized</span><span class="p">,</span> <span class="n">return_predictions</span> <span class="o">=</span> <span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+
+<span class="n">learner_class</span> <span class="o">=</span> <span class="n">l1l2Classifier</span>
+
+<span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;mu_range&#39;</span> <span class="p">:</span> <span class="n">mu_range</span><span class="p">,</span>
+    <span class="s1">&#39;tau_range&#39;</span> <span class="p">:</span> <span class="n">tau_range</span><span class="p">,</span>
+    <span class="s1">&#39;lambda_range&#39;</span> <span class="p">:</span> <span class="n">lambda_range</span><span class="p">,</span>
+    <span class="s1">&#39;data_normalizer&#39;</span> <span class="p">:</span> <span class="n">data_normalizer</span><span class="p">,</span>
+    <span class="s1">&#39;cv_error&#39;</span> <span class="p">:</span> <span class="n">cv_error</span><span class="p">,</span>
+    <span class="s1">&#39;error&#39;</span> <span class="p">:</span> <span class="n">error</span><span class="p">,</span>
+    <span class="s1">&#39;labels_normalizer&#39;</span> <span class="p">:</span> <span class="n">labels_normalizer</span><span class="p">,</span>
+    <span class="s1">&#39;sparse&#39;</span> <span class="p">:</span> <span class="n">sparse</span><span class="p">,</span>
+    <span class="s1">&#39;regularized&#39;</span> <span class="p">:</span> <span class="n">regularized</span><span class="p">,</span>
+    <span class="s1">&#39;return_predictions&#39;</span> <span class="p">:</span> <span class="n">return_predictions</span>
+<span class="p">}</span>
+
+<span class="c1">#~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="n">frequency_threshold</span> <span class="o">=</span> <span class="mf">0.75</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="running-the-experiments">
+<span id="running-experiments"></span><h2>Running the experiments<a class="headerlink" href="#running-the-experiments" title="Permalink to this headline">¶</a></h2>
+<p>Parallel jobs are created by invoking the <code class="docutils literal"><span class="pre">mpirun</span></code> command; the following syntax assumes that the <a class="reference external" href="https://www.open-mpi.org/">OpenMPI</a> implementation of MPI has been chosen for the cluster, if this is not the case, please refer to the documentation of the implementation available on your cluster for the command line options corresponding to those specified here:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>$ mpirun -np N_JOBS --hostfile HOSTFILE python pd_run.py path/to/config.py
+</pre></div>
+</div>
+<p>Here <code class="docutils literal"><span class="pre">N_JOBS</span></code> obviously determines how many parallel jobs will be spawned and distributed among all available nodes, while <code class="docutils literal"><span class="pre">HOSTFILE</span></code> is a file listing the addresses or names of the available nodes.</p>
+<p>Take into account that if optimized linear algebra libraries are present on the nodes (as it is safe to assume for most clusters) you should tune the number of jobs so that cores are optimally exploited: since those libraries already parallelize operations, it is useless to assign too many slots for each node.</p>
+</div>
+<div class="section" id="results-analysis">
+<span id="id4"></span><h2>Results analysis<a class="headerlink" href="#results-analysis" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">pd_analysis.py</span></code> script reads the results from all experiments and produces several plots and text files. The syntax is the following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>$ pd_analysis.py path/to/results_dir
+</pre></div>
+</div>
+<p><a class="reference internal" href="#manhattan-plot"><span>Fig. 1</span></a> shows the absolute feature selection frequency in both <em>regular</em> experiments and permutation tests; each tick on the horizontal axis represents a different feature, whose position on the vertical axis is the number of times it was selected in an experiment. Features are sorted based on the selection frequency relative to <em>regular</em> experiments; green dots are frequencies for <em>regular</em> experiments, red ones for permutation tests.</p>
+<div class="figure align-center" id="id5">
+<a class="reference internal image-reference" href="_images/manhattan_plot.pdf" id="manhattan-plot"><img alt="broken link" id="manhattan-plot" src="_images/manhattan_plot.pdf" /></a>
+<p class="caption"><span class="caption-number">Fig. 1 </span><span class="caption-text">A manhattan plot showing the distribution of frequencies for both <em>regular</em> experiments and permutation tests.</span><a class="headerlink" href="#manhattan-plot" title="Permalink to this image">¶</a></p>
+</div>
+<p><a class="reference internal" href="#signature-frequencies"><span>Fig. 2</span></a> shows a detail of the frequeny of the top <span class="math">\(2 \times p_{\rm rel}\)</span> selected features, where <span class="math">\(p_{\rm rel}\)</span> is the number of features identified as <em>relevant</em> by the framework, i.e. those which have been selected enough times according to the selection threshold defined in the configuration file. Seeing the selection frequency of <em>relevant</em> features with respect to the selection frequency of those which have been rejected may help better interpret the obtained results.</p>
+<div class="figure align-center" id="id6">
+<a class="reference internal image-reference" href="_images/signature_frequencies.pdf" id="signature-frequencies"><img alt="broken link" id="signature-frequencies" src="_images/signature_frequencies.pdf" /></a>
+<p class="caption"><span class="caption-number">Fig. 2 </span><span class="caption-text">A detail of the manhattan plot.</span><a class="headerlink" href="#signature-frequencies" title="Permalink to this image">¶</a></p>
+</div>
+<p>Finally, <a class="reference internal" href="#permutation-acc-distribution"><span>Fig. 3</span></a> shows the distribution of prediction accuracies (corrected for class imbalance) for <em>regular</em> experiments and permutation tests; this plot answer the questions:</p>
+<ul class="simple">
+<li>Is there any signal in the data being analyzed?</li>
+<li>If yes, how much the model can describe it?</li>
+</ul>
+<p>In the example figure, the two distributions are clearly different, and the green one (showing the accuracies of <em>regular</em> experiments) has a mean which is significantly higher than chance (50 %). A p-value obtained with the Wilcoxon rank sum test is also present in this plot, indicating whether there is a significant difference between the two distributions.</p>
+<div class="figure align-center" id="id7">
+<a class="reference internal image-reference" href="_images/permutation_acc_distribution.pdf" id="permutation-acc-distribution"><img alt="broken link" id="permutation-acc-distribution" src="_images/permutation_acc_distribution.pdf" /></a>
+<p class="caption"><span class="caption-number">Fig. 3 </span><span class="caption-text">The distributions of accuracies for both <em>regular</em> experiments and permutation tests.</span><a class="headerlink" href="#permutation-acc-distribution" title="Permalink to this image">¶</a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/palladio_logo_npbg.png" alt="Logo"/>
+            </a></p>
+   
+      
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Quick start tutorial</a><ul>
+<li><a class="reference internal" href="#installation-from-sources">Installation from sources</a></li>
+<li><a class="reference internal" href="#cluster-setup">Cluster setup</a><ul>
+<li><a class="reference internal" href="#quick-deployment">Quick deployment</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#input-data-format">Input data format</a></li>
+<li><a class="reference internal" href="#configuration-file">Configuration File</a></li>
+<li><a class="reference internal" href="#running-the-experiments">Running the experiments</a></li>
+<li><a class="reference internal" href="#results-analysis">Results analysis</a></li>
+</ul>
+</li>
+</ul>
+
+   
+
+   
+      
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="framework.html"
+                        title="previous chapter">The framework</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api.html"
+                        title="next chapter">API</a></p>
+   
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/tutorial.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+    
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+    <p class="logo">
+       <img class="logo" src="_static/logos.png" alt="Logos" usemap="#logosmap" />
+    </p>
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="framework.html" title="The framework"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 0.3 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>

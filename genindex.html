@@ -1,3 +1,4 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -6,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>PALLADIO (ParALleL frAmework for moDel selectIOn) &mdash; PALLADIO 0.3 documentation</title>
+    <title>Index &mdash; PALLADIO 0.3 documentation</title>
     
     <link rel="stylesheet" href="_static/slipGuru.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -24,8 +25,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="PALLADIO 0.3 documentation" href="#" />
-    <link rel="next" title="Introduction" href="introduction.html" />
+    <link rel="top" title="PALLADIO 0.3 documentation" href="index.html" />
 <meta name="keywords"
       content="SlipGuru, 'University of Genoa', statistical learning,
       computational biology, Python, distributed, computing, parallel" />
@@ -46,7 +46,7 @@
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
+          <a href="#" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
           <a href="np-modindex.html" title="Python Module Index"
@@ -54,10 +54,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="right" >
-          <a href="introduction.html" title="Introduction"
-             accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">PALLADIO 0.3 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 0.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -66,43 +63,56 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="palladio-parallel-framework-for-model-selection">
-<h1>PALLADIO (ParALleL frAmework for moDel selectIOn)<a class="headerlink" href="#palladio-parallel-framework-for-model-selection" title="Permalink to this headline">¶</a></h1>
-<p><strong>PALLADIO</strong> is a machine learning framework whose purpose is to provide robust and reproducible results when dealing with data where the signal to noise ratio is low; it also provides tools to determine whether the dataset being analyzed contains any signal at all.
-<strong>PALLADIO</strong> works by repeating the same experiment many times, each time resampling the training and the test set so that the outcome is reliable as it is not determined by a single partition of the dataset. Besides, using permutation tests, it is possible to provide, to some extent, a measure of how reliable the results produced by an experiments are.
-Since all experiments performed are independent, PALLADIO is designed so that it can exploit a cluster where it is available, in order to greatly reduce the amount of time required for the experiment.</p>
-<p>The final output of <strong>PALLADIO</strong> consists of:</p>
-<ul class="simple">
-<li>A plot showing the absolute frequencies of features for both <em>regular</em> experiments and permutation tests. Another plot shows in more detail the selection frequency for the most frequently selected features (i.e., those above the <em>selection threshold</em> defined in the configuration file).</li>
-<li>A plot showing the distribution of accuracies achieved by <em>regular</em> experiments and permutation tests.</li>
-<li>Two text files listing the features together with their absolute selection frequency, one for regular experiments and the other for permutation tests.</li>
-</ul>
-<div class="section" id="user-documentation">
-<h2>User documentation<a class="headerlink" href="#user-documentation" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="framework.html">The framework</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Quick start tutorial</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#installation-from-sources">Installation from sources</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#cluster-setup">Cluster setup</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tutorial.html#quick-deployment">Quick deployment</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#input-data-format">Input data format</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#configuration-file">Configuration File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#running-the-experiments">Running the experiments</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#results-analysis">Results analysis</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-palladio._core">Pipeline utilities</a></li>
-</ul>
-</li>
-</ul>
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#G"><strong>G</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ 
 </div>
-</div>
-</div>
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="api.html#palladio._core.generate_job_list">generate_job_list() (in module palladio._core)</a>
+  </dt>
+
+  </dl></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="api.html#palladio._core.main">main() (in module palladio._core)</a>
+  </dt>
+
+  </dl></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="api.html#module-palladio._core">palladio._core (module)</a>
+  </dt>
+
+  </dl></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="api.html#palladio._core.run_experiment">run_experiment() (in module palladio._core)</a>
+  </dt>
+
+  </dl></td>
+</tr></table>
+
 
 
           </div>
@@ -110,7 +120,7 @@ Since all experiments performed are independent, PALLADIO is designed so that it
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-            <p class="logo"><a href="#">
+            <p class="logo"><a href="index.html">
               <img class="logo" src="_static/palladio_logo_npbg.png" alt="Logo"/>
             </a></p>
    
@@ -133,16 +143,12 @@ Since all experiments performed are independent, PALLADIO is designed so that it
       </p>
    
 
+
+   
    
    
 
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/index.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
+
     
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
@@ -169,7 +175,7 @@ Since all experiments performed are independent, PALLADIO is designed so that it
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
+          <a href="#" title="General Index"
              >index</a></li>
         <li class="right" >
           <a href="np-modindex.html" title="Python Module Index"
@@ -177,10 +183,7 @@ Since all experiments performed are independent, PALLADIO is designed so that it
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="right" >
-          <a href="introduction.html" title="Introduction"
-             >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">PALLADIO 0.3 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 0.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
