@@ -25,14 +25,3 @@ In order to tackle this issue, **PALLADIO** repeats the experiment many times (:
 The experiment is also repeated the same number of times in a similar setting with a difference: in training sets, the labels are randomly shuffled, therefore destroying any connection between features and output class.
 
 The output of this procedure is not a single value, possibly averaged, for the accuracy, but instead *two distributions of values* (one for each of the two settings described above) which, in case of datasets where the relationship between features and output class is at most faint, allows users to distinguish between the two scenarios mentioned above: in facts, if the available features are somehow connected with the outcome class, even weakly, then the two distributions will be  different enough to be distinguished; if on the other hand features and class are not related in any way, the two distributions will be indistinguishable, and it will be safe to draw that conclusion.
-
-.. _framework:
-
-The framework
-=============
-
-A dataset consists of two things:
-
-* An input matrix :math:`X \in \mathbb{R}^{n \times p}` representing :math:`n` samples each one described by :math:`p` features; in the case of gene expression microarrays for instance each feature represents
-* An output vector :math:`{\bf y}` of length :math:`n` whose elements are either a continuous value or a discrete label, describing some property of the samples. These may represent for example the levels of a given substance in the blood of an individual (continuous variable) or the *class* to which he or she belongs (for instance, someone affected by a given disease or a healthy control).
-We will limit for the time being for a specific instance of the latter case, where the number of classes is two: this is commonly referred to as *binary classification* scenario.

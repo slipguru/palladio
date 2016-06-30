@@ -22,7 +22,10 @@ User documentation
 
  introduction.rst
 
+ framework.rst
+
  tutorial.rst
+
 .. _api:
 
 ***********************
@@ -36,33 +39,33 @@ API
 Pipeline utilities
 -----------------------------
 
-.. .. automodule:: adenine.core.define_pipeline
+.. automodule:: palladio._core
    :members:
 
-.. automodule:: adenine.core.pipelines
+.. .. automodule:: adenine.core.pipelines
    :members:
 
-.. automodule:: adenine.core.analyze_results
+.. .. automodule:: adenine.core.analyze_results
    :members:
 
-Input Data
------------------------------
+.. Input Data
+.. -----------------------------
 
-.. automodule:: adenine.utils.data_source
-   :members:
-
-
-Plotting functions
------------------------------
-
-.. automodule:: adenine.core.plotting
+.. .. automodule:: adenine.utils.data_source
    :members:
 
 
-Extra tools
------------------------------
+.. Plotting functions
+.. -----------------------------
 
-.. automodule:: adenine.utils.extra
+.. .. automodule:: adenine.core.plotting
+   :members:
+
+
+.. Extra tools
+.. -----------------------------
+
+.. .. automodule:: adenine.utils.extra
    :members:
 
 

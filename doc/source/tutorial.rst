@@ -45,7 +45,31 @@ source package which contains a ``examples\data`` directory with some data files
 
 * ``n_samples x n_variables`` input matrix
 * ``n_samples x 1`` labels vector
-* ``configuration`` file
+* a ``configuration`` file
+
+.. _cluster-setup:
+
+Cluster setup
+-----------------------
+
+Since all experiments performed during a run are independent from one another, **PALLADIO** has been designed specifically to work in a cluster environment.
+It is fairly easy to prepare the cluster for the experiments: assuming a standard configuration for the nodes (a shared home folder and a python installation which includes standard libraries for scientific computation, namely ``numpy``, ``scipy`` and ``sklearn``, as well as of course the ``mpi4py`` library for the MPI infrastructure), it is sufficient to transfer on the cluster a folder containing the dataset (data matrix and labels) and the configuration file and all additional libraries required by **PALLADIO** (``l1l2py``, available `here <http://slipguru.disi.unige.it/Software/L1L2Py/>`_), together with **PALLADIO** itself of course (copying the package folders should be enough).
+
+The content of the home folder once all required objects have been transfered to the cluster should look like this::
+
+    $ ls
+    pd_run.py experiment_folder l1l2py palladio
+
+    $ ls experiment_folder
+    data_file.csv labels_file.csv config.py
+
+.. _deployment-script:
+
+Besides, a script is provided to speed up the deployment process. Simply run::
+
+    $ python palladio-release-folder/scripts/deploy.py [--sample-data] [DESTINATION_FOLDER]
+
+This script will automatically copy all required files and libraries in the user home folder or ``DESTINATION_FOLDER`` if specified. The ``--sample-data`` option also copies a sample dataset in the home folder, to check if the installation was successful.
 
 .. _input-data-format:
 
@@ -77,30 +101,6 @@ imported as a module, then all the code is executed. In this file the user can d
 
 .. literalinclude:: ../../example/config_l1l2.py
    :language: python
-
-.. _cluster-setup:
-
-Cluster setup
------------------------
-
-Since all experiments performed during a run are independent from one another, **PALLADIO** has been designed specifically to work in a cluster environment.
-It is fairly easy to prepare the cluster for the experiments: assuming a standard configuration for the nodes (a shared home folder and a python installation which includes standard libraries for scientific computation, namely ``numpy``, ``scipy`` and ``sklearn``, as well as of course the ``mpi4py`` library for the MPI infrastructure), it is sufficient to transfer on the cluster a folder containing the dataset (data matrix and labels) and the configuration file and all additional libraries required by **PALLADIO** (``l1l2py``, available `here <http://slipguru.disi.unige.it/Software/L1L2Py/>`_), together with **PALLADIO** itself of course (copying the package folders should be enough).
-
-The content of the home folder once all required objects have been transfered to the cluster should look like this::
-
-    $ ls
-    pd_run.py experiment_folder l1l2py palladio
-
-    $ ls experiment_folder
-    data_file.csv labels_file.csv config.py
-
-.. _quick-setup:
-
-Besides, a script is provided to speed up the deployment process. Simply run::
-
-    $ python palladio-release-folder/scripts/deploy.py [--sample-data] [DESTINATION_FOLDER]
-
-This script will automatically copy all required files and libraries in the user home folder or ``DESTINATION_FOLDER`` if specified. The ``--sample-data`` option also copies a sample dataset in the home folder, to check if the installation was successful.
 
 .. _running-experiments:
 
