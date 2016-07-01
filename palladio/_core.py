@@ -12,6 +12,8 @@ import pandas as pd
 
 import time
 
+from .utils import sec_to_timestring
+
 ### Iniziatlize GLOBAL MPI variables (or dummy ones for the single process case)
 try:
     from mpi4py import MPI

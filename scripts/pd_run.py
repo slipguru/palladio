@@ -5,8 +5,6 @@ import os, sys
 
 from palladio import main
 
-from palladio.utils import sec_to_timestring
-
 # Script entry ----------------------------------------------------------------
 if __name__ == '__main__':
     
