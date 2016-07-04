@@ -14,6 +14,7 @@ The final output of **PALLADIO** consists of:
 * A plot showing the distribution of accuracies achieved by *regular* experiments and permutation tests.
 * Two text files listing the features together with their absolute selection frequency, one for regular experiments and the other for permutation tests.
 
+See :ref:`tutorial` for instructions on how to setup a cluster using the deployment script included in the **PALLADIO** distribution.
 
 User documentation
 ==================

@@ -53,7 +53,7 @@ Cluster setup
 -----------------------
 
 Since all experiments performed during a run are independent from one another, **PALLADIO** has been designed specifically to work in a cluster environment.
-It is fairly easy to prepare the cluster for the experiments: assuming a standard configuration for the nodes (a shared home folder and a python installation which includes standard libraries for scientific computation, namely ``numpy``, ``scipy`` and ``sklearn``, as well as of course the ``mpi4py`` library for the MPI infrastructure), it is sufficient to transfer on the cluster a folder containing the dataset (data matrix and labels) and the configuration file and all additional libraries required by **PALLADIO** (``l1l2py``, available `here <http://slipguru.disi.unige.it/Software/L1L2Py/>`_), together with **PALLADIO** itself of course (copying the package folders should be enough).
+It is fairly easy to prepare the cluster for the experiments: assuming a standard configuration for the nodes (a shared home folder and a python installation which includes standard libraries for scientific computation, namely ``numpy``, ``scipy`` and ``sklearn``, as well as of course the ``mpi4py`` library for the MPI infrastructure), it is sufficient to transfer on the cluster a folder containing the dataset (data matrix and labels) and the configuration file and all additional libraries required by **PALLADIO** (``l1l2py``, available `here <http://slipguru.disi.unige.it/Software/L1L2Py/>`_ [#f1]_), together with **PALLADIO** itself of course (copying the package folders should be enough).
 
 The content of the home folder once all required objects have been transfered to the cluster should look like this::
 
@@ -118,48 +118,27 @@ Here ``N_JOBS`` obviously determines how many parallel jobs will be spawned and 
 
 Take into account that if optimized linear algebra libraries are present on the nodes (as it is safe to assume for most clusters) you should tune the number of jobs so that cores are optimally exploited: since those libraries already parallelize operations, it is useless to assign too many slots for each node.
 
+Running experiments on a single machine
+"""""""""""""""""""""""""""""""""""""""""
+
+It is possible to perform experiments using **PALLADIO** also on a single machine, without a cluster infrastructure. The command is similar to the previous one, it is sufficient to omit the first part, relative to the MPI infrastructure::
+
+    $ python pd_run.py path/to/config.py
+
+.. warning::
+
+  Due to the great number of experiments which are performed, it might take a very long time for the whole procedure to complete; this option is therefore deprecated unless the dataset is very small (no more than 100 samples and no more than 100 features).
+
 .. _results-analysis:
 
 Results analysis
 ----------------
 The ``pd_analysis.py`` script reads the results from all experiments and produces several plots and text files. The syntax is the following::
 
-    $ pd_analysis.py path/to/results_dir
+    $ python pd_analysis.py path/to/results_dir
 
-:numref:`manhattan-plot` shows the absolute feature selection frequency in both *regular* experiments and permutation tests; each tick on the horizontal axis represents a different feature, whose position on the vertical axis is the number of times it was selected in an experiment. Features are sorted based on the selection frequency relative to *regular* experiments; green dots are frequencies for *regular* experiments, red ones for permutation tests.
+See :ref:`analysis` for further details on the output of the analysis.
 
-.. figure:: manhattan_plot.pdf
-   :scale: 80 %
-   :align: center
-   :alt: broken link
-   :name: manhattan-plot
-
-   A manhattan plot showing the distribution of frequencies for both *regular* experiments and permutation tests.
-
-:numref:`signature-frequencies` shows a detail of the frequeny of the top :math:`2 \times p_{\rm rel}` selected features, where :math:`p_{\rm rel}` is the number of features identified as *relevant* by the framework, i.e. those which have been selected enough times according to the selection threshold defined in the configuration file. Seeing the selection frequency of *relevant* features with respect to the selection frequency of those which have been rejected may help better interpret the obtained results.
-
-.. figure:: signature_frequencies.pdf
-  :scale: 80 %
-  :align: center
-  :alt: broken link
-  :name: signature-frequencies
-
-  A detail of the manhattan plot.
-
-Finally, :numref:`permutation-acc-distribution` shows the distribution of prediction accuracies (corrected for class imbalance) for *regular* experiments and permutation tests; this plot answer the questions:
-
-* Is there any signal in the data being analyzed?
-* If yes, how much the model can describe it?
-
-In the example figure, the two distributions are clearly different, and the green one (showing the accuracies of *regular* experiments) has a mean which is significantly higher than chance (50 \%). A p-value obtained with the Wilcoxon rank sum test is also present in this plot, indicating whether there is a significant difference between the two distributions.
-
-.. figure:: permutation_acc_distribution.pdf
-  :scale: 80 %
-  :align: center
-  :alt: broken link
-  :name: permutation-acc-distribution
-
-  The distributions of accuracies for both *regular* experiments and permutation tests.
 
 .. Reference
 .. ----------------
@@ -167,3 +146,7 @@ In the example figure, the two distributions are clearly different, and the gree
 
 
 .. https://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test
+
+.. rubric:: Footnotes
+
+.. [#f1] A standalone version of the ``L1L2Py`` library is included in the package in order to further speed up the deployment process.
