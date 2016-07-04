@@ -76,13 +76,37 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
 def run_experiment(data, labels, config_dir, config, is_permutation_test, custom_name):
     """Run a single independent experiment
 
-    Long explanation
+    Perform a single experiment, which is divided in three main stages:
+    
+    * Dataset Splitting
+    * Model Selection
+    * Model Assessment
+
+    The details of the process actually depend on the algorithms used.
 
     Parameters
     ----------
 
     data : ndarray
-        Short exp
+        A :math:`n \\times p` matrix describing the input data.
+        
+    labels : ndarray
+        A :math:`n`-dimensional vector containing the labels indicating the class of the samples.
+        
+    config_dir : string
+        The path to the folder containing the configuration file, which will also contain the main session folder.
+        
+    config : object
+        The object containing all configuration parameters for the session.
+        
+    is_permutation_test : bool
+        A flag indicatin whether the experiment is part of the permutation test
+        (and therefore has had its training labels randomly shuffled) or not.
+        
+    custom_name : string
+        The name of the subfolder where the experiments' results will be stored. It is a combination
+        of a prefix which is either ``regular`` or ``permutation`` depending on the nature of the experiment, 
+        followed by two numbers which can be used to identify the experiment, for debugging purposes.
 
     """
 
@@ -112,6 +136,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     # idx_lr = aux_splits[0][0]
     # idx_ts = aux_splits[0][1]
 
+    ### A quick workaround to get just the first couple of the list; one iteration the break the loop
     for idx_tr, idx_ts in aux_splits:
         idx_lr = idx_tr
         idx_ts = idx_ts
@@ -168,13 +193,14 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
 def main(config_path):
     """Main function
 
-    Long explanation
+    The main function, performs initial tasks such as creating the main session folder and copying files inside it,
+    as well as distributing the jobs on all available machines.
 
     Parameters
     ----------
 
     config_path : string
-        Short exp
+        A path to the configuration file containing all required information to run a **PALLADIO** session.
 
     """
 
@@ -265,6 +291,7 @@ def main(config_path):
     else:
         job_list = None
 
+    ### XXX Fix for single machine!!!
     ### Distribute job list with broadcast
     job_list = comm.bcast(job_list, root=0)
 
