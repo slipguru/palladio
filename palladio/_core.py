@@ -29,7 +29,7 @@ except:
 
     comm = None
     size = 1
-    rank = 1
+    rank = 0
     name = 'localhost'
 
     IS_MPI_JOB = False
@@ -77,7 +77,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     """Run a single independent experiment
 
     Perform a single experiment, which is divided in three main stages:
-    
+
     * Dataset Splitting
     * Model Selection
     * Model Assessment
@@ -89,23 +89,23 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
 
     data : ndarray
         A :math:`n \\times p` matrix describing the input data.
-        
+
     labels : ndarray
         A :math:`n`-dimensional vector containing the labels indicating the class of the samples.
-        
+
     config_dir : string
         The path to the folder containing the configuration file, which will also contain the main session folder.
-        
+
     config : object
         The object containing all configuration parameters for the session.
-        
+
     is_permutation_test : bool
         A flag indicatin whether the experiment is part of the permutation test
         (and therefore has had its training labels randomly shuffled) or not.
-        
+
     custom_name : string
         The name of the subfolder where the experiments' results will be stored. It is a combination
-        of a prefix which is either ``regular`` or ``permutation`` depending on the nature of the experiment, 
+        of a prefix which is either ``regular`` or ``permutation`` depending on the nature of the experiment,
         followed by two numbers which can be used to identify the experiment, for debugging purposes.
 
     """
@@ -190,6 +190,61 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
 
     return
 
+def load_data(config_path, config, data_path, labels_path):
+    """Load data, labels and variables names.
+
+    TODO doc
+    """
+    # Configuration File
+    config_dir = os.path.dirname(config_path)
+
+    if rank == 0:
+        print("") #--------------------------------------------------------------------
+        print('Reading data... ')
+
+    ### Read data
+    pd_data = pd.read_csv(data_path, header=0, index_col=0)
+
+    if config.samples_on == 'col':
+        pd_data = pd_data.transpose()
+
+    probeset_names = pd_data.columns
+
+    if not config.data_preprocessing is None:
+        if rank == 0:
+            print("Preprocessing data...")
+        config.data_preprocessing.load_data(pd_data)
+        pd_data = config.data_preprocessing.process()
+
+    ### Read labels
+    pd_labels = pd.read_csv(labels_path, header=0, index_col=0)
+
+    if not config.positive_label is None:
+        poslab = config.positive_label
+    else:
+        uv = np.sort(np.unique(pd_labels.values))
+
+        if len(uv) != 2:
+            raise Exception("More than two unique values in the labels array")
+
+        poslab = uv[0]
+
+    def _toPlusMinus(x) :
+        """
+        Converts the values in the labels
+        """
+        if x == poslab:
+            return +1.0
+        else:
+            return -1.0
+
+    pd_labels_mapped = pd_labels.applymap(_toPlusMinus)
+
+    data = pd_data.as_matrix()
+    labels = pd_labels_mapped.as_matrix().ravel()
+
+    return data, labels, probeset_names
+
 def main(config_path):
     """Main function
 
@@ -218,6 +273,9 @@ def main(config_path):
     data_path = os.path.join(config_dir, config.data_matrix)
     labels_path = os.path.join(config_dir, config.labels)
 
+    ### Read data, labels, variables names
+    data, labels, _ = load_data(config_path, config, data_path, labels_path)
+
     ### Create base results dir if it does not already exist
     if rank == 0:
         result_path = os.path.join(config_dir, config.result_path) #result base dir
@@ -232,59 +290,13 @@ def main(config_path):
         ### Wait for the folder to be created and files to be copied
         comm.barrier()
 
-    # Experimental design
-    N_jobs_regular = config.N_jobs_regular
-    N_jobs_permutation = config.N_jobs_permutation
-
-    if rank == 0:
-        print("") #--------------------------------------------------------------------
-        print('Reading data... ')
-
-    ### Read data
-    pd_data = pd.read_csv(data_path)
-
-    if config.samples_on == 'col':
-        pd_data.index = pd_data[pd_data.columns[0]] # Correctly use the first column as index
-        pd_data =  pd_data.iloc[:,1:] # and remove it from the actual data
-
-
-    if not config.data_preprocessing is None:
-        if rank == 0:
-            print("Preprocessing data...")
-        config.data_preprocessing.load_data(pd_data)
-        pd_data = config.data_preprocessing.process()
-
-    pd_labels = pd.read_csv(labels_path)
-    pd_labels.index = pd_labels[pd_labels.columns[0]] # Correctly use the first column as index
-    pd_labels = pd_labels.iloc[:,1:] # and remove it from labels
-
-    if not config.positive_label is None:
-        poslab = config.positive_label
-    else:
-        uv = np.sort(np.unique(pd_labels.values))
-
-        if len(uv) != 2:
-            raise Exception("More than two unique values in the labels array")
-
-        poslab = uv[0]
-
-    def _toPlusMinus(x) :
-        """
-        Converts the values in the labels
-        """
-        if x == poslab:
-            return +1.0
-        else:
-            return -1.0
-
-    pd_labels_mapped = pd_labels.applymap(_toPlusMinus)
-
-    data = pd_data.as_matrix().T
-    labels = pd_labels_mapped.as_matrix().ravel()
-
     if rank == 0:
         print('  * Data shape:', data.shape)
         print('  * Labels shape:', labels.shape)
+
+    # Experimental design
+    N_jobs_regular = config.N_jobs_regular
+    N_jobs_permutation = config.N_jobs_permutation
 
     if rank == 0:
         job_list = generate_job_list(N_jobs_regular, N_jobs_permutation)
@@ -332,7 +344,6 @@ def main(config_path):
         t100 = time.time()
 
     if rank == 0:
-
         with open(os.path.join(result_path, 'report.txt'), 'w') as rf:
 
             rf.write("Total elapsed time: {}".format(sec_to_timestring(t100-t0)))
