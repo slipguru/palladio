@@ -1,4 +1,6 @@
-import pandas as pd
+import os
+
+# import pandas as pd
 
 import matplotlib
 
@@ -9,6 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import seaborn as sns
+
+from scipy import stats
 
 def plot_distributions(v_regular, v_permutation, base_folder):
     """

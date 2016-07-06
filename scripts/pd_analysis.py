@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import os, sys, imp
 
-import pandas as pd
+# import pandas as pd
 
 import matplotlib
 
