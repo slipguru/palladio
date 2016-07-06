@@ -192,7 +192,20 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
 def load_data(config_path, config, data_path, labels_path):
     """Load data, labels and variables names.
 
-    TODO doc
+    Parameters
+    ----------
+    config_path : string
+        A path to the configuration file containing all required information
+        to run a **PALLADIO** session.
+
+    config : object
+        The object containing all configuration parameters for the session.
+
+    data_path : string
+        A path to the data file.
+
+    labels_path : string
+        A path to the labels file.
     """
     # Configuration File
     config_dir = os.path.dirname(config_path)
