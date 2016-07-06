@@ -69,9 +69,6 @@ def analyze_experiments(base_folder, config):
     from l1l2signature import internals as l1l2_core
     from l1l2signature import utils as l1l2_utils
 
-    print("#--------------------------------------------------------------------")
-    print('Reading data... ')
-
     # Data paths
     data_path = os.path.join(base_folder, 'data_file')
     labels_path = os.path.join(base_folder, 'labels_file')
