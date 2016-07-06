@@ -18,7 +18,7 @@ result_path = 'golub_palladio_test_l1l2'
 N_jobs_regular = 100
 
 # The number of instances for the permutation tests
-# (labels in the test sets are randomly shuffled)
+# (labels in the training sets are randomly shuffled)
 N_jobs_permutation = 100
 
 ### The ratio of the dataset held out for model assessment

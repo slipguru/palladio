@@ -19,7 +19,7 @@ from scipy import stats
 import cPickle as pkl
 
 from palladio._core import load_data
-from palladio.plotting import plot_distributions, features_manhattan_plot, plot_feature_frequencies
+from palladio import plotting
 
 def analyze_experiment(exp_folder, config):
 
@@ -139,8 +139,6 @@ def main():
     sorted_keys_regular = sorted(selected_regular, key=selected_regular.__getitem__)
     sorted_keys_permutation = sorted(selected_permutation, key=selected_permutation.__getitem__)
 
-
-
     with open(os.path.join(base_folder, 'signature_regular.txt'), 'w') as f:
         line_drawn = False
         for k in reversed(sorted_keys_regular):
@@ -159,11 +157,15 @@ def main():
                 f.write("\n")
             f.write("{} : {}\n".format(k,selected_permutation[k]))
 
-    plot_distributions(v_regular, v_permutation, base_folder)
+    plotting.distributions(v_regular, v_permutation, base_folder)
 
-    plot_feature_frequencies(sorted_keys_regular, selected_regular, base_folder, threshold = threshold)
+    plotting.feature_frequencies(sorted_keys_regular, selected_regular, base_folder, threshold = threshold)
 
-    features_manhattan_plot(sorted_keys_regular, selected_regular, selected_permutation, base_folder, threshold = threshold)
+    plotting.features_manhattan(sorted_keys_regular, selected_regular, selected_permutation, base_folder, threshold = threshold)
+
+    plotting.selected_over_threshold(selected_regular, selected_permutation,
+                                     config.N_jobs_regular, config.N_jobs_permutation,
+                                     base_folder, threshold = threshold)
 
 if __name__ == '__main__':
     main()

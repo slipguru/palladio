@@ -14,7 +14,7 @@ import seaborn as sns
 
 from scipy import stats
 
-def plot_distributions(v_regular, v_permutation, base_folder):
+def distributions(v_regular, v_permutation, base_folder):
     """
     Create a plot of the distributions of accuracies for both "regular" experiments and permutation tests
 
@@ -60,14 +60,12 @@ def plot_distributions(v_regular, v_permutation, base_folder):
     kstest = stats.kstest(v_regular*100, 'norm', args=(mu, sigma))
     rstest = stats.ranksums(v_regular, v_permutation)
 
-
-
     with open(os.path.join(base_folder, 'stats.txt'), 'w')  as f:
 
-        f.write("Kolmogorov-Smirnov test p-value: {0:.3e}\n".format(kstest[1]))
+        # f.write("Kolmogorov-Smirnov test p-value: {0:.3e}\n".format(kstest[1]))
         f.write("Wilcoxon Rank-Sum test p-value: {0:.3e}\n".format(rstest[1]))
 
-    print("Kolmogorov-Smirnov test: {}".format(kstest))
+    # print("Kolmogorov-Smirnov test: {}".format(kstest))
     print("Wilcoxon Rank-Sum test: {}".format(rstest))
 
 
@@ -90,7 +88,7 @@ def plot_distributions(v_regular, v_permutation, base_folder):
 
     plt.savefig(os.path.join(base_folder, 'permutation_acc_distribution.pdf'))
 
-def features_manhattan_plot(sorted_keys, frequencies_true, frequencies_perm, base_folder, threshold = 75):
+def features_manhattan(sorted_keys, frequencies_true, frequencies_perm, base_folder, threshold = 75):
     """
     Parameters
     ----------
@@ -142,7 +140,7 @@ def features_manhattan_plot(sorted_keys, frequencies_true, frequencies_perm, bas
 
     plt.savefig(os.path.join(base_folder, 'manhattan_plot.pdf'))
 
-def plot_feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 75):
+def feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 75):
     """
     Plot a bar chart of the first 2 x M features in a signature,
     where M is the number of features whose frequencies is over a given threshold
@@ -221,3 +219,52 @@ def plot_feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 
     plt.ylabel("Absolute Frequency", fontsize="large")
 
     plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
+
+
+def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular, N_jobs_permutation, base_folder, threshold = 75):
+    """Plot the selection trend against the selection frequency threshold.
+
+
+    Parameters
+    ----------
+
+    sorted_keys : list
+    """
+    # horizontal axis
+    thresh_axis = np.linspace(0,1,21)
+
+    # number of selected features for true/perm
+    y_true = list()
+    y_perm = list()
+
+    # Unroll dict
+    for k in frequencies_true.keys():
+        y_true.append(frequencies_true[k])
+        y_perm.append(frequencies_perm[k])
+    y_true = np.array(y_true)
+    y_perm = np.array(y_perm)
+
+    # tot number features
+    n_feat = len(y_true)
+
+    # init selected counts
+    sel_true = np.zeros(len(thresh_axis))
+    sel_perm = np.zeros(len(thresh_axis))
+
+    # iterate over the horiz axis (i.e. the selection freq thresh)
+    for i, thr in enumerate(thresh_axis):
+        # sel_true[i] = np.count_nonzero(y_true > thr)
+        # sel_perm[i] = np.count_nonzero(y_perm > thr)
+        sel_true[i] = np.count_nonzero(y_true >= thr*N_jobs_regular)
+        sel_perm[i] = np.count_nonzero(y_perm >= thr*N_jobs_permutation)
+
+    # make plot
+    plt.figure()
+    plt.plot(100*thresh_axis, sel_true, marker = 'h', alpha = 0.8, color = '#99cc00', label='Real signature')
+    plt.plot(100*thresh_axis, sel_perm, marker = 'h', alpha = 0.8, color = 'r', label='Permutation signature')
+    plt.axvline(x=threshold, ymin=0, ymax=n_feat, ls = '--', lw = 0.5, color = 'k', label='Threshold')
+    plt.legend()
+    plt.xlabel("Selection frequency %", fontsize="large")
+    plt.ylabel("Number of selected features", fontsize="large")
+
+    plt.savefig(os.path.join(base_folder, 'selected_over_threshold.pdf'))
