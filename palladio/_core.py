@@ -1,20 +1,16 @@
-import numpy as np
-
-import os, sys
+import os
 import imp
 import shutil
 import cPickle as pkl
-import random
+import numpy as np
+import time
+import pandas as pd
 
 from hashlib import sha512
 
-import pandas as pd
-
-import time
-
 from .utils import sec_to_timestring
 
-### Iniziatlize GLOBAL MPI variables (or dummy ones for the single process case)
+# Initialize GLOBAL MPI variables (or dummy ones for the single process case)
 try:
     from mpi4py import MPI
 
@@ -34,35 +30,34 @@ except:
 
     IS_MPI_JOB = False
 
-def generate_job_list(N_jobs_regular, N_jobs_permutation):
-    """Generates a vector used to distribute jobs among nodes
 
-    Given the total number of processes, generate a list of jobs distributing the load,
-    so that each process has approximately the same amount of work to do
-    (i.e., the same number of regular and permutated instances of the experiment).
+def generate_job_list(N_jobs_regular, N_jobs_permutation):
+    """Generate a vector used to distribute jobs among nodes.
+
+    Given the total number of processes, generate a list of jobs distributing
+    the load, so that each process has approximately the same amount of work
+    to do (i.e., the same number of regular and permutated instances of the
+    experiment).
 
     Parameters
     ----------
-
     N_jobs_regular : int
         The number of *regular* jobs, i.e. experiments where the labels
         have not been randomly shuffled.
 
     N_jobs_permutation : int
-        The number of experiments for the permutation test, i.e. experiments where the labels
-        *in the training set* will be randomly shuffled in order to disrupt any relationship
-        between data and labels.
+        The number of experiments for the permutation test, i.e. experiments
+        where the labels *in the training set* will be randomly shuffled in
+        order to disrupt any relationship between data and labels.
 
     Returns
     -------
-
     type_vector : numpy.ndarray
-        A vector whose entries are either 0 or 1, representing respectively a job
-        where a *regular* experiment is performed and one where an experiment where
-        labels *in the training set* are randomly shuffled is performed.
-
+        A vector whose entries are either 0 or 1, representing respectively a
+        job where a *regular* experiment is performed and one where an
+        experiment where labels *in the training set* are randomly shuffled
+        is performed.
     """
-
     # The total number of jobs
     N_jobs_total = N_jobs_permutation + N_jobs_regular
 
@@ -73,8 +68,9 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
 
     return type_vector
 
+
 def run_experiment(data, labels, config_dir, config, is_permutation_test, custom_name):
-    """Run a single independent experiment
+    """Run a single independent experiment.
 
     Perform a single experiment, which is divided in three main stages:
 
@@ -86,15 +82,16 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
 
     Parameters
     ----------
-
     data : ndarray
         A :math:`n \\times p` matrix describing the input data.
 
     labels : ndarray
-        A :math:`n`-dimensional vector containing the labels indicating the class of the samples.
+        A :math:`n`-dimensional vector containing the labels indicating the
+        class of the samples.
 
     config_dir : string
-        The path to the folder containing the configuration file, which will also contain the main session folder.
+        The path to the folder containing the configuration file, which will
+        also contain the main session folder.
 
     config : object
         The object containing all configuration parameters for the session.
@@ -104,21 +101,21 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
         (and therefore has had its training labels randomly shuffled) or not.
 
     custom_name : string
-        The name of the subfolder where the experiments' results will be stored. It is a combination
-        of a prefix which is either ``regular`` or ``permutation`` depending on the nature of the experiment,
-        followed by two numbers which can be used to identify the experiment, for debugging purposes.
-
+        The name of the subfolder where the experiments' results will be
+        stored. It is a combination of a prefix which is either ``regular`` or
+        ``permutation`` depending on the nature of the experiment, followed
+        by two numbers which can be used to identify the experiment, for
+        debugging purposes.
     """
+    result_path = os.path.join(config_dir, config.result_path)  # result base dir
 
-    result_path = os.path.join(config_dir, config.result_path) #result base dir
-
-    ### Create experiment folders
+    # Create experiment folders
     result_dir = os.path.join(result_path, custom_name)
     os.mkdir(result_dir)
 
-    ### Produce a seed for the pseudo random generator
+    # Produce a seed for the pseudo random generator
     rseed = 0
-    aux = sha512(name).digest() # hash the machine's name
+    aux = sha512(name).digest()  # hash the machine's name
     # extract integers from the sha
     for c in aux:
         try:
@@ -128,15 +125,16 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     rseed = time.time()
     rseed += rank
 
-    ### Split the dataset in learning and test set
-    ### Use a trick to keep the original splitting strategy
-    aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))), rseed = rseed)
+    # Split the dataset in learning and test set
+    # Use a trick to keep the original splitting strategy
+    aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))), rseed=rseed)
     # aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))))
 
     # idx_lr = aux_splits[0][0]
     # idx_ts = aux_splits[0][1]
 
-    ### A quick workaround to get just the first couple of the list; one iteration the break the loop
+    # A quick workaround to get just the first couple of the list;
+    # one iteration the break the loop
     for idx_tr, idx_ts in aux_splits:
         idx_lr = idx_tr
         idx_ts = idx_ts
@@ -148,8 +146,8 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     data_ts = data[idx_ts, :]
     labels_ts = labels[idx_ts]
 
-    ### Compute the ranges of the parameters using only the learning set
-    ### TODO FIX
+    # Compute the ranges of the parameters using only the learning set
+    # TODO FIX
     if is_permutation_test:
         labels_perm = labels_lr.copy()
         np.random.shuffle(labels_perm)
@@ -159,21 +157,21 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     Xts = data_ts
     Yts = labels_ts
 
-    ### Setup the internal splitting for model selection
+    # Setup the internal splitting for model selection
     int_k = config.internal_k
-    ms_split = config.cv_splitting(Ytr, int_k, rseed = time.clock()) # since it requires the labels, it can't be done before those are loaded
+    ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())  # since it requires the labels, it can't be done before those are loaded
     config.params['ms_split'] = ms_split
 
-    ### Create the object that will actually perform the classification/feature selection
+    # Create the object that will actually perform the classification/feature selection
     clf = config.learner_class(config.params)
 
-    ### Set the actual data and perform additional steps such as rescaling parameters etc.
+    # Set the actual data and perform additional steps such as rescaling parameters etc.
     clf.setup(Xtr, Ytr, Xts, Yts)
 
     result = clf.run()
 
     # result = out['result']
-    result['labels_ts'] = labels_ts ### also save labels
+    result['labels_ts'] = labels_ts  # also save labels
 
     # save results
     with open(os.path.join(result_dir, 'result.pkl'), 'w') as f:
@@ -189,6 +187,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
         pkl.dump(in_split, f, pkl.HIGHEST_PROTOCOL)
 
     return
+
 
 def load_data(config_path, config, data_path, labels_path):
     """Load data, labels and variables names.
@@ -229,10 +228,8 @@ def load_data(config_path, config, data_path, labels_path):
 
         poslab = uv[0]
 
-    def _toPlusMinus(x) :
-        """
-        Converts the values in the labels
-        """
+    def _toPlusMinus(x):
+        """Converts the values in the labels"""
         if x == poslab:
             return +1.0
         else:
@@ -245,20 +242,20 @@ def load_data(config_path, config, data_path, labels_path):
 
     return data, labels, probeset_names
 
-def main(config_path):
-    """Main function
 
-    The main function, performs initial tasks such as creating the main session folder and copying files inside it,
+def main(config_path):
+    """Main function.
+
+    The main function, performs initial tasks such as creating the main session
+    folder and copying files inside it,
     as well as distributing the jobs on all available machines.
 
     Parameters
     ----------
-
     config_path : string
-        A path to the configuration file containing all required information to run a **PALLADIO** session.
-
+        A path to the configuration file containing all required information
+        to run a **PALLADIO** session.
     """
-
     if rank == 0:
         t0 = time.time()
 
