@@ -8,6 +8,12 @@ from palladio.wrappers.l1l2 import l1l2Classifier
 #~~ Data Input/Output ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # * Data assumed csv with samples and features labels
 # * All the path are w.r.t. config file path
+
+
+# file_types = 'npy_pkl'
+
+file_types = 'dataframe_csv'
+
 data_matrix = 'data/gedm.csv'
 labels = 'data/labels.csv'
 delimiter = ','
