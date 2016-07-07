@@ -369,7 +369,7 @@ def main(config_path):
         labels_path = os.path.join(config_dir, config.labels)
         indcol_path = os.path.join(config_dir, config.indcols)
         
-        dataset_files = {'data_file' : data_path, 'labels_file' : labels_path, 'indcol' : indcol_path}
+        dataset_files = {'data_file' : data_path, 'labels_file' : labels_path, 'indcols' : indcol_path}
         
         data, labels, _ = load_data_npy_pkl(config_path, config, data_path, labels_path, indcol_path)
         
