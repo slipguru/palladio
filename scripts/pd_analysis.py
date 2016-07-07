@@ -48,9 +48,15 @@ def analyze_experiment(exp_folder, config):
 
     balanced_accuracy = 0.5 * ( (TP / float(TP + FN)) + (TN / float(TN + FP)) )
 
+    # save balanced accuracy
     analysis_results['balanced_accuracy'] = balanced_accuracy
 
+    # save selected_list
     analysis_results['selected_list'] = result['selected_list']
+
+    # save kcv errors
+    analysis_results['kcv_err_ts'] = result['kcv_err_ts']
+    analysis_results['kcv_err_tr'] = result['kcv_err_tr']
 
     return analysis_results
 
@@ -78,14 +84,20 @@ def analyze_experiments(base_folder, config):
     ### Read data, labels, variables names
     data, labels, probeset_names = load_data(config_path, config, data_path, labels_path)
 
-    MCC_regular = list()
-    MCC_permutation = list()
+    MCC_regular = list() # not used so far
+    MCC_permutation = list()  # not used so far
 
+    # accuracy containers
     acc_regular = list()
     acc_permutation = list()
 
+    # selection containers
     selected_regular = dict(zip(probeset_names, np.zeros((len(probeset_names),))))
     selected_permutation = dict(zip(probeset_names, np.zeros((len(probeset_names),))))
+
+    # kcv error containers
+    kcv_err_regular = {'tr': list(), 'ts': list()}
+    kcv_err_permutation = {'tr': list(), 'ts': list()}
 
     for exp_folder in [os.path.join(base_folder, x) for x in os.listdir(base_folder)]:
 
@@ -97,27 +109,37 @@ def analyze_experiments(base_folder, config):
 
             if exp_folder.split('/')[-1].startswith('regular'):
 
+                # update accuracy
                 acc_regular.append(analysis_result['balanced_accuracy'])
-
+                # update selection
                 for p in selected_probesets:
                     selected_regular[p] += 1
+                # update kcv errors
+                kcv_err_regular['tr'].append(analysis_result['kcv_err_tr'])
+                kcv_err_regular['ts'].append(analysis_result['kcv_err_ts'])
 
             elif exp_folder.split('/')[-1].startswith('permutation'):
 
+                # update accuracy
                 acc_permutation.append(analysis_result['balanced_accuracy'])
-
+                # update selection
                 for p in selected_probesets:
                     selected_permutation[p] += 1
+                # update kcv errors
+                kcv_err_permutation['tr'].append(analysis_result['kcv_err_tr'])
+                kcv_err_permutation['ts'].append(analysis_result['kcv_err_ts'])
 
             else:
                 print "error"
 
     out = {
-        'v_regular' : np.array(acc_regular),
-        'v_permutation' : np.array(acc_permutation),
-        'selected_regular' : selected_regular,
-        'selected_permutation' : selected_permutation,
-    }
+            'v_regular' : np.array(acc_regular),
+            'v_permutation' : np.array(acc_permutation),
+            'selected_regular' : selected_regular,
+            'selected_permutation' : selected_permutation,
+            'kcv_err_regular' : kcv_err_regular,
+            'kcv_err_permutation': kcv_err_permutation
+          }
 
     return out
 
@@ -134,6 +156,7 @@ def main():
 
     v_regular, v_permutation = out['v_regular'], out['v_permutation']
     selected_regular, selected_permutation = out['selected_regular'], out['selected_permutation']
+    kcv_err_regular, kcv_err_permutation = out['kcv_err_regular'], out['kcv_err_permutation']
 
     ### Manually sorting stuff
     sorted_keys_regular = sorted(selected_regular, key=selected_regular.__getitem__)
@@ -166,6 +189,9 @@ def main():
     plotting.selected_over_threshold(selected_regular, selected_permutation,
                                      config.N_jobs_regular, config.N_jobs_permutation,
                                      base_folder, threshold = threshold)
+
+    for kcv_err, exp in zip([kcv_err_regular, kcv_err_permutation], ['regular', 'permutation']):
+        plotting.kcv_err_surfaces(kcv_err, exp, base_folder)
 
 if __name__ == '__main__':
     main()

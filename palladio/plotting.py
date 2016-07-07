@@ -6,7 +6,9 @@ import matplotlib
 
 matplotlib.use('Agg')
 
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
 import numpy as np
 
@@ -268,3 +270,91 @@ def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular, 
     plt.ylabel("Number of selected features", fontsize="large")
 
     plt.savefig(os.path.join(base_folder, 'selected_over_threshold.pdf'))
+
+
+
+def kcv_err_surfaces(kcv_err, exp, base_folder):
+    """Generate plot surfaces for training and test error across experiments.
+
+        Parameters
+        ----------
+
+        kcv_err : list of arrays
+
+        exp : string
+            Either 'regular' or 'permutation'
+
+        base_folder: string
+            Path to base output folder.
+    """
+    def most_common(lst):
+        """Return the most common element in a list."""
+        return max(set(lst), key=lst.count)
+
+    print("-----------------------------------------------")
+    print("Experiment type: {}".format(exp))
+
+    # average errors dictionary
+    avg_err = dict()
+
+    # iterate over tr and ts
+    for k in kcv_err.keys():
+        print('exp: {}'.format(k))
+        # it may happen that for a certain experiment a solution is not
+        # provided for each values of tau. we want to exclude such situations
+        mode = most_common([e.shape for e in kcv_err[k]]) # get the most common size of the matrix
+        kcv_err_k = filter(lambda x: x.shape == mode, kcv_err[k])
+        # get the number of experiment where everything worked fine
+        n_exp = len(kcv_err_k)
+        # perform reduce operation
+        avg_err[k] = sum(kcv_err_k) / float(n_exp)
+        # this is like avg_err = reduce(lambda x,y: x+y, kcv_err_k) / float(n_exp)
+
+    ### PLOT SECTION
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    cmaps = [cm.summer, cm.winter]
+
+
+    for k, c in zip(avg_err.keys(), cmaps):
+        ZZ = avg_err[k]
+
+        xx = np.arange(0,mode[1]) # FIX THIS!!! we need the actual values for tau and lambda
+        yy = np.arange(0,mode[0])
+        XX, YY = np.meshgrid(xx, yy)
+
+
+        surf = ax.plot_surface(XX, YY, ZZ, rstride=1,
+                                           cstride=1,
+                                           linewidth=0,
+                                           antialiased=False,
+                                           cmap=c)
+
+    # fig.colorbar()
+    plt.title('KCV error '+exp+' experiment')
+    plt.xlabel("$\tau$")
+    plt.xlabel("$\lambda$")
+    # plt.legend()
+    plt.savefig(os.path.join(base_folder, 'kcv_err_'+exp+'.pdf'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################################################################
