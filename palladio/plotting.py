@@ -97,7 +97,15 @@ def distributions(v_regular, v_permutation, base_folder):
     with open(os.path.join(base_folder, 'stats.txt'), 'w')  as f:
 
         # f.write("Kolmogorov-Smirnov test p-value: {0:.3e}\n".format(kstest[1]))
+        # f.write("Testing distributions")
         f.write("Wilcoxon Rank-Sum test p-value: {0:.3e}\n".format(rstest[1]))
+        f.write("\n")
+
+        f.write("Regular experiments, balanced accuracy\n")
+        f.write("Mean = {0:.2f}, STD = {0:.2f}\n".format(reg_mean, reg_std))
+
+        f.write("Permutation tests, balanced accuracy\n")
+        f.write("Mean = {0:.2f}, STD = {0:.2f}\n".format(perm_mean, perm_std))
 
     # print("Kolmogorov-Smirnov test: {}".format(kstest))
     print("Wilcoxon Rank-Sum test: {}".format(rstest))
