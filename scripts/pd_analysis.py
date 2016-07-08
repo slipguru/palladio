@@ -26,6 +26,9 @@ def analyze_experiment(exp_folder, config):
     with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
         result = pkl.load(f)
 
+    with open(os.path.join(exp_folder, 'in_split.pkl'), 'r') as f:
+        in_split = pkl.load(f)
+
     Y_ts = result['labels_ts'] # the actual labels
 
     analysis_results = dict()
@@ -58,6 +61,9 @@ def analyze_experiment(exp_folder, config):
     analysis_results['kcv_err_ts'] = result['kcv_err_ts']
     analysis_results['kcv_err_tr'] = result['kcv_err_tr']
 
+    # save params ranges
+    analysis_results['param_ranges'] = in_split['param_ranges']
+
     return analysis_results
 
 def analyze_experiments(base_folder, config):
@@ -86,14 +92,14 @@ def analyze_experiments(base_folder, config):
 
         ### Read data, labels, variables names
         data, labels, probeset_names = load_data_dataframe_csv(base_folder, config, data_path, labels_path)
-        
+
     elif config.file_types == 'npy_pkl':
-        
+
         # Data paths
         indcol_path = os.path.join(base_folder, 'indcols')
-        
+
         data, labels, probeset_names = load_data_npy_pkl(base_folder, config, data_path, labels_path, indcol_path)
-        
+
     probeset_names = np.array(probeset_names)
 
     MCC_regular = list() # not used so far
@@ -144,13 +150,17 @@ def analyze_experiments(base_folder, config):
             else:
                 print "error"
 
+        # store the actual parameters ranges
+        param_ranges = analysis_result['param_ranges']
+
     out = {
             'v_regular' : np.array(acc_regular),
             'v_permutation' : np.array(acc_permutation),
             'selected_regular' : selected_regular,
             'selected_permutation' : selected_permutation,
             'kcv_err_regular' : kcv_err_regular,
-            'kcv_err_permutation': kcv_err_permutation
+            'kcv_err_permutation': kcv_err_permutation,
+            'param_ranges': param_ranges
           }
 
     return out
@@ -169,6 +179,7 @@ def main():
     v_regular, v_permutation = out['v_regular'], out['v_permutation']
     selected_regular, selected_permutation = out['selected_regular'], out['selected_permutation']
     kcv_err_regular, kcv_err_permutation = out['kcv_err_regular'], out['kcv_err_permutation']
+    param_ranges = out['param_ranges']
 
     ### Manually sorting stuff
     sorted_keys_regular = sorted(selected_regular, key=selected_regular.__getitem__)
@@ -203,7 +214,7 @@ def main():
                                      base_folder, threshold = threshold)
 
     for kcv_err, exp in zip([kcv_err_regular, kcv_err_permutation], ['regular', 'permutation']):
-        plotting.kcv_err_surfaces(kcv_err, exp, base_folder)
+        plotting.kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges)
 
 if __name__ == '__main__':
     main()

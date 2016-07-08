@@ -305,7 +305,7 @@ def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular, 
 
 
 
-def kcv_err_surfaces(kcv_err, exp, base_folder):
+def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges):
     """Generate plot surfaces for training and test error across experiments.
 
         Parameters
@@ -318,6 +318,10 @@ def kcv_err_surfaces(kcv_err, exp, base_folder):
 
         base_folder: string
             Path to base output folder.
+
+        param_ranges : list
+            list containing all the hyperparameter ranges. When using l1l2Classifier
+            this is [tau_range, lambda_range]
     """
     def most_common(lst):
         """Return the most common element in a list."""
@@ -352,8 +356,10 @@ def kcv_err_surfaces(kcv_err, exp, base_folder):
     for k, c in zip(avg_err.keys(), cmaps):
         ZZ = avg_err[k]
 
-        xx = np.arange(0,mode[0]) # FIX THIS!!! we need the actual values for tau and lambda
-        yy = np.arange(0,mode[1])
+        # xx = np.arange(0,mode[0]) # FIX THIS!!! we need the actual values for tau and lambda
+        # yy = np.arange(0,mode[1])
+        xx = np.log10(param_ranges[0]) # tau
+        yy = np.log10(param_ranges[1]) # lambda
         XX, YY = np.meshgrid(xx, yy)
 
         surf = ax.plot_surface(XX, YY, ZZ.T, rstride=1,
@@ -372,8 +378,8 @@ def kcv_err_surfaces(kcv_err, exp, base_folder):
 
     # fig.colorbar()
     ax.set_title('average KCV error of '+exp+' experiments')
-    ax.set_ylabel(r"$\lambda$")
-    ax.set_xlabel(r"$\tau$")
+    ax.set_ylabel(r"$log_{10}(\lambda)$")
+    ax.set_xlabel(r"$log_{10}(\tau)$")
     ax.set_zlabel("avg kcv err")
     ax.legend(legend_handles, legend_labels[:len(legend_handles)], loc='best')
 

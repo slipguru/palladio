@@ -168,6 +168,11 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     # Set the actual data and perform additional steps such as rescaling parameters etc.
     clf.setup(Xtr, Ytr, Xts, Yts)
 
+    ### Workaround: this is gonna work only if clf is an l1l2Classifier
+    param_1_range = clf._tau_range
+    param_2_range = clf._lambda_range
+    ###
+
     result = clf.run()
 
     # result = out['result']
@@ -180,7 +185,8 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     in_split = {
         'ms_split': ms_split,
         # 'outer_split': aux_splits[0]
-        'outer_split': (idx_lr, idx_ts)
+        'outer_split': (idx_lr, idx_ts),
+        'param_ranges': (param_1_range, param_2_range)
     }
 
     with open(os.path.join(result_dir, 'in_split.pkl'), 'w') as f:
@@ -272,7 +278,7 @@ def load_data_npy_pkl(config_path, config, data_path, labels_path, indcol_path =
 
     labels_path : string
         A path to the ``.npy`` labels file.
-        
+
     indcol_path : string, optional
         A path to the ``.pkl`` file containing sample and column names.
     """
@@ -282,22 +288,22 @@ def load_data_npy_pkl(config_path, config, data_path, labels_path, indcol_path =
     if rank == 0:
         print("") #--------------------------------------------------------------------
         print('Reading data... ')
-    
-    
+
+
     data = np.load(data_path)
     labels = np.load(labels_path)
-    
+
     if config.samples_on == 'col':
         data = data.T
-    
+
     ### TODO FIX IF DATA IS TRANSPOSED???
     with open(indcol_path, 'r') as f:
         res = pkl.load(f)
-        
+
         probeset_names = res['columns']
         samples_names = res['index']
-        
-    
+
+
     ### TODO FIX
     # if not config.data_preprocessing is None:
     #     if rank == 0:
@@ -356,23 +362,23 @@ def main(config_path):
         # Data paths
         data_path = os.path.join(config_dir, config.data_matrix)
         labels_path = os.path.join(config_dir, config.labels)
-        
+
         dataset_files = {'data_file' : data_path, 'labels_file' : labels_path}
-    
+
         ### Read data, labels, variables names
         data, labels, _ = load_data_dataframe_csv(config_path, config, data_path, labels_path)
-        
+
     elif config.file_types == 'npy_pkl':
-        
+
         # Data paths
         data_path = os.path.join(config_dir, config.data_matrix)
         labels_path = os.path.join(config_dir, config.labels)
         indcol_path = os.path.join(config_dir, config.indcols)
-        
+
         dataset_files = {'data_file' : data_path, 'labels_file' : labels_path, 'indcols' : indcol_path}
-        
+
         data, labels, _ = load_data_npy_pkl(config_path, config, data_path, labels_path, indcol_path)
-        
+
     ### Create base results dir if it does not already exist
     ### Also copy dataset files inside it
     if rank == 0:
@@ -381,10 +387,10 @@ def main(config_path):
             os.mkdir(result_path)
 
         shutil.copy(config_path, os.path.join(result_path, 'config.py'))
-        
+
         for k in dataset_files.keys():
             os.link(dataset_files[k], os.path.join(result_path, k))
-        
+
         # os.link(labels_path, os.path.join(result_path, 'labels_file'))
 
     if IS_MPI_JOB:
