@@ -189,7 +189,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     return
 
 
-def load_data(config_path, config, data_path, labels_path):
+def load_data_dataframe_csv(config_path, config, data_path, labels_path):
     """Load data, labels and variables names.
 
     Parameters
@@ -255,6 +255,78 @@ def load_data(config_path, config, data_path, labels_path):
 
     return data, labels, probeset_names
 
+def load_data_npy_pkl(config_path, config, data_path, labels_path, indcol_path = None):
+    """Load data, labels and variables names.
+
+    Parameters
+    ----------
+    config_path : string
+        A path to the configuration file containing all required information
+        to run a **PALLADIO** session.
+
+    config : object
+        The object containing all configuration parameters for the session.
+
+    data_path : string
+        A path to the ``.npy`` data file.
+
+    labels_path : string
+        A path to the ``.npy`` labels file.
+        
+    indcol_path : string, optional
+        A path to the ``.pkl`` file containing sample and column names.
+    """
+    # Configuration File
+    config_dir = os.path.dirname(config_path)
+
+    if rank == 0:
+        print("") #--------------------------------------------------------------------
+        print('Reading data... ')
+    
+    
+    data = np.load(data_path)
+    labels = np.load(labels_path)
+    
+    if config.samples_on == 'col':
+        data = data.T
+    
+    ### TODO FIX IF DATA IS TRANSPOSED???
+    with open(indcol_path, 'r') as f:
+        res = pkl.load(f)
+        
+        probeset_names = res['columns']
+        samples_names = res['index']
+        
+    
+    ### TODO FIX
+    # if not config.data_preprocessing is None:
+    #     if rank == 0:
+    #         print("Preprocessing data...")
+    #     config.data_preprocessing.load_data(pd_data)
+    #     pd_data = config.data_preprocessing.process()
+
+    if not config.positive_label is None:
+        poslab = config.positive_label
+    else:
+        uv = np.sort(np.unique(labels))
+
+        if len(uv) != 2:
+            raise Exception("More than two unique values in the labels array")
+
+        poslab = uv[0]
+
+    def _toPlusMinus(x):
+        """Converts the values in the labels"""
+        if x == poslab:
+            return +1.0
+        else:
+            return -1.0
+
+    labels_mapped = map(_toPlusMinus, labels)
+    labels = np.array(labels)
+
+    return data, labels, probeset_names
+
 
 def main(config_path):
     """Main function.
@@ -279,22 +351,41 @@ def main(config_path):
     config = imp.load_source('config', config_path)
     imp.release_lock()
 
-    # Data paths
-    data_path = os.path.join(config_dir, config.data_matrix)
-    labels_path = os.path.join(config_dir, config.labels)
+    if config.file_types == 'dataframe_csv':
 
-    ### Read data, labels, variables names
-    data, labels, _ = load_data(config_path, config, data_path, labels_path)
-
+        # Data paths
+        data_path = os.path.join(config_dir, config.data_matrix)
+        labels_path = os.path.join(config_dir, config.labels)
+        
+        dataset_files = {'data_file' : data_path, 'labels_file' : labels_path}
+    
+        ### Read data, labels, variables names
+        data, labels, _ = load_data_dataframe_csv(config_path, config, data_path, labels_path)
+        
+    elif config.file_types == 'npy_pkl':
+        
+        # Data paths
+        data_path = os.path.join(config_dir, config.data_matrix)
+        labels_path = os.path.join(config_dir, config.labels)
+        indcol_path = os.path.join(config_dir, config.indcols)
+        
+        dataset_files = {'data_file' : data_path, 'labels_file' : labels_path, 'indcols' : indcol_path}
+        
+        data, labels, _ = load_data_npy_pkl(config_path, config, data_path, labels_path, indcol_path)
+        
     ### Create base results dir if it does not already exist
+    ### Also copy dataset files inside it
     if rank == 0:
         result_path = os.path.join(config_dir, config.result_path) #result base dir
         if not os.path.exists(result_path):
             os.mkdir(result_path)
 
         shutil.copy(config_path, os.path.join(result_path, 'config.py'))
-        os.link(data_path, os.path.join(result_path, 'data_file'))
-        os.link(labels_path, os.path.join(result_path, 'labels_file'))
+        
+        for k in dataset_files.keys():
+            os.link(dataset_files[k], os.path.join(result_path, k))
+        
+        # os.link(labels_path, os.path.join(result_path, 'labels_file'))
 
     if IS_MPI_JOB:
         ### Wait for the folder to be created and files to be copied

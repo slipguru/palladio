@@ -18,7 +18,7 @@ from scipy import stats
 
 import cPickle as pkl
 
-from palladio._core import load_data
+from palladio._core import load_data_dataframe_csv, load_data_npy_pkl
 from palladio import plotting
 
 def analyze_experiment(exp_folder, config):
@@ -81,8 +81,20 @@ def analyze_experiments(base_folder, config):
     labels_path = os.path.join(base_folder, 'labels_file')
     config_path = os.path.join(base_folder, 'config.py')
 
-    ### Read data, labels, variables names
-    data, labels, probeset_names = load_data(config_path, config, data_path, labels_path)
+
+    if config.file_types == 'dataframe_csv':
+
+        ### Read data, labels, variables names
+        data, labels, probeset_names = load_data_dataframe_csv(base_folder, config, data_path, labels_path)
+        
+    elif config.file_types == 'npy_pkl':
+        
+        # Data paths
+        indcol_path = os.path.join(base_folder, 'indcols')
+        
+        data, labels, probeset_names = load_data_npy_pkl(base_folder, config, data_path, labels_path, indcol_path)
+        
+    probeset_names = np.array(probeset_names)
 
     MCC_regular = list() # not used so far
     MCC_permutation = list()  # not used so far
