@@ -7,6 +7,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
@@ -15,6 +16,37 @@ import numpy as np
 import seaborn as sns
 
 from scipy import stats
+
+# Dictionary of nice colors
+colorsHex = {
+    "Aluminium6": "#2e3436",
+    "Aluminium5": "#555753",
+    "Aluminium4": "#888a85",
+    "Aluminium3": "#babdb6",
+    "Aluminium2": "#d3d7cf",
+    "Aluminium1": "#eeeeec",
+    "lightPurple": "#ad7fa8",
+    "mediumPurple": "#75507b",
+    "darkPurple": "#5c3566",
+    "lightBlue": "#729fcf",
+    "mediumBlue": "#3465a4",
+    "darkBlue": "#204a87",
+    "lightGreen": "#8ae234",
+    "mediumGreen": "#73d216",
+    "darkGreen": "#4e9a06",
+    "lightChocolate": "#e9b96e",
+    "mediumChocolate": "#c17d11",
+    "darkChocolate": "#8f5902",
+    "lightRed": "#ef2929",
+    "mediumRed": "#cc0000",
+    "darkRed": "#a40000",
+    "lightOrange": "#fcaf3e",
+    "mediumOrange": "#f57900",
+    "darkOrange": "#ce5c00",
+    "lightButter": "#fce94f",
+    "mediumButter": "#edd400",
+    "darkButter": "#c4a000"
+}
 
 def distributions(v_regular, v_permutation, base_folder):
     """
@@ -51,8 +83,8 @@ def distributions(v_regular, v_permutation, base_folder):
     perm_mean = np.mean(v_permutation)
     perm_std = np.std(v_permutation)
 
-    sns.distplot(v_permutation*100, label = "Permutation tests \nMean = {0:.2f}, STD = {1:.2f}".format(perm_mean, perm_std), color = 'r', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
-    sns.distplot(v_regular*100, label = "Regular experiments \nMean = {0:.2f}, STD = {1:.2f}".format(reg_mean, reg_std), color = '#99cc00', ax = ax, hist_kws = {'alpha' : 0.8}, **args)
+    sns.distplot(v_permutation*100, label = "Permutation tests \nMean = {0:.2f}, STD = {1:.2f}".format(perm_mean, perm_std), color = colorsHex['lightRed'], ax = ax, hist_kws = {'alpha' : 0.8}, **args)
+    sns.distplot(v_regular*100, label = "Regular experiments \nMean = {0:.2f}, STD = {1:.2f}".format(reg_mean, reg_std), color = colorsHex['lightGreen'], ax = ax, hist_kws = {'alpha' : 0.8}, **args)
 
     ### Fit a gaussian with permutation data
     (mu, sigma) = stats.norm.fit(v_permutation*100)
@@ -114,8 +146,8 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm, base_fol
 
     plt.figure()
 
-    s_t = plt.scatter(fake_x, y_true, marker = 'h', alpha = 0.8, s = 10, color = '#99cc00')
-    s_p = plt.scatter(fake_x, y_perm, marker = 'h', alpha = 0.8, s = 10, color = 'r')
+    s_t = plt.scatter(fake_x, y_true, marker = 'h', alpha = 0.8, s = 10, color = colorsHex['lightGreen'])
+    s_p = plt.scatter(fake_x, y_perm, marker = 'h', alpha = 0.8, s = 10, color = colorsHex['lightRed'])
     threshold_line = plt.axhline(y=threshold, ls = '--', lw = 0.5, color = 'k')
 
     plt.xlim([-5,len(sorted_keys) + 5])
@@ -195,7 +227,7 @@ def feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 75):
 
     plt.title("Manhattan plot - top features detail", fontsize = 20)
 
-    ax = sns.barplot(x = x, y = y, color = '#99cc00', alpha = 0.9)
+    ax = sns.barplot(x = x, y = y, color = colorsHex['lightGreen'], alpha = 0.9)
 
     ### Rotate x ticks
     for item in ax.get_xticklabels():
@@ -215,7 +247,7 @@ def feature_frequencies(sorted_keys, frequencies, base_folder, threshold = 75):
     ### plot a vertical line which separates selected features from those not selected
     xmin, xmax = ax.get_xbound()
     mid = float(xmax + xmin)/2
-    plt.axvline(x=mid, ls = '-', lw = 1, color = 'r')
+    plt.axvline(x=mid, ls = '-', lw = 1, color = colorsHex['lightRed'])
 
     plt.xlabel("Feature names", fontsize="large")
     plt.ylabel("Absolute Frequency", fontsize="large")
@@ -262,8 +294,8 @@ def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular, 
 
     # make plot
     plt.figure()
-    plt.plot(100*thresh_axis, sel_true, marker = 'h', alpha = 0.8, color = '#99cc00', label='Real signature')
-    plt.plot(100*thresh_axis, sel_perm, marker = 'h', alpha = 0.8, color = 'r', label='Permutation signature')
+    plt.plot(100*thresh_axis, sel_true, marker = 'h', alpha = 0.8, color = colorsHex['lightGreen'], label='Real signature')
+    plt.plot(100*thresh_axis, sel_perm, marker = 'h', alpha = 0.8, color = colorsHex['lightRed'], label='Permutation signature')
     plt.axvline(x=threshold, ymin=0, ymax=n_feat, ls = '--', lw = 0.5, color = 'k', label='Threshold')
     plt.legend()
     plt.xlabel("Selection frequency %", fontsize="large")
@@ -291,15 +323,11 @@ def kcv_err_surfaces(kcv_err, exp, base_folder):
         """Return the most common element in a list."""
         return max(set(lst), key=lst.count)
 
-    print("-----------------------------------------------")
-    print("Experiment type: {}".format(exp))
-
     # average errors dictionary
     avg_err = dict()
 
     # iterate over tr and ts
     for k in kcv_err.keys():
-        print('exp: {}'.format(k))
         # it may happen that for a certain experiment a solution is not
         # provided for each values of tau. we want to exclude such situations
         mode = most_common([e.shape for e in kcv_err[k]]) # get the most common size of the matrix
@@ -313,27 +341,42 @@ def kcv_err_surfaces(kcv_err, exp, base_folder):
     ### PLOT SECTION
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-    cmaps = [cm.summer, cm.winter]
+    cmaps = [cm.Oranges, cm.Blues]
+    fc = {'tr': colorsHex['lightBlue'], 'ts': colorsHex['lightOrange']}
 
+    # legends
+    legend_handles = []
+    legend_labels = ['Test Error', 'Train Error']
 
+    # error surface
     for k, c in zip(avg_err.keys(), cmaps):
         ZZ = avg_err[k]
 
-        xx = np.arange(0,mode[1]) # FIX THIS!!! we need the actual values for tau and lambda
-        yy = np.arange(0,mode[0])
+        xx = np.arange(0,mode[0]) # FIX THIS!!! we need the actual values for tau and lambda
+        yy = np.arange(0,mode[1])
         XX, YY = np.meshgrid(xx, yy)
 
-
-        surf = ax.plot_surface(XX, YY, ZZ, rstride=1,
+        surf = ax.plot_surface(XX, YY, ZZ.T, rstride=1,
                                            cstride=1,
                                            linewidth=0,
                                            antialiased=False,
                                            cmap=c)
 
+        legend_handles.append(Rectangle((0, 0), 1, 1, fc=fc[k])) # proxy handle
+
+    # plot minimum
+    ZZ = avg_err['ts']
+    x_min_idxs, y_min_idxs = np.where(ZZ == np.min(ZZ))
+    ax.plot(xx[x_min_idxs], yy[y_min_idxs],
+            ZZ[x_min_idxs, y_min_idxs], 'o', c=colorsHex['darkBlue'])
+
     # fig.colorbar()
-    plt.title('KCV error '+exp+' experiment')
-    plt.xlabel("$\tau$")
-    plt.xlabel("$\lambda$")
+    ax.set_title('average KCV error of '+exp+' experiments')
+    ax.set_ylabel(r"$\lambda$")
+    ax.set_xlabel(r"$\tau$")
+    ax.set_zlabel("avg kcv err")
+    ax.legend(legend_handles, legend_labels[:len(legend_handles)], loc='best')
+
     # plt.legend()
     plt.savefig(os.path.join(base_folder, 'kcv_err_'+exp+'.pdf'))
 
