@@ -13,7 +13,7 @@ setup(
     description=('ParALleL frAmework for moDel selectIOn'),
     long_description=open('README.md').read(),
     author='Matteo Barbieri, Samuele Fiorini, Federico Tomasi',
-    author_email='{samuele.fiorini, federico.tomasi}@dibris.unige.it',
+    author_email='{matteo.barbieri, samuele.fiorini, federico.tomasi}@dibris.unige.it',
     maintainer='Matteo Barbieri, Samuele Fiorini, Federico Tomasi',
     maintainer_email='{matteo.barbieri, samuele.fiorini, federico.tomasi}@dibris.unige.it',
     url='https://github.com/slipguru/palladio',
