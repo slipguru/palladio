@@ -232,7 +232,7 @@ def main(config_path):
         config.dataset_options
     )
     
-    data, labels, _  = data_reader.load_dataset(config_dir)
+    data, labels, _  = dataset.load_dataset(config_dir)
     
     ### Create base results dir if it does not already exist
     ### Also copy dataset files inside it
@@ -245,7 +245,7 @@ def main(config_path):
         shutil.copy(config_path, os.path.join(result_path, 'config.py'))
 
         ### CREATE HARD LINK IN SESSION FOLDER
-        data_reader.copy_files(config_dir, result_path)
+        dataset.copy_files(config_dir, result_path)
     
     ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
