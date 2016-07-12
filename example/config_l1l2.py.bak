@@ -1,37 +1,23 @@
 # Configuration file example for PALLADIO
-# version: '0.4
-
-from palladio.wrappers.l1l2 import l1l2Classifier
-
-from palladio.data_readers import Reader_csv
+# version: '0.1.1
 
 import l1l2py
 
-#####################
-### DATASET PATHS ###
-#####################
+from palladio.wrappers.l1l2 import l1l2Classifier
 
+#~~ Data Input/Output ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# * Data assumed csv with samples and features labels
 # * All the path are w.r.t. config file path
 
-data_reader = csv_reader
 
-### The list of all files required for the experiments
-dataset_files = {
-    'data' : 'data/gedm.csv',
-    'labels' : 'data/labels.csv'
-}
+# file_types = 'npy_pkl'
 
-dataset_options = {
-    'delimiter' : ',',
-    'samples_on' : 'col', # or 'row': samples on cols or rows
-    'data_preprocessing' : None,
-    'positive_label' : None # Indicates the positive class in case of 2-class task
-}
+file_types = 'dataframe_csv'
 
-#######################
-### SESSION OPTIONS ###
-#######################
-
+data_matrix = 'data/gedm.csv'
+labels = 'data/labels.csv'
+delimiter = ','
+samples_on = 'col' # or 'row': samples on cols or rows
 result_path = 'golub_palladio_test_l1l2'
 
 # The number of "regular" experiment
@@ -45,11 +31,22 @@ N_jobs_permutation = 100
 ### It should be of the form 1/M
 test_set_ratio = float(1)/4
 
-#######################
-### LEARNER OPTIONS ###
-#######################
+#~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+data_normalizer = l1l2py.tools.center
+labels_normalizer = None
 
-learner_class = l1l2Classifier
+data_preprocessing = None
+
+#~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+internal_k = 3
+cv_splitting = l1l2py.tools.stratified_kfold_splits
+
+#~~ Errors functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# * See l1l2py.tools.{regression_error, classification_error,
+#                     balanced_classification_error}
+cv_error = l1l2py.tools.regression_error
+error = l1l2py.tools.balanced_classification_error
+positive_label = None # Indicates the positive class in case of 2-class task
 
 #~~ L1l2 Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # * Ranges will be sorted from smaller to bigger value!
@@ -60,9 +57,7 @@ lambda_range = l1l2py.tools.geometric_range(1e0, 1e4, 10)
 
 sparse, regularized, return_predictions = (True, False, True)
 
-#~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-data_normalizer = l1l2py.tools.center
-labels_normalizer = None
+learner_class = l1l2Classifier
 
 params = {
     'mu_range' : mu_range,
@@ -76,16 +71,6 @@ params = {
     'regularized' : regularized,
     'return_predictions' : return_predictions
 }
-
-#~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-internal_k = 3
-cv_splitting = l1l2py.tools.stratified_kfold_splits
-
-#~~ Errors functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# * See l1l2py.tools.{regression_error, classification_error,
-#                     balanced_classification_error}
-cv_error = l1l2py.tools.regression_error
-error = l1l2py.tools.balanced_classification_error
 
 #~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 frequency_threshold = 0.75
