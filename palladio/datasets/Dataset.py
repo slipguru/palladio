@@ -2,9 +2,29 @@ import os
 
 class Dataset(object):
     
-    def __init__(self, dataset_files, dataset_options):
+    def __init__(self, dataset_files, dataset_options, is_analysis = False):
+        """
         
-        self._dataset_files = dataset_files
+        Parameters
+        ----------
+        
+        is_analysis : bool
+            When loading the dataset during the analysis, files
+            have been renamed and moved in the session folder;
+            therefore only the keys are used to determine files'
+            paths.
+        """
+        
+        if is_analysis:
+            aux = {}
+            
+            for k in dataset_files.keys():
+                aux[k] = k
+            
+            self._dataset_files = aux
+        else:
+            self._dataset_files = dataset_files
+            
         self._dataset_options = dataset_options
         
     def get_file(self, file_key):

@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 import os, sys, imp
 
-# import pandas as pd
-
 import matplotlib
 
 matplotlib.use('Agg')
@@ -18,7 +16,6 @@ from scipy import stats
 
 import cPickle as pkl
 
-from palladio._core import load_data_dataframe_csv, load_data_npy_pkl
 from palladio import plotting
 
 def analyze_experiment(exp_folder, config):
@@ -82,25 +79,15 @@ def analyze_experiments(base_folder, config):
     from l1l2signature import internals as l1l2_core
     from l1l2signature import utils as l1l2_utils
 
-    # Data paths
-    data_path = os.path.join(base_folder, 'data_file')
-    labels_path = os.path.join(base_folder, 'labels_file')
-    config_path = os.path.join(base_folder, 'config.py')
+    dataset = config.dataset_class(
+        config.dataset_files,
+        config.dataset_options,
+        is_analysis = True
+    )
+    
+    data, labels, feature_names  = dataset.load_dataset(base_folder)
 
-
-    if config.file_types == 'dataframe_csv':
-
-        ### Read data, labels, variables names
-        data, labels, probeset_names = load_data_dataframe_csv(base_folder, config, data_path, labels_path)
-
-    elif config.file_types == 'npy_pkl':
-
-        # Data paths
-        indcol_path = os.path.join(base_folder, 'indcols')
-
-        data, labels, probeset_names = load_data_npy_pkl(base_folder, config, data_path, labels_path, indcol_path)
-
-    probeset_names = np.array(probeset_names)
+    feature_names = np.array(feature_names)
 
     MCC_regular = list() # not used so far
     MCC_permutation = list()  # not used so far
@@ -110,8 +97,8 @@ def analyze_experiments(base_folder, config):
     acc_permutation = list()
 
     # selection containers
-    selected_regular = dict(zip(probeset_names, np.zeros((len(probeset_names),))))
-    selected_permutation = dict(zip(probeset_names, np.zeros((len(probeset_names),))))
+    selected_regular = dict(zip(feature_names, np.zeros((len(feature_names),))))
+    selected_permutation = dict(zip(feature_names, np.zeros((len(feature_names),))))
 
     # kcv error containers
     kcv_err_regular = {'tr': list(), 'ts': list()}
@@ -123,7 +110,7 @@ def analyze_experiments(base_folder, config):
 
             analysis_result = analyze_experiment(exp_folder, config)
 
-            selected_probesets = probeset_names[analysis_result['selected_list']]
+            selected_probesets = feature_names[analysis_result['selected_list']]
 
             if exp_folder.split('/')[-1].startswith('regular'):
 
