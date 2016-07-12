@@ -3,9 +3,9 @@ import os
 import pandas as pd
 import numpy as np
 
-from .reader import Reader
+from .Dataset import Dataset
 
-class Reader_csv(Reader):
+class DatasetCSV(Dataset):
     """Dataset composed by data matrix and labels vector, stored in two csv files.
     
     

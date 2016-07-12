@@ -4,7 +4,6 @@ import shutil
 import cPickle as pkl
 import numpy as np
 import time
-import pandas as pd
 
 from hashlib import sha512
 
@@ -228,7 +227,7 @@ def main(config_path):
     if rank == 0:
         print("Loading dataset...")
     
-    data_reader = config.data_reader(
+    dataset = config.dataset_class(
         config.dataset_files,
         config.dataset_options
     )

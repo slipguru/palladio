@@ -1,6 +1,6 @@
 import os
 
-class Reader(object):
+class Dataset(object):
     
     def __init__(self, dataset_files, dataset_options):
         

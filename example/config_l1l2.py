@@ -3,7 +3,7 @@
 
 from palladio.wrappers.l1l2 import l1l2Classifier
 
-from palladio.data_readers import Reader_csv
+from palladio.datasets import DatasetCSV
 
 import l1l2py
 
@@ -13,7 +13,7 @@ import l1l2py
 
 # * All the path are w.r.t. config file path
 
-data_reader = Reader_csv
+dataset_class = DatasetCSV
 
 ### The list of all files required for the experiments
 dataset_files = {
