@@ -13,7 +13,7 @@ import l1l2py
 
 # * All the path are w.r.t. config file path
 
-data_reader = csv_reader
+data_reader = Reader_csv
 
 ### The list of all files required for the experiments
 dataset_files = {
@@ -64,6 +64,16 @@ sparse, regularized, return_predictions = (True, False, True)
 data_normalizer = l1l2py.tools.center
 labels_normalizer = None
 
+#~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+internal_k = 3
+cv_splitting = l1l2py.tools.stratified_kfold_splits
+
+#~~ Errors functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# * See l1l2py.tools.{regression_error, classification_error,
+#                     balanced_classification_error}
+cv_error = l1l2py.tools.regression_error
+error = l1l2py.tools.balanced_classification_error
+
 params = {
     'mu_range' : mu_range,
     'tau_range' : tau_range,
@@ -76,16 +86,6 @@ params = {
     'regularized' : regularized,
     'return_predictions' : return_predictions
 }
-
-#~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-internal_k = 3
-cv_splitting = l1l2py.tools.stratified_kfold_splits
-
-#~~ Errors functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# * See l1l2py.tools.{regression_error, classification_error,
-#                     balanced_classification_error}
-cv_error = l1l2py.tools.regression_error
-error = l1l2py.tools.balanced_classification_error
 
 #~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 frequency_threshold = 0.75

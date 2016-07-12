@@ -210,74 +210,52 @@ def main(config_path):
     if rank == 0:
         t0 = time.time()
 
-    # Configuration File
+    ##########################
+    ### LOAD CONFIGURATION ###
+    ##########################
+
     config_dir = os.path.dirname(config_path)
 
+    ### For some reason, it must be atomic
     imp.acquire_lock()
     config = imp.load_source('config', config_path)
     imp.release_lock()
     
-    ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ####################
+    ### LOAD DATASET ###
+    ####################
+    
+    if rank == 0:
+        print("Loading dataset...")
     
     data_reader = config.data_reader(
         config.dataset_files,
         config.dataset_options
     )
     
+    data, labels, _  = data_reader.load_dataset(config_dir)
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    if config.file_types == 'dataframe_csv':
+    ### Create base results dir if it does not already exist
+    ### Also copy dataset files inside it
+    if rank == 0:
+        result_path = os.path.join(config_dir, config.result_path) #result base dir
+        
+        if not os.path.exists(result_path):
+            os.mkdir(result_path)
 
-        # Data paths
-        data_path = os.path.join(config_dir, config.data_matrix)
-        labels_path = os.path.join(config_dir, config.labels)
+        shutil.copy(config_path, os.path.join(result_path, 'config.py'))
 
-        dataset_files = {'data_file' : data_path, 'labels_file' : labels_path}
-
-        ### Read data, labels, variables names
-        data, labels, _ = load_data_dataframe_csv(config_path, config, data_path, labels_path)
-
-    elif config.file_types == 'npy_pkl':
-
-        # Data paths
-        data_path = os.path.join(config_dir, config.data_matrix)
-        labels_path = os.path.join(config_dir, config.labels)
-        indcol_path = os.path.join(config_dir, config.indcols)
-
-        dataset_files = {'data_file' : data_path, 'labels_file' : labels_path, 'indcols' : indcol_path}
-
-        data, labels, _ = load_data_npy_pkl(config_path, config, data_path, labels_path, indcol_path)
+        ### CREATE HARD LINK IN SESSION FOLDER
+        data_reader.copy_files(config_dir, result_path)
+    
+    ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     
     ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     
 
-    ### Create base results dir if it does not already exist
-    ### Also copy dataset files inside it
-    if rank == 0:
-        result_path = os.path.join(config_dir, config.result_path) #result base dir
-        if not os.path.exists(result_path):
-            os.mkdir(result_path)
-
-        shutil.copy(config_path, os.path.join(result_path, 'config.py'))
-
-        for k in dataset_files.keys():
-            os.link(dataset_files[k], os.path.join(result_path, k))
-
-        # os.link(labels_path, os.path.join(result_path, 'labels_file'))
+   
 
     if IS_MPI_JOB:
         ### Wait for the folder to be created and files to be copied

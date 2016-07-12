@@ -86,4 +86,4 @@ class Reader_csv(Reader):
         data = pd_data.as_matrix()
         labels = pd_labels_mapped.as_matrix().ravel()
     
-        return data, labels, probeset_names
+        return data, labels, feature_names
