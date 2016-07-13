@@ -159,10 +159,10 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     # Setup the internal splitting for model selection
     int_k = config.internal_k
     ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())  # since it requires the labels, it can't be done before those are loaded
-    config.params['ms_split'] = ms_split
+    config.learner_params['ms_split'] = ms_split
 
     # Create the object that will actually perform the classification/feature selection
-    clf = config.learner_class(config.params)
+    clf = config.learner_class(config.learner_params)
 
     # Set the actual data and perform additional steps such as rescaling parameters etc.
     clf.setup(Xtr, Ytr, Xts, Yts)
@@ -248,13 +248,7 @@ def main(config_path):
         dataset.copy_files(config_dir, result_path)
     
     ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
-    
     ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    
-
-   
 
     if IS_MPI_JOB:
         ### Wait for the folder to be created and files to be copied

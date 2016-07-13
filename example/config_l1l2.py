@@ -74,14 +74,14 @@ cv_splitting = l1l2py.tools.stratified_kfold_splits
 cv_error = l1l2py.tools.regression_error
 error = l1l2py.tools.balanced_classification_error
 
-params = {
+learner_params = {
     'mu_range' : mu_range,
     'tau_range' : tau_range,
     'lambda_range' : lambda_range,
     'data_normalizer' : data_normalizer,
+    'labels_normalizer' : labels_normalizer,
     'cv_error' : cv_error,
     'error' : error,
-    'labels_normalizer' : labels_normalizer,
     'sparse' : sparse,
     'regularized' : regularized,
     'return_predictions' : return_predictions
