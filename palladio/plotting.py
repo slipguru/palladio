@@ -102,10 +102,10 @@ def distributions(v_regular, v_permutation, base_folder):
         f.write("\n")
 
         f.write("Regular experiments, balanced accuracy\n")
-        f.write("Mean = {0:.2f}, STD = {0:.2f}\n".format(reg_mean, reg_std))
+        f.write("Mean = {0:.2f}, STD = {1:.2f}\n".format(reg_mean, reg_std))
 
         f.write("Permutation tests, balanced accuracy\n")
-        f.write("Mean = {0:.2f}, STD = {0:.2f}\n".format(perm_mean, perm_std))
+        f.write("Mean = {0:.2f}, STD = {1:.2f}\n".format(perm_mean, perm_std))
 
     # print("Kolmogorov-Smirnov test: {}".format(kstest))
     print("Wilcoxon Rank-Sum test: {}".format(rstest))
