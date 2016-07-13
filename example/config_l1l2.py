@@ -24,7 +24,7 @@ dataset_files = {
 dataset_options = {
     'delimiter' : ',',
     'samples_on' : 'col', # or 'row': samples on cols or rows
-    'data_preprocessing' : None,
+    # 'data_preprocessing' : None,
     'positive_label' : None # Indicates the positive class in case of 2-class task
 }
 
@@ -55,7 +55,8 @@ learner_class = l1l2Classifier
 # * Ranges will be sorted from smaller to bigger value!
 # * See l1l2py.tools.{geometric_range, linear_range}
 tau_range = l1l2py.tools.geometric_range(1e-3, 0.5, 20) # * MAX_TAU
-mu_range = l1l2py.tools.geometric_range(1e-3, 1.0, 3)   # * CORRELATION_FACTOR
+# mu_range = l1l2py.tools.geometric_range(1e-3, 1.0, 3)   # * CORRELATION_FACTOR
+mu = 1e-3  # * CORRELATION_FACTOR
 lambda_range = l1l2py.tools.geometric_range(1e0, 1e4, 10)
 
 sparse, regularized, return_predictions = (True, False, True)
@@ -75,7 +76,8 @@ cv_error = l1l2py.tools.regression_error
 error = l1l2py.tools.balanced_classification_error
 
 learner_params = {
-    'mu_range' : mu_range,
+    # 'mu_range' : mu_range,
+    'mu' : mu,
     'tau_range' : tau_range,
     'lambda_range' : lambda_range,
     'data_normalizer' : data_normalizer,

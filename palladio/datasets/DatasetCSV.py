@@ -48,13 +48,13 @@ class DatasetCSV(Dataset):
         ### Retrieve feature names from the column names of the DataFrame
         feature_names = pd_data.columns
         
-        if not self.get_option('data_preprocessing') is None:
-        ### TODO Check!!!
-            # if rank == 0:
-                # print("Preprocessing data...")
-                
-            self.get_option('data_preprocessing').load_data(pd_data)
-            pd_data = self.get_option('data_preprocessing').process()
+        # if not self.get_option('data_preprocessing') is None:
+        # ### TODO Check!!!
+        #     # if rank == 0:
+        #         # print("Preprocessing data...")
+        #         
+        #     self.get_option('data_preprocessing').load_data(pd_data)
+        #     pd_data = self.get_option('data_preprocessing').process()
 
         ##################
         ##### LABELS #####

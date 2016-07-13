@@ -133,7 +133,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     # idx_ts = aux_splits[0][1]
 
     # A quick workaround to get just the first couple of the list;
-    # one iteration the break the loop
+    # one iteration, then break the loop
     for idx_tr, idx_ts in aux_splits:
         idx_lr = idx_tr
         idx_ts = idx_ts
@@ -168,8 +168,12 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     clf.setup(Xtr, Ytr, Xts, Yts)
 
     ### Workaround: this is gonna work only if clf is an l1l2Classifier
-    param_1_range = clf._tau_range
-    param_2_range = clf._lambda_range
+    try:
+        param_1_range = clf._tau_range
+        param_2_range = clf._lambda_range
+    except:
+        param_1_range = None
+        param_2_range = None
     ###
 
     result = clf.run()

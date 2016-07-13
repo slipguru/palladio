@@ -21,7 +21,9 @@ class l1l2Classifier:
         rs = l1l2_utils.RangesScaler(Xtr, Ytr, self._params['data_normalizer'], self._params['labels_normalizer'])
         
         self._tau_range = rs.tau_range(self._params['tau_range'])
-        self._mu_range = rs.mu_range(self._params['mu_range'])
+        self._mu_range = rs.mu_range(
+            np.array([self._params['mu']])
+        )
         self._lambda_range = np.sort(self._params['lambda_range'])
         
         pass
