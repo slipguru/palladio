@@ -8,6 +8,7 @@ import time
 from hashlib import sha512
 
 from .utils import sec_to_timestring
+from .wrappers.l1l2 import l1l2Classifier  # need to check type
 
 # Initialize GLOBAL MPI variables (or dummy ones for the single process case)
 try:
@@ -158,8 +159,13 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
 
     # Setup the internal splitting for model selection
     int_k = config.internal_k
-    ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())  # since it requires the labels, it can't be done before those are loaded
-    config.learner_params['ms_split'] = ms_split
+
+    # TODO: fix this and make it more general
+    if isinstance(config.learner_class, l1l2Classifier):
+        ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())  # since it requires the labels, it can't be done before those are loaded
+        config.learner_params['ms_split'] = ms_split
+    else:
+        config.learner_params['internal_k'] = int_k
 
     # Create the object that will actually perform the classification/feature selection
     clf = config.learner_class(config.learner_params)
@@ -223,26 +229,26 @@ def main(config_path):
     imp.acquire_lock()
     config = imp.load_source('config', config_path)
     imp.release_lock()
-    
+
     ####################
     ### LOAD DATASET ###
     ####################
-    
+
     if rank == 0:
         print("Loading dataset...")
-    
+
     dataset = config.dataset_class(
         config.dataset_files,
         config.dataset_options
     )
-    
+
     data, labels, _  = dataset.load_dataset(config_dir)
-    
+
     ### Create base results dir if it does not already exist
     ### Also copy dataset files inside it
     if rank == 0:
         result_path = os.path.join(config_dir, config.result_path) #result base dir
-        
+
         if not os.path.exists(result_path):
             os.mkdir(result_path)
 
@@ -250,7 +256,7 @@ def main(config_path):
 
         ### CREATE HARD LINK IN SESSION FOLDER
         dataset.copy_files(config_dir, result_path)
-    
+
     ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
