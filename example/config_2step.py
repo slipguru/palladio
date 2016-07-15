@@ -1,7 +1,8 @@
 # Configuration file example for PALLADIO
 # version: '0.4
 
-from palladio.wrappers.l1l2 import l1l2Classifier
+# from palladio.wrappers.linear_two import l1l2Classifier
+from palladio.wrappers.linear_twosteps import LinearTwoStepClassifier
 
 from palladio.datasets import DatasetCSV
 
@@ -32,7 +33,7 @@ dataset_options = {
 ### SESSION OPTIONS ###
 #######################
 
-result_path = 'golub_palladio_test_l1l2'
+result_path = 'golub_palladio_test_2step'
 
 # The number of "regular" experiment
 N_jobs_regular = 100
@@ -49,7 +50,7 @@ test_set_ratio = float(1)/4
 ### LEARNER OPTIONS ###
 #######################
 
-learner_class = l1l2Classifier
+learner_class = LinearTwoStepClassifier
 
 #~~ L1l2 Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # * Ranges will be sorted from smaller to bigger value!
@@ -67,7 +68,7 @@ labels_normalizer = None
 
 #~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 internal_k = 3
-# cv_splitting = l1l2py.tools.stratified_kfold_splits
+cv_splitting = l1l2py.tools.stratified_kfold_splits
 
 #~~ Errors functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # * See l1l2py.tools.{regression_error, classification_error,
