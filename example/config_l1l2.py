@@ -22,7 +22,7 @@ dataset_files = {
 }
 
 dataset_options = {
-    'positive_label': None  # Indicates the positive class in case of 2-class task
+    'positive_label': None,  # Indicates the positive class in case of 2-class task
     'samples_on': 'col',  # or 'row': samples on cols or rows
     # 'data_preprocessing' : None,
 
