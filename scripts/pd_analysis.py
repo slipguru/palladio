@@ -1,22 +1,17 @@
-#!/usr/bin/env python -u
-# -*- coding: utf-8 -*-
-import os, sys, imp
-
-import matplotlib
-
-matplotlib.use('Agg')
-
-import matplotlib.pyplot as plt
-
+#!/usr/bin/env python
+import os
+import sys
+import imp
 import numpy as np
-
+import matplotlib; matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import seaborn as sns
+import cPickle as pkl
 
 from scipy import stats
 
-import cPickle as pkl
-
 from palladio import plotting
+
 
 def analyze_experiment(exp_folder, config):
 
@@ -82,9 +77,9 @@ def analyze_experiments(base_folder, config):
     dataset = config.dataset_class(
         config.dataset_files,
         config.dataset_options,
-        is_analysis = True
+        is_analysis=True
     )
-    
+
     data, labels, feature_names  = dataset.load_dataset(base_folder)
 
     feature_names = np.array(feature_names)
@@ -105,9 +100,7 @@ def analyze_experiments(base_folder, config):
     kcv_err_permutation = {'tr': list(), 'ts': list()}
 
     for exp_folder in [os.path.join(base_folder, x) for x in os.listdir(base_folder)]:
-
         if os.path.isdir(exp_folder):
-
             analysis_result = analyze_experiment(exp_folder, config)
 
             selected_probesets = feature_names[analysis_result['selected_list']]
@@ -137,18 +130,16 @@ def analyze_experiments(base_folder, config):
             else:
                 print "error"
 
-        # store the actual parameters ranges
-        param_ranges = analysis_result['param_ranges']
-
-    out = {
-            'v_regular' : np.array(acc_regular),
-            'v_permutation' : np.array(acc_permutation),
-            'selected_regular' : selected_regular,
-            'selected_permutation' : selected_permutation,
-            'kcv_err_regular' : kcv_err_regular,
-            'kcv_err_permutation': kcv_err_permutation,
-            'param_ranges': param_ranges
-          }
+    # store the actual parameters ranges
+    param_ranges = analysis_result['param_ranges']
+    out = {'v_regular': np.array(acc_regular),
+           'v_permutation': np.array(acc_permutation),
+           'selected_regular': selected_regular,
+           'selected_permutation': selected_permutation,
+           'kcv_err_regular': kcv_err_regular,
+           'kcv_err_permutation': kcv_err_permutation,
+           'param_ranges': param_ranges
+           }
 
     return out
 

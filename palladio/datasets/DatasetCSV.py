@@ -45,7 +45,6 @@ class DatasetCSV(Dataset):
         pd_data = pd.read_csv(data_path, **self._dataset_options)
 
         if samples_on == 'col':
-            print(pd_data)
             pd_data = pd_data.transpose()
 
         # Retrieve feature names from the column names of the DataFrame
@@ -62,8 +61,8 @@ class DatasetCSV(Dataset):
         ##################
         # LABELS
         ##################
-        # For labels, remove parameters that were likely specified for data
-        # only.
+        # Before loading labels, remove parameters that were likely specified
+        # for data only.
         self._dataset_options.pop('usecols', None)
         pd_labels = pd.read_csv(labels_path, **self._dataset_options)
 
@@ -74,10 +73,8 @@ class DatasetCSV(Dataset):
                                 "array.")
             poslab = uv[0]
 
-        # Auxiliary function required to convert the labels to
-        # -1/+1
         def _to_plus_minus(x):
-            """Convert values in the labels."""
+            """Convert labels to -1 / +1."""
             return +1. if x == poslab else -1.
 
         # Convert labels to -1/+1
@@ -85,7 +82,4 @@ class DatasetCSV(Dataset):
 
         data = pd_data.as_matrix()
         labels = pd_labels_mapped.as_matrix().ravel()
-
-        print(feature_names)
-
         return data, labels, feature_names
