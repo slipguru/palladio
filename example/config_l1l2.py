@@ -22,10 +22,14 @@ dataset_files = {
 }
 
 dataset_options = {
-    'delimiter' : ',',
-    'samples_on' : 'col', # or 'row': samples on cols or rows
+    'positive_label': None  # Indicates the positive class in case of 2-class task
+    'samples_on': 'col',  # or 'row': samples on cols or rows
     # 'data_preprocessing' : None,
-    'positive_label' : None # Indicates the positive class in case of 2-class task
+
+    # other options for pandas.read_csv
+    'delimiter': ',',
+    'header': 0,
+    'index_col': 0
 }
 
 #######################
