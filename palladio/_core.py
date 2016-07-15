@@ -162,18 +162,22 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
 
     # TODO: fix this and make it more general
     if isinstance(config.learner_class, l1l2Classifier):
-        ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())  # since it requires the labels, it can't be done before those are loaded
+        # since it requires the labels, it can't be done before they are loaded
+        ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())
         config.learner_params['ms_split'] = ms_split
     else:
         config.learner_params['internal_k'] = int_k
+        ms_split = None
 
-    # Create the object that will actually perform the classification/feature selection
+    # Create the object that will actually perform
+    # the classification/feature selection
     clf = config.learner_class(config.learner_params)
 
-    # Set the actual data and perform additional steps such as rescaling parameters etc.
+    # Set the actual data and perform
+    # additional steps such as rescaling parameters etc.
     clf.setup(Xtr, Ytr, Xts, Yts)
 
-    ### Workaround: this is gonna work only if clf is an l1l2Classifier
+    # Workaround: this is gonna work only if clf is an l1l2Classifier
     try:
         param_1_range = clf._tau_range
         param_2_range = clf._lambda_range
@@ -202,6 +206,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
         pkl.dump(in_split, f, pkl.HIGHEST_PROTOCOL)
 
     return
+
 
 def main(config_path):
     """Main function.

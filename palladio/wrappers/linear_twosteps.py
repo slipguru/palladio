@@ -1,6 +1,7 @@
 """Feature selection and classification by linear two steps model."""
 
 import numpy as np
+from sklearn.base import BaseEstimator
 from sklearn.linear_model import ElasticNet  # feature selection
 from sklearn.linear_model import RidgeClassifier  # overshrink prevention
 
@@ -65,7 +66,30 @@ class LinearTwoStepClassifier(Classification):
 
         clf.fit(self._Xtr, self._Ytr)
 
-class LinearTwoStepTransformer(object):
+        # Evaluate prediction on test set
+        Y_pred = clf.best_estimator_.predict(self._Xts)
+        Y_pred_tr = clf.best_estimator_.predict(self._Xtr)
+
+        # Get performance
+        err_fun = self._params['error']  # config error function
+        ts_err = err_fun(self._Yts, Y_pred)
+        tr_err = err_fun(self._Ytr, Y_pred_tr)
+
+        # Save results
+        result = dict()
+        result['selected_list'] = np.nonzero(clf.best_estimator_.coef_)[0].tolist()
+        result['beta_list'] = clf.best_estimator_.coef_.tolist()
+        result['prediction_ts_list'] = Y_pred
+        result['prediction_tr_list'] = Y_pred_tr
+        result['err_ts_list'] = ts_err
+        result['err_tr_list'] = tr_err
+        # TODO: save the kcv_err_ts and (if possible) training
+        # result['kcv_err_ts'] = 
+
+        return result
+
+
+class LinearTwoStepTransformer(BaseEstimator):
     """An sklearn-compliant transformer class.
 
     This transformer class simply wraps the LinearTwoStep classifier.
@@ -86,6 +110,7 @@ class LinearTwoStepTransformer(object):
         # Predict labels
         pred_y = self.predict(X)
         real_y = y
+
         if self.scoring is not None:
             return self.scoring(real_y, pred_y)
         else:
@@ -150,7 +175,7 @@ class LinearTwoStepTransformer(object):
             # trainig data are recentered
             return np.dot(X - self.data_norm_factors, self.coef_)
 
-    def get_params(self, deep=None):
+    def get_params(self, deep=None):  # the keyword argument deep is unused
         return {'tau': self._tau, 'mu': self._mu, 'lam': self._lambda,
                 'scoring': self.scoring,
                 'data_normalizer': self.data_normalizer,
@@ -160,3 +185,4 @@ class LinearTwoStepTransformer(object):
         self._tau = kwargs['tau']
         self._mu = kwargs['mu']
         self._lambda = kwargs['lam']
+        return self
