@@ -223,26 +223,26 @@ def main(config_path):
     imp.acquire_lock()
     config = imp.load_source('config', config_path)
     imp.release_lock()
-    
+
     ####################
     ### LOAD DATASET ###
     ####################
-    
+
     if rank == 0:
         print("Loading dataset...")
-    
+
     dataset = config.dataset_class(
         config.dataset_files,
         config.dataset_options
     )
-    
-    data, labels, _  = dataset.load_dataset(config_dir)
-    
-    ### Create base results dir if it does not already exist
-    ### Also copy dataset files inside it
+
+    data, labels, _ = dataset.load_dataset(config_dir)
+
+    # Create base results dir if it does not already exist
+    # Also copy dataset files inside it
     if rank == 0:
         result_path = os.path.join(config_dir, config.result_path) #result base dir
-        
+
         if not os.path.exists(result_path):
             os.mkdir(result_path)
 
@@ -250,7 +250,7 @@ def main(config_path):
 
         ### CREATE HARD LINK IN SESSION FOLDER
         dataset.copy_files(config_dir, result_path)
-    
+
     ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
