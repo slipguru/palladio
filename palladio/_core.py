@@ -8,6 +8,7 @@ import time
 from hashlib import sha512
 
 from .utils import sec_to_timestring
+from .wrappers.l1l2 import l1l2Classifier  # need to check type
 
 # Initialize GLOBAL MPI variables (or dummy ones for the single process case)
 try:
@@ -158,16 +159,25 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
 
     # Setup the internal splitting for model selection
     int_k = config.internal_k
-    ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())  # since it requires the labels, it can't be done before those are loaded
-    config.learner_params['ms_split'] = ms_split
 
-    # Create the object that will actually perform the classification/feature selection
+    # TODO: fix this and make it more general
+    if isinstance(config.learner_class, l1l2Classifier):
+        # since it requires the labels, it can't be done before they are loaded
+        ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())
+        config.learner_params['ms_split'] = ms_split
+    else:
+        config.learner_params['internal_k'] = int_k
+        ms_split = None
+
+    # Create the object that will actually perform
+    # the classification/feature selection
     clf = config.learner_class(config.learner_params)
 
-    # Set the actual data and perform additional steps such as rescaling parameters etc.
+    # Set the actual data and perform
+    # additional steps such as rescaling parameters etc.
     clf.setup(Xtr, Ytr, Xts, Yts)
 
-    ### Workaround: this is gonna work only if clf is an l1l2Classifier
+    # Workaround: this is gonna work only if clf is an l1l2Classifier
     try:
         param_1_range = clf._tau_range
         param_2_range = clf._lambda_range
@@ -196,6 +206,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
         pkl.dump(in_split, f, pkl.HIGHEST_PROTOCOL)
 
     return
+
 
 def main(config_path):
     """Main function.
@@ -236,10 +247,10 @@ def main(config_path):
         config.dataset_options
     )
 
-    data, labels, _ = dataset.load_dataset(config_dir)
+    data, labels, _  = dataset.load_dataset(config_dir)
 
-    # Create base results dir if it does not already exist
-    # Also copy dataset files inside it
+    ### Create base results dir if it does not already exist
+    ### Also copy dataset files inside it
     if rank == 0:
         result_path = os.path.join(config_dir, config.result_path) #result base dir
 
