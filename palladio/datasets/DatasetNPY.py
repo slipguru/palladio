@@ -1,5 +1,5 @@
 import os
-
+import cPickle as pkl
 import numpy as np
 
 from .Dataset import Dataset
@@ -72,7 +72,7 @@ class DatasetNPY(Dataset):
         if not self.get_option('positive_label') is None:
             poslab = self.get_option('positive_label')
         else:
-            uv = np.sort(np.unique(pd_labels.values))
+            uv = np.sort(np.unique(labels))
     
             if len(uv) != 2:
                 raise Exception("More than two unique values in the labels array")
