@@ -1,7 +1,8 @@
 # Configuration file example for PALLADIO
 # version: '0.4
 
-from palladio.wrappers.l1l2 import l1l2Classifier
+# from palladio.wrappers.linear_two import l1l2Classifier
+from palladio.wrappers.linear_twosteps import LinearTwoStepClassifier
 
 from palladio.datasets import DatasetCSV
 
@@ -22,28 +23,24 @@ dataset_files = {
 }
 
 dataset_options = {
-    'positive_label': None,  # Indicates the positive class in case of 2-class task
-    'samples_on': 'col',  # or 'row': samples on cols or rows
+    'delimiter' : ',',
+    'samples_on' : 'col', # or 'row': samples on cols or rows
     # 'data_preprocessing' : None,
-
-    # other options for pandas.read_csv
-    'delimiter': ',',
-    'header': 0,
-    'index_col': 0
+    'positive_label' : None # Indicates the positive class in case of 2-class task
 }
 
 #######################
 ### SESSION OPTIONS ###
 #######################
 
-result_path = 'golub_palladio_test_l1l2'
+result_path = 'golub_palladio_test_2step'
 
 # The number of "regular" experiment
-N_jobs_regular = 100
+N_jobs_regular = 2
 
 # The number of instances for the permutation tests
 # (labels in the training sets are randomly shuffled)
-N_jobs_permutation = 100
+N_jobs_permutation = 2
 
 ### The ratio of the dataset held out for model assessment
 ### It should be of the form 1/M
@@ -53,7 +50,7 @@ test_set_ratio = float(1)/4
 ### LEARNER OPTIONS ###
 #######################
 
-learner_class = l1l2Classifier
+learner_class = LinearTwoStepClassifier
 
 #~~ L1l2 Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # * Ranges will be sorted from smaller to bigger value!

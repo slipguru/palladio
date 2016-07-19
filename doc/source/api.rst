@@ -14,8 +14,13 @@ Pipeline utilities
 .. automodule:: palladio._core
    :members:
 
-.. .. automodule:: adenine.core.pipelines
+
+Extra tools
+-----------------------------
+
+.. automodule:: palladio.utils
    :members:
+
 
 .. .. automodule:: adenine.core.analyze_results
    :members:

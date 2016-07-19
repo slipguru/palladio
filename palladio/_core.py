@@ -4,11 +4,11 @@ import shutil
 import cPickle as pkl
 import numpy as np
 import time
-import pandas as pd
 
 from hashlib import sha512
 
 from .utils import sec_to_timestring
+from .wrappers.l1l2 import l1l2Classifier  # need to check type
 
 # Initialize GLOBAL MPI variables (or dummy ones for the single process case)
 try:
@@ -134,7 +134,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     # idx_ts = aux_splits[0][1]
 
     # A quick workaround to get just the first couple of the list;
-    # one iteration the break the loop
+    # one iteration, then break the loop
     for idx_tr, idx_ts in aux_splits:
         idx_lr = idx_tr
         idx_ts = idx_ts
@@ -159,14 +159,32 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
 
     # Setup the internal splitting for model selection
     int_k = config.internal_k
-    ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())  # since it requires the labels, it can't be done before those are loaded
-    config.params['ms_split'] = ms_split
 
-    # Create the object that will actually perform the classification/feature selection
-    clf = config.learner_class(config.params)
+    # TODO: fix this and make it more general
+    if isinstance(config.learner_class, l1l2Classifier):
+        # since it requires the labels, it can't be done before they are loaded
+        ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())
+        config.learner_params['ms_split'] = ms_split
+    else:
+        config.learner_params['internal_k'] = int_k
+        ms_split = None
 
-    # Set the actual data and perform additional steps such as rescaling parameters etc.
+    # Create the object that will actually perform
+    # the classification/feature selection
+    clf = config.learner_class(config.learner_params)
+
+    # Set the actual data and perform
+    # additional steps such as rescaling parameters etc.
     clf.setup(Xtr, Ytr, Xts, Yts)
+
+    # Workaround: this is gonna work only if clf is an l1l2Classifier
+    try:
+        param_1_range = clf._tau_range
+        param_2_range = clf._lambda_range
+    except:
+        param_1_range = None
+        param_2_range = None
+    ###
 
     result = clf.run()
 
@@ -180,80 +198,14 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     in_split = {
         'ms_split': ms_split,
         # 'outer_split': aux_splits[0]
-        'outer_split': (idx_lr, idx_ts)
+        'outer_split': (idx_lr, idx_ts),
+        'param_ranges': (param_1_range, param_2_range)
     }
 
     with open(os.path.join(result_dir, 'in_split.pkl'), 'w') as f:
         pkl.dump(in_split, f, pkl.HIGHEST_PROTOCOL)
 
     return
-
-
-def load_data(config_path, config, data_path, labels_path):
-    """Load data, labels and variables names.
-
-    Parameters
-    ----------
-    config_path : string
-        A path to the configuration file containing all required information
-        to run a **PALLADIO** session.
-
-    config : object
-        The object containing all configuration parameters for the session.
-
-    data_path : string
-        A path to the data file.
-
-    labels_path : string
-        A path to the labels file.
-    """
-    # Configuration File
-    config_dir = os.path.dirname(config_path)
-
-    if rank == 0:
-        print("") #--------------------------------------------------------------------
-        print('Reading data... ')
-
-    ### Read data
-    pd_data = pd.read_csv(data_path, header=0, index_col=0)
-
-    if config.samples_on == 'col':
-        pd_data = pd_data.transpose()
-
-    probeset_names = pd_data.columns
-
-    if not config.data_preprocessing is None:
-        if rank == 0:
-            print("Preprocessing data...")
-        config.data_preprocessing.load_data(pd_data)
-        pd_data = config.data_preprocessing.process()
-
-    ### Read labels
-    pd_labels = pd.read_csv(labels_path, header=0, index_col=0)
-
-    if not config.positive_label is None:
-        poslab = config.positive_label
-    else:
-        uv = np.sort(np.unique(pd_labels.values))
-
-        if len(uv) != 2:
-            raise Exception("More than two unique values in the labels array")
-
-        poslab = uv[0]
-
-    def _toPlusMinus(x):
-        """Converts the values in the labels"""
-        if x == poslab:
-            return +1.0
-        else:
-            return -1.0
-
-    pd_labels_mapped = pd_labels.applymap(_toPlusMinus)
-
-    data = pd_data.as_matrix()
-    labels = pd_labels_mapped.as_matrix().ravel()
-
-    return data, labels, probeset_names
 
 
 def main(config_path):
@@ -272,29 +224,46 @@ def main(config_path):
     if rank == 0:
         t0 = time.time()
 
-    # Configuration File
+    ##########################
+    ### LOAD CONFIGURATION ###
+    ##########################
+
     config_dir = os.path.dirname(config_path)
 
+    ### For some reason, it must be atomic
     imp.acquire_lock()
     config = imp.load_source('config', config_path)
     imp.release_lock()
 
-    # Data paths
-    data_path = os.path.join(config_dir, config.data_matrix)
-    labels_path = os.path.join(config_dir, config.labels)
+    ####################
+    ### LOAD DATASET ###
+    ####################
 
-    ### Read data, labels, variables names
-    data, labels, _ = load_data(config_path, config, data_path, labels_path)
+    if rank == 0:
+        print("Loading dataset...")
+
+    dataset = config.dataset_class(
+        config.dataset_files,
+        config.dataset_options
+    )
+
+    data, labels, _  = dataset.load_dataset(config_dir)
 
     ### Create base results dir if it does not already exist
+    ### Also copy dataset files inside it
     if rank == 0:
         result_path = os.path.join(config_dir, config.result_path) #result base dir
+
         if not os.path.exists(result_path):
             os.mkdir(result_path)
 
         shutil.copy(config_path, os.path.join(result_path, 'config.py'))
-        os.link(data_path, os.path.join(result_path, 'data_file'))
-        os.link(labels_path, os.path.join(result_path, 'labels_file'))
+
+        ### CREATE HARD LINK IN SESSION FOLDER
+        dataset.copy_files(config_dir, result_path)
+
+    ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     if IS_MPI_JOB:
         ### Wait for the folder to be created and files to be copied
