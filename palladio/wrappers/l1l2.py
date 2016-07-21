@@ -1,10 +1,11 @@
-import l1l2py
-
 import numpy as np
 
 from l1l2signature import utils as l1l2_utils
+from .classification import Classification
 
-class l1l2Classifier:
+import l1l2py
+
+class l1l2Classifier(Classification):
     
     def __init__(self, params):
         
@@ -26,17 +27,33 @@ class l1l2Classifier:
         )
         self._lambda_range = np.sort(self._params['lambda_range'])
         
-        pass
+        # Determine which version of the algorithm must be used (CPU or GPU)
+        # based on the process rank and configuration settings
+        if self.get_param('process_rank') in self.get_param('gpu_processes'):
+            self._algorithm_version = 'GPU'
+        else:
+            self._algorithm_version = 'CPU'
+        
+        
+    def get_algorithm_version(self):
+        
+        return self._algorithm_version
+        
         
     def run(self):
+        
         
         # Execution
         result = l1l2py.model_selection(
             self._Xtr, self._Ytr, self._Xts, self._Yts, 
             self._mu_range, self._tau_range, self._lambda_range,
-            self._params['ms_split'], self._params['cv_error'], self._params['error'],
-            self._params['data_normalizer'], self._params['labels_normalizer'],
-            self._params['sparse'], self._params['regularized'], self._params['return_predictions']
+            self.get_param('ms_split'), self.get_param('cv_error'), self.get_param('error'),
+            data_normalizer = self.get_param('data_normalizer'),
+            labels_normalizer = self.get_param('labels_normalizer'),
+            sparse = self.get_param('sparse'),
+            regularized = self.get_param('regularized'),
+            return_predictions = self.get_param('return_predictions'),
+            algorithm_version = self.get_algorithm_version()
             )
 
         ### Return only the first element of the list, which is the one related to the smallest value of mu

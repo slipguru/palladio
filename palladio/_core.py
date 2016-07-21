@@ -161,6 +161,9 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())  # since it requires the labels, it can't be done before those are loaded
     config.learner_params['ms_split'] = ms_split
 
+    # Add process rank
+    config.learner_params['process_rank'] = rank
+
     # Create the object that will actually perform the classification/feature selection
     clf = config.learner_class(config.learner_params)
 
