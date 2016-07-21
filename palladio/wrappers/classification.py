@@ -14,6 +14,9 @@ class Classification(object):
         
         self._Xts = Xts
         self._Yts = Yts
+    
+    def get_param(self, param_name):
+        return self._params[param_name]
         
     def getXtr(self):
         return self._Xtr

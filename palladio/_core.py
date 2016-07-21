@@ -161,7 +161,8 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     int_k = config.internal_k
 
     # TODO: fix this and make it more general
-    if isinstance(config.learner_class, l1l2Classifier):
+    if config.learner_class == l1l2Classifier:
+    # if isinstance(config.learner_class, l1l2Classifier):
         # since it requires the labels, it can't be done before they are loaded
         ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())
         config.learner_params['ms_split'] = ms_split
@@ -169,8 +170,12 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
         config.learner_params['internal_k'] = int_k
         ms_split = None
 
+    # Add process rank
+    config.learner_params['process_rank'] = rank
+    
     # Create the object that will actually perform
     # the classification/feature selection
+
     clf = config.learner_class(config.learner_params)
 
     # Set the actual data and perform
