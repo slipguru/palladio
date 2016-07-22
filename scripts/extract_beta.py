@@ -10,6 +10,7 @@ import os, sys
 def beta_average():
 
     session_folder = sys.argv[1]
+    experiments_folder = os.path.join(session_folder, 'experiments')
 
 
     beta = None
@@ -17,19 +18,16 @@ def beta_average():
 
     i = 0
 
-    for f in os.listdir(session_folder):
+    for f in os.listdir(experiments_folder):
 
 
-        if f.startswith('regular') and os.path.isdir(os.path.join(session_folder, f)):
+        if f.startswith('regular') and os.path.isdir(os.path.join(experiments_folder, f)):
 
             exp_folder = os.path.join(session_folder, f)
             results_file = os.path.join(exp_folder, 'result.pkl')
 
             with open(results_file, 'r') as f:
                 res = pkl.load(f)
-
-            print res['beta_list']
-            return
 
             if beta is None:
                 beta = np.array(res['model'])
