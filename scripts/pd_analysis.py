@@ -80,6 +80,8 @@ def analyze_experiments(base_folder, config):
         is_analysis=True
     )
 
+    experiments_folder = os.path.join(base_folder, 'experiments')
+    
     data, labels, feature_names  = dataset.load_dataset(base_folder)
 
     feature_names = np.array(feature_names)
@@ -99,7 +101,7 @@ def analyze_experiments(base_folder, config):
     kcv_err_regular = {'tr': list(), 'ts': list()}
     kcv_err_permutation = {'tr': list(), 'ts': list()}
 
-    for exp_folder in [os.path.join(base_folder, x) for x in os.listdir(base_folder)]:
+    for exp_folder in [os.path.join(experiments_folder, x) for x in os.listdir(experiments_folder)]:
         if os.path.isdir(exp_folder):
             analysis_result = analyze_experiment(exp_folder, config)
 
@@ -147,7 +149,7 @@ def analyze_experiments(base_folder, config):
 def main():
 
     base_folder = sys.argv[1]
-
+    
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
 
     threshold = int(config.N_jobs_regular * config.frequency_threshold)
@@ -182,15 +184,16 @@ def main():
             f.write("{} : {}\n".format(k,selected_permutation[k]))
 
     plotting.distributions(v_regular, v_permutation, base_folder)
-
+    
     plotting.feature_frequencies(sorted_keys_regular, selected_regular, base_folder, threshold = threshold)
-
+    
     plotting.features_manhattan(sorted_keys_regular, selected_regular, selected_permutation, base_folder, threshold = threshold)
-
+    
     plotting.selected_over_threshold(selected_regular, selected_permutation,
                                      config.N_jobs_regular, config.N_jobs_permutation,
                                      base_folder, threshold = threshold)
-
+    
+    
     for kcv_err, exp in zip([kcv_err_regular, kcv_err_permutation], ['regular', 'permutation']):
         plotting.kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges)
 

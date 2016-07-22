@@ -66,7 +66,7 @@ def distributions(v_regular, v_permutation, base_folder):
     """
 
     # nbins = 15
-
+    
     fig, ax = plt.subplots(figsize=(18, 10))
 
     args = {
