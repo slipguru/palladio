@@ -66,7 +66,7 @@ def distributions(v_regular, v_permutation, base_folder):
     """
 
     # nbins = 15
-    
+
     fig, ax = plt.subplots(figsize=(18, 10))
 
     args = {
@@ -272,8 +272,8 @@ def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular, 
 
     sorted_keys : list
     """
-    # horizontal axis
-    thresh_axis = np.linspace(0,1,21)
+    # horizontal axis REVERSED
+    thresh_axis = np.linspace(0,1,21)[::-1]
 
     # number of selected features for true/perm
     y_true = list()
@@ -304,7 +304,7 @@ def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular, 
     plt.figure()
     plt.plot(100*thresh_axis, sel_true, marker = 'h', alpha = 0.8, color = colorsHex['lightGreen'], label='Real signature')
     plt.plot(100*thresh_axis, sel_perm, marker = 'h', alpha = 0.8, color = colorsHex['lightRed'], label='Permutation signature')
-    plt.axvline(x=threshold, ymin=0, ymax=n_feat, ls = '--', lw = 0.5, color = 'k', label='Threshold')
+    plt.axvline(x=100-threshold, ymin=0, ymax=n_feat, ls = '--', lw = 0.5, color = 'k', label='Threshold')
     plt.legend()
     plt.xlabel("Selection frequency %", fontsize="large")
     plt.ylabel("Number of selected features", fontsize="large")
