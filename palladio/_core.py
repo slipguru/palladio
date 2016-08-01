@@ -180,7 +180,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, experi
 
     # Add process rank
     config.learner_params['process_rank'] = rank
-    
+
     # Create the object that will actually perform
     # the classification/feature selection
 
@@ -269,15 +269,15 @@ def main(config_path):
     ### Create base session folder
     ### Also copy dataset files inside it
     if rank == 0:
-        
+
         # Create main session folder
         if not os.path.exists(result_path):
             os.mkdir(result_path)
         else:
             raise Exception("Session folder {} already exists, aborting.".format(result_path))
-        
+
         # Create experiments folder (where all experiments sub-folders will be created)
-        
+
         os.mkdir(experiments_folder_path)
 
         shutil.copy(config_path, os.path.join(result_path, 'config.py'))
@@ -331,20 +331,20 @@ def main(config_path):
         ### the process' rank and a sequential number
         custom_name = "{}_p_{}_i_{}".format(("permutation" if is_permutation_test else "regular"), rank, i)
         tmp_name_base = 'tmp_' + custom_name
-        
+
         #######################
         ### RECOVERY SYSTEM ###
         #######################
-        
+
         experiment_resubmissions = 0
         experiment_completed = False
         while not experiment_completed and experiment_resubmissions <= MAX_RESUBMISSIONS:
-            
+
             try:
                 tmp_name = tmp_name_base + '_submission_{}'.format(experiment_resubmissions+1)
                 run_experiment(data, labels, config_dir, config, is_permutation_test, experiments_folder_path, tmp_name)
                 experiment_completed = True
-                
+
                 shutil.move(
                     os.path.join(experiments_folder_path, tmp_name),
                     os.path.join(experiments_folder_path, custom_name),
@@ -354,16 +354,16 @@ def main(config_path):
                 # If somethings out of the ordinary happens,
                 # resubmit the job
                 experiment_resubmissions += 1
-                print("[{}_{}] failed experiment {}, resubmission #{}".format(name, rank, i, experiment_resubmissions))
-            
+                print("[{}_{}] failed experiment {}, resubmission #{}\nException raised: {}".format(name, rank, i, experiment_resubmissions, e))
+
         if not experiment_completed:
             print("[{}_{}] failed to complete experiment {}, max resubmissions limit reached".format(name, rank, i))
-            
-            
 
-        
 
-        
+
+
+
+
 
     if IS_MPI_JOB:
         ### Wait for all experiments to finish before taking the time
