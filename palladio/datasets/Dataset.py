@@ -1,5 +1,6 @@
 import os
-
+import time
+import shutil
 
 class Dataset(object):
     """Main class for containing data and labels."""
@@ -61,10 +62,11 @@ class Dataset(object):
         """
         while not os.path.exists(session_folder):
             time.sleep(0.5)
-        print("{} created".format(session_folder))
+        print("\n{} created".format(session_folder))
 
         for link_name in self._dataset_files.keys():
-            os.link(
+            #os.link(
+            shutil.copy2(
                 os.path.join(base_path, self.get_file(link_name)),  # SRC
                 os.path.join(session_folder, link_name)             # DST
             )
