@@ -71,8 +71,6 @@ def analyze_experiments(base_folder, config):
 
     # Local imports, in order to select backend on startup
     from matplotlib import pyplot as plt
-    from l1l2signature import internals as l1l2_core
-    from l1l2signature import utils as l1l2_utils
 
     dataset = config.dataset_class(
         config.dataset_files,
@@ -81,7 +79,7 @@ def analyze_experiments(base_folder, config):
     )
 
     experiments_folder = os.path.join(base_folder, 'experiments')
-    
+
     data, labels, feature_names  = dataset.load_dataset(base_folder)
 
     feature_names = np.array(feature_names)
@@ -149,7 +147,7 @@ def analyze_experiments(base_folder, config):
 def main():
 
     base_folder = sys.argv[1]
-    
+
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
 
     threshold = int(config.N_jobs_regular * config.frequency_threshold)
@@ -184,16 +182,16 @@ def main():
             f.write("{} : {}\n".format(k,selected_permutation[k]))
 
     plotting.distributions(v_regular, v_permutation, base_folder)
-    
+
     plotting.feature_frequencies(sorted_keys_regular, selected_regular, base_folder, threshold = threshold)
-    
+
     plotting.features_manhattan(sorted_keys_regular, selected_regular, selected_permutation, base_folder, threshold = threshold)
-    
+
     plotting.selected_over_threshold(selected_regular, selected_permutation,
                                      config.N_jobs_regular, config.N_jobs_permutation,
                                      base_folder, threshold = threshold)
-    
-    
+
+
     for kcv_err, exp in zip([kcv_err_regular, kcv_err_permutation], ['regular', 'permutation']):
         plotting.kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges)
 
