@@ -1,12 +1,12 @@
 import numpy as np
 
-from l1l2signature import utils as l1l2_utils
+from palladio import utils as pd_utils
 from .classification import Classification
 
 import l1l2py
 
 class l1l2Classifier(Classification):
-    
+
     def __init__(self, params):
 
         self._params = params
@@ -19,30 +19,30 @@ class l1l2Classifier(Classification):
         self._Xts = Xts
         self._Yts = Yts
 
-        rs = l1l2_utils.RangesScaler(Xtr, Ytr,
+        rs = pd_utils.RangesScaler(Xtr, Ytr,
                                      self._params['data_normalizer'],
                                      self._params['labels_normalizer'])
 
         self._tau_range = rs.tau_range(self._params['tau_range'])
         self._mu_range = rs.mu_range(np.array([self._params['mu']]))
         self._lambda_range = np.sort(self._params['lambda_range'])
-        
+
         # Determine which version of the algorithm must be used (CPU or GPU)
         # based on the process rank and configuration settings
         if self.get_param('process_rank') in self.get_param('gpu_processes'):
             self._algorithm_version = 'GPU'
         else:
             self._algorithm_version = 'CPU'
-        
-        
+
+
     def get_algorithm_version(self):
-        
+
         return self._algorithm_version
-        
-        
+
+
     def run(self):
-        
-        
+
+
         # Execution
         result = l1l2py.model_selection(
             self._Xtr, self._Ytr, self._Xts, self._Yts,
