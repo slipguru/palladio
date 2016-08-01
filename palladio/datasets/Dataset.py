@@ -59,6 +59,9 @@ class Dataset(object):
         sessio_folder : string
             The folder inside which files links are being created.
         """
+        while not os.path.exists(session_folder):
+            time.sleep(0.5)
+        print("{} created".format(session_folder))
 
         for link_name in self._dataset_files.keys():
             os.link(
