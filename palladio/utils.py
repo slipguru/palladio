@@ -6,6 +6,7 @@
 # PALLADIO Refactoring: Samuele Fiorini
 
 import numpy as np
+import l1l2py
 
 class PDException(Exception):
     """Exception raised by ``PALLADIO`` classes and functions."""
@@ -378,7 +379,7 @@ def _check_unique_labels(labels):
     unique_labels.sort(kind='mergesort')
     class1 = (labels == unique_labels[0])
     class2 = (labels == unique_labels[1])
-    
+
     return unique_labels, class1, class2
 
 def sec_to_timestring(seconds):
