@@ -48,32 +48,46 @@ colorsHex = {
     "darkButter": "#c4a000"
 }
 
-def distributions(v_regular, v_permutation, base_folder):
+def distributions(v_regular, v_permutation, base_folder, metric):
     """
-    Create a plot of the distributions of accuracies for both "regular" experiments and permutation tests
+    Create a plot of the distributions of performance metrics for both "regular"
+    experiments and permutation tests.
 
     Parameters
     ----------
 
     v_regular : numpy.array
-        The accuracy values for all regular experiments
+        The metric values for all regular experiments
 
     v_permutation : numpy.array
-        The accuracy values for permutation tests
+        The metric values for permutation tests
 
     base_folder : string
         The folder where the plot will be saved
+
+    metric : string
+        The object metric, this should be in ['Accuracy', 'Balanced Accuracy',
+        'MCC', 'Precision', 'Recall', 'F1']. It is going to be used to set the
+        title and the xlabel.
     """
 
-    # nbins = 15
+    # scaling factor for percentage plot
+    if metric.lower() not in ['mcc']:
+        scale = 100
+        _bins = np.arange(0, 105, 5)
+        x_min = 0.0
+    else:
+      scale = 1
+      _bins = np.arange(-1, 1, 0.05)
+      x_min = -1.0
+    x_max = 1.0
 
     fig, ax = plt.subplots(figsize=(18, 10))
 
     args = {
         'norm_hist' : False,
         'kde' : False,
-        # 'bins' : np.arange(0,1.05,0.05)
-        'bins' : np.arange(0,105,5),
+        'bins' : _bins,
         # hist_kws : {'alpha' : 0.8}
     }
 
@@ -83,44 +97,54 @@ def distributions(v_regular, v_permutation, base_folder):
     perm_mean = np.mean(v_permutation)
     perm_std = np.std(v_permutation)
 
-    sns.distplot(v_permutation*100, label = "Permutation tests \nMean = {0:.2f}, STD = {1:.2f}".format(perm_mean, perm_std), color = colorsHex['lightRed'], ax = ax, hist_kws = {'alpha' : 0.8}, **args)
-    sns.distplot(v_regular*100, label = "Regular experiments \nMean = {0:.2f}, STD = {1:.2f}".format(reg_mean, reg_std), color = colorsHex['lightGreen'], ax = ax, hist_kws = {'alpha' : 0.8}, **args)
+    sns.distplot(v_permutation*scale,
+                 label = "Permutation tests \nMean = {0:.2f}, STD = {1:.2f}".format(perm_mean, perm_std),
+                 color = colorsHex['lightRed'], ax = ax,
+                 hist_kws = {'alpha' : 0.8}, **args)
+    sns.distplot(v_regular*scale,
+                 label = "Regular experiments \nMean = {0:.2f}, STD = {1:.2f}".format(reg_mean, reg_std),
+                 color = colorsHex['lightGreen'], ax = ax,
+                 hist_kws = {'alpha' : 0.8}, **args)
 
-    ### Fit a gaussian with permutation data
-    (mu, sigma) = stats.norm.fit(v_permutation*100)
-
-    # print (mu, sigma)
-
-    kstest = stats.kstest(v_regular*100, 'norm', args=(mu, sigma))
+    ### Fit a gaussian with permutation data (DEPRECATED)
+    # (mu, sigma) = stats.norm.fit(v_permutation*100)
+    # kstest = stats.kstest(v_regular*100, 'norm', args=(mu, sigma))
+    ### Wilcoxon rank sum test
     rstest = stats.ranksums(v_regular, v_permutation)
 
-    with open(os.path.join(base_folder, 'stats.txt'), 'w')  as f:
+    with open(os.path.join(base_folder, 'stats.txt'), 'a')  as f:
 
         # f.write("Kolmogorov-Smirnov test p-value: {0:.3e}\n".format(kstest[1]))
         # f.write("Testing distributions")
+        f.write("\n------------------------------------------\n")
+        f.write("Metric : {}\n".format(metric))
         f.write("Wilcoxon Rank-Sum test p-value: {0:.3e}\n".format(rstest[1]))
         f.write("\n")
 
-        f.write("Regular experiments, balanced accuracy\n")
+        f.write("Regular experiments, {}\n".format(metric))
         f.write("Mean = {0:.2f}, STD = {1:.2f}\n".format(reg_mean, reg_std))
 
-        f.write("Permutation tests, balanced accuracy\n")
+        f.write("Permutation tests, {}\n".format(metric))
         f.write("Mean = {0:.2f}, STD = {1:.2f}\n".format(perm_mean, perm_std))
 
     # print("Kolmogorov-Smirnov test: {}".format(kstest))
-    print("Wilcoxon Rank-Sum test: {}".format(rstest))
+    print("[{}] Wilcoxon Rank-Sum test: {}".format(metric, rstest))
 
-
-    plt.xlabel("Balanced Accuracy (%)", fontsize="large")
+    if metric.lower() not in ['mcc']:
+        plt.xlabel("{} (%)".format(metric), fontsize="large")
+    else:
+        plt.xlabel("{}".format(metric), fontsize="large")
     plt.ylabel("Absolute Frequency", fontsize="large")
 
-    plt.title("Distribution of accuracies", fontsize = 20)
+    plt.title("Distribution of {}".format(metric), fontsize = 20)
 
     ### Determine limits for the x axis
-    x_min = v_permutation.min() - v_permutation.mean()/10
-    x_max = v_regular.max() + v_regular.mean()/10
+    # x_min = v_permutation.min() - v_permutation.mean()/10
+    # x_max = v_regular.max() + v_regular.mean()/10
+    # see above
 
-    plt.xlim([x_min*100,x_max*100])
+
+    plt.xlim([x_min*scale,x_max*scale])
 
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='upper right',
            ncol=2, mode="expand", borderaxespad=0., fontsize="large")
@@ -128,7 +152,7 @@ def distributions(v_regular, v_permutation, base_folder):
     # fig.text(0.1, 0.01, "Kolmogorov-Smirnov test p-value: {0:.3e}\n".format(kstest[1]), fontsize=18)
     fig.text(0.1, 0.005, "Wilcoxon Rank-Sum test p-value: {0:.3e}\n".format(rstest[1]), fontsize=18)
 
-    plt.savefig(os.path.join(base_folder, 'permutation_acc_distribution.pdf'))
+    plt.savefig(os.path.join(base_folder, 'permutation_'+metric+'_distribution.pdf'))
 
 def features_manhattan(sorted_keys, frequencies_true, frequencies_perm, base_folder, threshold = 75):
     """

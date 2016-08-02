@@ -28,6 +28,7 @@ class Dataset(object):
             self._dataset_files = dataset_files
 
         self._dataset_options = dataset_options
+        self._poslab = dataset_options['positive_label']
 
     def get_file(self, file_key):
         return self._dataset_files[file_key]
