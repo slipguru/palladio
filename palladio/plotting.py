@@ -200,7 +200,7 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm, base_fol
            fontsize=8)
 
     plt.xlabel('Features')
-    plt.ylabel('Absolute frequencies ({} real, {} permutation)'.format(len(y_true), len(y_perm)))
+    plt.ylabel('Absolute frequencies ({} regular, {} permutation)'.format(len(y_true), len(y_perm)))
 
     plt.title("Feature frequencies")
 
