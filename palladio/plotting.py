@@ -91,11 +91,11 @@ def distributions(v_regular, v_permutation, base_folder, metric):
         # hist_kws : {'alpha' : 0.8}
     }
 
-    reg_mean = np.mean(v_regular)
-    reg_std = np.std(v_regular)
+    reg_mean = np.nanmean(v_regular)
+    reg_std = np.nanstd(v_regular)
 
-    perm_mean = np.mean(v_permutation)
-    perm_std = np.std(v_permutation)
+    perm_mean = np.nanmean(v_permutation)
+    perm_std = np.nanstd(v_permutation)
 
     sns.distplot(v_permutation*scale,
                  label = "Permutation tests \nMean = {0:.2f}, STD = {1:.2f}".format(perm_mean, perm_std),

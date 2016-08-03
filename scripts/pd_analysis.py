@@ -40,6 +40,13 @@ def analyze_experiment(exp_folder, config, poslab):
     TN = np.sum((Y_lr == -1) * (Y_ts == Y_lr))
     FN = np.sum((Y_lr == -1) * (Y_ts != Y_lr))
 
+    # print("----------------------------")
+    # print("TP: {}".format(TP))
+    # print("FP: {}".format(FP))
+    # print("TN: {}".format(TN))
+    # print("FN: {}".format(FN))
+    # print("----------------------------")
+
     accuracy = (TP + TN) / float(TP + FP + FN + TN)
     balanced_accuracy = 0.5 * ( (TP / float(TP + FN)) + (TN / float(TN + FP)) )
 
@@ -47,7 +54,7 @@ def analyze_experiment(exp_folder, config, poslab):
     MCC = ( ((TP * TN) - (FP * FN)) / (1.0 if den == 0 else np.sqrt(den)) )
 
     if poslab is not None:
-        precision =  TP / float(TP + FP)
+        precision = TP / float(TP + FP)
         recall = TP / float(TP + FN)
         F1 = 2.0 * ((precision * recall) / (precision + recall))
     else:
@@ -94,7 +101,7 @@ def analyze_experiments(base_folder, config):
 
     experiments_folder = os.path.join(base_folder, 'experiments')
 
-    data, labels, feature_names  = dataset.load_dataset(base_folder)
+    data, labels, feature_names = dataset.load_dataset(base_folder)
 
     feature_names = np.array(feature_names)
 
