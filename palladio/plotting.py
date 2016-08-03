@@ -183,7 +183,7 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm, base_fol
     threshold_line = plt.axhline(y=threshold, ls = '--', lw = 0.5, color = 'k')
 
     plt.xlim([-5,len(sorted_keys) + 5])
-    plt.ylim([-5,105])
+    plt.ylim([-5,len(y_true)+5])
 
     plt.tick_params(
     axis='x',          # changes apply to the x-axis
@@ -200,7 +200,7 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm, base_fol
            fontsize=8)
 
     plt.xlabel('Features')
-    plt.ylabel('Absolute frequencies')
+    plt.ylabel('Absolute frequencies ({} real, {} permutation)'.format(len(y_true), len(y_perm)))
 
     plt.title("Feature frequencies")
 
