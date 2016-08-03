@@ -89,4 +89,7 @@ class DatasetCSV(Dataset):
 
         data = pd_data.as_matrix()
         labels = pd_labels_mapped.as_matrix().ravel()
+        if data.shape[0] != labels.shape[0]:
+            raise ValueError("The number of samples in data do not correspond "
+                             "to the number of samples in labels.")
         return data, labels, feature_names
