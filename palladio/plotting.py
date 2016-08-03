@@ -154,7 +154,8 @@ def distributions(v_regular, v_permutation, base_folder, metric):
 
     plt.savefig(os.path.join(base_folder, 'permutation_'+metric+'_distribution.pdf'))
 
-def features_manhattan(sorted_keys, frequencies_true, frequencies_perm, base_folder, threshold = 75):
+def features_manhattan(sorted_keys, frequencies_true, frequencies_perm,
+                       base_folder, N_jobs_regular, N_jobs_permutation, threshold = 75):
     """
     Parameters
     ----------
@@ -183,7 +184,7 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm, base_fol
     threshold_line = plt.axhline(y=threshold, ls = '--', lw = 0.5, color = 'k')
 
     plt.xlim([-5,len(sorted_keys) + 5])
-    plt.ylim([-5,len(y_true)+5])
+    plt.ylim([-5,N_jobs_regular+5])
 
     plt.tick_params(
     axis='x',          # changes apply to the x-axis
@@ -200,7 +201,7 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm, base_fol
            fontsize=8)
 
     plt.xlabel('Features')
-    plt.ylabel('Absolute frequencies ({} regular, {} permutation)'.format(len(y_true), len(y_perm)))
+    plt.ylabel('Absolute frequencies ({} regular, {} permutation)'.format(N_jobs_regular, N_jobs_permutation))
 
     plt.title("Feature frequencies")
 

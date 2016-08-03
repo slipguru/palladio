@@ -198,6 +198,8 @@ def main():
 
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
     _positive_label = config.dataset_options['positive_label']
+    _N_jobs_regular = config.N_jobs_regular
+    _N_jobs_permutation = config.N_jobs_permutation
 
     threshold = int(config.N_jobs_regular * config.frequency_threshold)
 
@@ -249,7 +251,8 @@ def main():
 
     plotting.feature_frequencies(sorted_keys_regular, selected_regular, base_folder, threshold = threshold)
 
-    plotting.features_manhattan(sorted_keys_regular, selected_regular, selected_permutation, base_folder, threshold = threshold)
+    plotting.features_manhattan(sorted_keys_regular, selected_regular, selected_permutation,
+                                base_folder, _N_jobs_regular, _N_jobs_permutation, threshold=threshold)
 
     plotting.selected_over_threshold(selected_regular, selected_permutation,
                                      config.N_jobs_regular, config.N_jobs_permutation,
