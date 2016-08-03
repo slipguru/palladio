@@ -49,6 +49,13 @@ class DatasetCSV(Dataset):
 
         # Retrieve feature names from the column names of the DataFrame
         feature_names = pd_data.columns
+        if feature_names.shape[0] != np.unique(feature_names).shape[0]:
+            import sys
+            sys.stderr.write("Feature names specified are not unique. "
+                             "Assigning a unique label.")
+            feature_names = np.array(feature_names)
+            for _, __ in enumerate(feature_names):
+                feature_names[_] += '_{}'.format(_)
 
         # if not self.get_option('data_preprocessing') is None:
         # ### TODO Check!!!

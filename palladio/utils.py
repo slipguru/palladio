@@ -71,7 +71,7 @@ class RangesScaler(object):
 
         if max(trange) >= 1.0 or min(trange) < 0.0:
             raise PDException('relative tau values have to '
-                                         'be in [0, 1)')
+                              'be in [0, 1)')
 
         return trange * self.tau_scaling_factor
 
@@ -101,7 +101,7 @@ class RangesScaler(object):
 
         if min(mrange) < 0.0:
             raise PDException('relative mu values have to be '
-                                         'greater than 0')
+                              'greater than 0')
 
         return np.sort(mrange) * self.mu_scaling_factor
 
@@ -217,7 +217,7 @@ def selection_summary(splits_results):
     """
     # Sum selection lists by mu values (mu_num x num_var)
     return np.sum(np.asarray(sr['selected_list'], dtype=float)
-                     for sr in splits_results)
+                  for sr in splits_results)
 
 
 def confusion_matrix(labels, predictions):
@@ -369,6 +369,7 @@ def classification_measures(confusion_matrix, positive_label=None):
 
     return summary
 
+
 def _check_unique_labels(labels):
     labels = np.array([str(s).strip() for s in labels])
     unique_labels = np.unique(labels)
@@ -382,8 +383,10 @@ def _check_unique_labels(labels):
 
     return unique_labels, class1, class2
 
+
 def sec_to_timestring(seconds):
     """Transform seconds into a formatted time string.
+
     Parameters
     -----------
     seconds : int

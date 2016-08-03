@@ -70,7 +70,8 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
     return type_vector
 
 
-def run_experiment(data, labels, config_dir, config, is_permutation_test, experiments_folder_path, custom_name):
+def run_experiment(data, labels, config_dir, config, is_permutation_test,
+                   experiments_folder_path, custom_name):
     """Run a single independent experiment.
 
     Perform a single experiment, which is divided in three main stages:
@@ -238,18 +239,18 @@ def main(config_path):
         t0 = time.time()
 
     ##########################
-    ### LOAD CONFIGURATION ###
+    # LOAD CONFIGURATION
     ##########################
 
     config_dir = os.path.dirname(config_path)
 
-    ### For some reason, it must be atomic
+    # For some reason, it must be atomic
     imp.acquire_lock()
     config = imp.load_source('config', config_path)
     imp.release_lock()
 
     ####################
-    ### LOAD DATASET ###
+    # LOAD DATASET
     ####################
 
     if rank == 0:
@@ -260,14 +261,14 @@ def main(config_path):
         config.dataset_options
     )
 
-    data, labels, _  = dataset.load_dataset(config_dir)
+    data, labels, _ = dataset.load_dataset(config_dir)
 
     # Session folder
     result_path = os.path.join(config_dir, config.result_path) # session base dir
     experiments_folder_path = os.path.join(result_path, 'experiments')
 
-    ### Create base session folder
-    ### Also copy dataset files inside it
+    # Create base session folder
+    # Also copy dataset files inside it
     if rank == 0:
 
         # Create main session folder
@@ -282,11 +283,11 @@ def main(config_path):
 
         shutil.copy(config_path, os.path.join(result_path, 'config.py'))
 
-        ### CREATE HARD LINK IN SESSION FOLDER
+        # CREATE HARD LINK IN SESSION FOLDER
         dataset.copy_files(config_dir, result_path)
 
     if IS_MPI_JOB:
-        ### Wait for the folder to be created and files to be copied
+        # Wait for the folder to be created and files to be copied
         comm.barrier()
 
     if rank == 0:
