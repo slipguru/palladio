@@ -30,6 +30,7 @@ except:
 
     IS_MPI_JOB = False
 
+MAX_RESUBMISSIONS = 2
 
 def generate_job_list(N_jobs_regular, N_jobs_permutation):
     """Generate a vector used to distribute jobs among nodes.
@@ -69,7 +70,8 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
     return type_vector
 
 
-def run_experiment(data, labels, config_dir, config, is_permutation_test, custom_name):
+def run_experiment(data, labels, config_dir, config, is_permutation_test,
+                   experiments_folder_path, custom_name):
     """Run a single independent experiment.
 
     Perform a single experiment, which is divided in three main stages:
@@ -100,6 +102,10 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
         A flag indicatin whether the experiment is part of the permutation test
         (and therefore has had its training labels randomly shuffled) or not.
 
+    experiments_folder_path : string
+        The path to the folder where all experiments' sub-folders
+        will be stored
+
     custom_name : string
         The name of the subfolder where the experiments' results will be
         stored. It is a combination of a prefix which is either ``regular`` or
@@ -110,8 +116,11 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     result_path = os.path.join(config_dir, config.result_path)  # result base dir
 
     # Create experiment folders
-    result_dir = os.path.join(result_path, custom_name)
+    result_dir = os.path.join(experiments_folder_path, custom_name)
     os.mkdir(result_dir)
+
+    # if np.random.random() > 0.9:
+    #     raise Exception("Random mistake!!! sh*t happens!")
 
     # Produce a seed for the pseudo random generator
     rseed = 0
@@ -161,7 +170,8 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
     int_k = config.internal_k
 
     # TODO: fix this and make it more general
-    if isinstance(config.learner_class, l1l2Classifier):
+    if config.learner_class == l1l2Classifier:
+    # if isinstance(config.learner_class, l1l2Classifier):
         # since it requires the labels, it can't be done before they are loaded
         ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())
         config.learner_params['ms_split'] = ms_split
@@ -169,8 +179,12 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test, custom
         config.learner_params['internal_k'] = int_k
         ms_split = None
 
+    # Add process rank
+    config.learner_params['process_rank'] = rank
+
     # Create the object that will actually perform
     # the classification/feature selection
+
     clf = config.learner_class(config.learner_params)
 
     # Set the actual data and perform
@@ -225,18 +239,18 @@ def main(config_path):
         t0 = time.time()
 
     ##########################
-    ### LOAD CONFIGURATION ###
+    # LOAD CONFIGURATION
     ##########################
 
     config_dir = os.path.dirname(config_path)
 
-    ### For some reason, it must be atomic
+    # For some reason, it must be atomic
     imp.acquire_lock()
     config = imp.load_source('config', config_path)
     imp.release_lock()
 
     ####################
-    ### LOAD DATASET ###
+    # LOAD DATASET
     ####################
 
     if rank == 0:
@@ -247,26 +261,33 @@ def main(config_path):
         config.dataset_options
     )
 
-    data, labels, _  = dataset.load_dataset(config_dir)
+    data, labels, _ = dataset.load_dataset(config_dir)
 
-    ### Create base results dir if it does not already exist
-    ### Also copy dataset files inside it
+    # Session folder
+    result_path = os.path.join(config_dir, config.result_path) # session base dir
+    experiments_folder_path = os.path.join(result_path, 'experiments')
+
+    # Create base session folder
+    # Also copy dataset files inside it
     if rank == 0:
-        result_path = os.path.join(config_dir, config.result_path) #result base dir
 
+        # Create main session folder
         if not os.path.exists(result_path):
             os.mkdir(result_path)
+        else:
+            raise Exception("Session folder {} already exists, aborting.".format(result_path))
+
+        # Create experiments folder (where all experiments sub-folders will be created)
+
+        os.mkdir(experiments_folder_path)
 
         shutil.copy(config_path, os.path.join(result_path, 'config.py'))
 
-        ### CREATE HARD LINK IN SESSION FOLDER
+        # CREATE HARD LINK IN SESSION FOLDER
         dataset.copy_files(config_dir, result_path)
 
-    ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     if IS_MPI_JOB:
-        ### Wait for the folder to be created and files to be copied
+        # Wait for the folder to be created and files to be copied
         comm.barrier()
 
     if rank == 0:
@@ -310,10 +331,40 @@ def main(config_path):
         ### Create a custom name for the experiment based on whether it is a permutation test,
         ### the process' rank and a sequential number
         custom_name = "{}_p_{}_i_{}".format(("permutation" if is_permutation_test else "regular"), rank, i)
+        tmp_name_base = 'tmp_' + custom_name
 
-        run_experiment(data, labels, config_dir, config, is_permutation_test, custom_name)
+        #######################
+        ### RECOVERY SYSTEM ###
+        #######################
 
-        print("[{}_{}] finished experiment {}".format(name, rank, i))
+        experiment_resubmissions = 0
+        experiment_completed = False
+        while not experiment_completed and experiment_resubmissions <= MAX_RESUBMISSIONS:
+
+            try:
+                tmp_name = tmp_name_base + '_submission_{}'.format(experiment_resubmissions+1)
+                run_experiment(data, labels, config_dir, config, is_permutation_test, experiments_folder_path, tmp_name)
+                experiment_completed = True
+
+                shutil.move(
+                    os.path.join(experiments_folder_path, tmp_name),
+                    os.path.join(experiments_folder_path, custom_name),
+                )
+                print("[{}_{}] finished experiment {}".format(name, rank, i))
+            except Exception as e:
+                # If somethings out of the ordinary happens,
+                # resubmit the job
+                experiment_resubmissions += 1
+                print("[{}_{}] failed experiment {}, resubmission #{}\nException raised: {}".format(name, rank, i, experiment_resubmissions, e))
+
+        if not experiment_completed:
+            print("[{}_{}] failed to complete experiment {}, max resubmissions limit reached".format(name, rank, i))
+
+
+
+
+
+
 
     if IS_MPI_JOB:
         ### Wait for all experiments to finish before taking the time

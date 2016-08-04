@@ -1,5 +1,6 @@
 import os
-
+import time
+import shutil
 
 class Dataset(object):
     """Main class for containing data and labels."""
@@ -27,6 +28,7 @@ class Dataset(object):
             self._dataset_files = dataset_files
 
         self._dataset_options = dataset_options
+        self._poslab = dataset_options['positive_label']
 
     def get_file(self, file_key):
         return self._dataset_files[file_key]
@@ -59,9 +61,13 @@ class Dataset(object):
         sessio_folder : string
             The folder inside which files links are being created.
         """
+        while not os.path.exists(session_folder):
+            time.sleep(0.5)
+        print("\n{} created".format(session_folder))
 
         for link_name in self._dataset_files.keys():
-            os.link(
+            #os.link(
+            shutil.copy2(
                 os.path.join(base_path, self.get_file(link_name)),  # SRC
                 os.path.join(session_folder, link_name)             # DST
             )

@@ -24,4 +24,3 @@ Having trouble with PALLADIO? Check out our [documentation](http://www.slipguru.
 * matteo [dot] barbieri [at] dibris [dot] unige [dot] it
 * samuele [dot] fiorini [at] dibris [dot] unige [dot] it
 * federico [dot] tomasi [at] dibris [dot] unige [dot] it
-

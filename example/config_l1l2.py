@@ -81,6 +81,7 @@ error = l1l2py.tools.balanced_classification_error
 
 learner_params = {
     # 'mu_range' : mu_range,
+    'gpu_processes' : [0, 2],
     'mu' : mu,
     'tau_range' : tau_range,
     'lambda_range' : lambda_range,
