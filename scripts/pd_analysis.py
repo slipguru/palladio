@@ -2,6 +2,7 @@
 import os
 import sys
 import imp
+import argparse
 import numpy as np
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -199,10 +200,7 @@ def analyze_experiments(base_folder, config):
     return out
 
 
-def main():
-
-    base_folder = sys.argv[1]
-
+def main(base_folder):
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
     _positive_label = config.dataset_options['positive_label']
     _N_jobs_regular = config.N_jobs_regular
@@ -248,7 +246,8 @@ def main():
             f.write("{} : {}\n".format(k,selected_permutation[k]))
 
     # Plotting section
-    plotting.distributions(acc_regular, acc_permutation, base_folder, 'Accuracy')
+    plotting.distributions(acc_regular, acc_permutation, base_folder,
+                           'Accuracy', first_run=True)
     plotting.distributions(v_regular, v_permutation, base_folder, 'Balanced Accuracy')
     plotting.distributions(MCC_regular, MCC_permutation, base_folder, 'MCC')
     if _positive_label is not None:
@@ -270,4 +269,11 @@ def main():
         plotting.kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges)
 
 if __name__ == '__main__':
-    main()
+    from palladio import __version__
+    parser = argparse.ArgumentParser(description='palladio script for '
+                                                 'analysing results.')
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s v' + __version__)
+    parser.add_argument("result_folder", help="specify results directory")
+    args = parser.parse_args()
+    main(args.result_folder)
