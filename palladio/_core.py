@@ -264,21 +264,21 @@ def main(config_path):
     data, labels, _ = dataset.load_dataset(config_dir)
 
     # Session folder
-    result_path = os.path.join(config_dir, config.result_path) # session base dir
+    result_path = os.path.join(config_dir, config.result_path)  # session base dir
     experiments_folder_path = os.path.join(result_path, 'experiments')
 
     # Create base session folder
     # Also copy dataset files inside it
     if rank == 0:
-
         # Create main session folder
         if not os.path.exists(result_path):
             os.mkdir(result_path)
         else:
-            raise Exception("Session folder {} already exists, aborting.".format(result_path))
+            raise Exception("Session folder {} already exists, aborting."
+                            .format(result_path))
 
-        # Create experiments folder (where all experiments sub-folders will be created)
-
+        # Create experiments folder (where all experiments sub-folders will
+        # be created)
         os.mkdir(experiments_folder_path)
 
         shutil.copy(config_path, os.path.join(result_path, 'config.py'))
