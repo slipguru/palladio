@@ -360,12 +360,6 @@ def main(config_path):
         if not experiment_completed:
             print("[{}_{}] failed to complete experiment {}, max resubmissions limit reached".format(name, rank, i))
 
-
-
-
-
-
-
     if IS_MPI_JOB:
         ### Wait for all experiments to finish before taking the time
         comm.barrier()
