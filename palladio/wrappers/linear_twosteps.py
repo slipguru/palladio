@@ -84,7 +84,8 @@ class LinearTwoStepClassifier(Classification):
         result['err_ts_list'] = ts_err
         result['err_tr_list'] = tr_err
         # TODO: save the kcv_err_ts and (if possible) training
-        # result['kcv_err_ts'] = 
+        result['kcv_err_ts'] = np.zeros((len(self._tau_range),
+                                        len(self._lambda_range)))
 
         return result
 
