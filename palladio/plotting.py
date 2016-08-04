@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import os
 # import pandas as pd
 import matplotlib; matplotlib.use('Agg')
@@ -342,7 +343,7 @@ def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular,
     plt.savefig(os.path.join(base_folder, 'selected_over_threshold.pdf'))
 
 
-def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges):
+def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
     """Generate plot surfaces for training and test error across experiments.
 
     Parameters
@@ -415,8 +416,8 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges):
 
     # fig.colorbar()
     ax.set_title('average KCV error of ' + exp + ' experiments')
-    ax.set_ylabel(r"$log_{10}(\lambda)$")
-    ax.set_xlabel(r"$log_{10}(\tau)$")
+    ax.set_ylabel(r"$log_{10}(" + param_names[0] + ")$")
+    ax.set_xlabel(r"$log_{10}(" + param_names[1] + ")$")
     ax.set_zlabel("avg kcv err")
     ax.legend(legend_handles, legend_labels[:len(legend_handles)], loc='best')
 

@@ -171,7 +171,6 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
 
     # TODO: fix this and make it more general
     if config.learner_class == l1l2Classifier:
-    # if isinstance(config.learner_class, l1l2Classifier):
         # since it requires the labels, it can't be done before they are loaded
         ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())
         config.learner_params['ms_split'] = ms_split
@@ -191,13 +190,14 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
     # additional steps such as rescaling parameters etc.
     clf.setup(Xtr, Ytr, Xts, Yts)
 
-    # Workaround: this is gonna work only if clf is an l1l2Classifier
+    # TODO
+    # Workaround: this is gonna work only if clf is an l1l2Classifier or ElasticNetCV
     try:
         param_1_range = clf._tau_range
         param_2_range = clf._lambda_range
     except:
-        param_1_range = None
-        param_2_range = None
+        param_1_range = clf.l1_ratio_range
+        param_2_range = clf.alpha_range
     ###
 
     result = clf.run()

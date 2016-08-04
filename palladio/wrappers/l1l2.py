@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import numpy as np
 
 from palladio import utils as pd_utils
@@ -11,6 +12,7 @@ class l1l2Classifier(Classification):
     def __init__(self, params):
 
         self._params = params
+        self.param_names = [r'\tau', r'\lambda']
 
     def setup(self, Xtr, Ytr, Xts, Yts):
 

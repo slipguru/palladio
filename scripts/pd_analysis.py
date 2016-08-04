@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 import os
 import imp
 import argparse
@@ -39,13 +40,6 @@ def analyze_experiment(exp_folder, config, poslab):
     FP = np.sum((Y_lr == 1) * (Y_ts != Y_lr))
     TN = np.sum((Y_lr == -1) * (Y_ts == Y_lr))
     FN = np.sum((Y_lr == -1) * (Y_ts != Y_lr))
-
-    # print("----------------------------")
-    # print("TP: {}".format(TP))
-    # print("FP: {}".format(FP))
-    # print("TN: {}".format(TN))
-    # print("FN: {}".format(FN))
-    # print("----------------------------")
 
     accuracy = (TP + TN) / float(TP + FP + FN + TN)
     balanced_accuracy = 0.5 * ((TP / float(TP + FN)) + (TN / float(TN + FP)))
@@ -199,6 +193,8 @@ def main(base_folder):
     _positive_label = config.dataset_options['positive_label']
     _N_jobs_regular = config.N_jobs_regular
     _N_jobs_permutation = config.N_jobs_permutation
+    _learner = config.learner_class()
+    param_names = _learner.param_names
 
     threshold = int(config.N_jobs_regular * config.frequency_threshold)
 
@@ -279,7 +275,7 @@ def main(base_folder):
 
     for kcv_err, exp in zip([kcv_err_regular, kcv_err_permutation],
                             ['regular', 'permutation']):
-        plotting.kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges)
+        plotting.kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names)
 
 
 if __name__ == '__main__':

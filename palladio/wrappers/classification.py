@@ -1,45 +1,46 @@
 class Classification(object):
 
-    def __init__(self, params = None):
-        
+    def __init__(self, params=None):
+
         self._params = params
-        
+        self.param_names = [None, None]
+
         self._data_normalizer = None
         self._labels_normalizer = None
-        
+
     def setup(self, Xtr, Ytr, Xts, Yts):
-        
+
         self._Xtr = Xtr
         self._Ytr = Ytr
-        
+
         self._Xts = Xts
         self._Yts = Yts
-    
+
     def get_param(self, param_name):
         return self._params[param_name]
-        
+
     def getXtr(self):
         return self._Xtr
-    
+
     def getXts(self):
         return self._Xts
-    
+
     def getYtr(self):
         return self._Ytr
-    
+
     def getYts(self):
         return self._Yts
-    
+
     def run(self):
         """
         Returns
         ------
-        
+
         result : dict
             Keys of the dictionary:
-            
+
             Output dictionary. According with the parameters the dictionary has
-        
+
             **kcv_err_ts** : (T, L) ndarray
                 [STAGE I] Mean cross validation errors on the training set.
             **kcv_err_tr** : (T, L) ndarray
@@ -62,8 +63,8 @@ class Classification(object):
             **prediction_tr_list** : list of M two-dimensional ndarray, optional
                 [STAGE II] Prediction vectors for the models evaluated on the
                 training set.
-            
+
             ''
         """
-        
+
         raise Exception("Abstract method")
