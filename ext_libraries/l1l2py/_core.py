@@ -4,26 +4,26 @@ In this module are implemented the two main stages of the l1l2 with
 double optimization variable selection.
 
 """
-## This code is written by Salvatore Masecchia <salvatore.masecchia@unige.it>
-## and Annalisa Barla <annalisa.barla@unige.it>
-## Copyright (C) 2010 SlipGURU -
-## Statistical Learning and Image Processing Genoa University Research Group
-## Via Dodecaneso, 35 - 16146 Genova, ITALY.
+# This code is written by Salvatore Masecchia <salvatore.masecchia@unige.it>
+# and Annalisa Barla <annalisa.barla@unige.it>
+# Copyright (C) 2010 SlipGURU -
+# Statistical Learning and Image Processing Genoa University Research Group
+# Via Dodecaneso, 35 - 16146 Genova, ITALY.
 ##
-## This file is part of L1L2Py.
+# This file is part of L1L2Py.
 ##
-## L1L2Py is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
+# L1L2Py is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 ##
-## L1L2Py is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
+# L1L2Py is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 ##
-## You should have received a copy of the GNU General Public License
-## along with L1L2Py. If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License
+# along with L1L2Py. If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ['model_selection', 'minimal_model', 'nested_models']
 
@@ -32,19 +32,21 @@ import itertools as it
 
 from l1l2py.algorithms import ridge_regression, l1l2_regularization
 
-import random
+# import random
 
-def emergency_log(message, file_path = '/tmp/emergency_log.txt'):
-    
+
+def emergency_log(message, file_path='/tmp/emergency_log.txt'):
+
     with open(file_path, 'a') as lf:
         lf.write(message)
+
 
 def model_selection(data, labels, test_data, test_labels,
                     mu_range, tau_range, lambda_range,
                     cv_splits, cv_error_function, error_function,
                     data_normalizer=None, labels_normalizer=None,
                     sparse=False, regularized=True,
-                    return_predictions=False, algorithm_version = 'CPU'):
+                    return_predictions=False, algorithm_version='CPU'):
     r"""Complete model selection procedure.
 
     It executes the two stages implemented in ``minimal_model`` and
@@ -110,7 +112,7 @@ def model_selection(data, labels, test_data, test_labels,
     stage1_out = minimal_model(data, labels, mu_range[0],
                                tau_range, lambda_range,
                                cv_splits, cv_error_function,
-                               data_normalizer, labels_normalizer, algorithm_version = algorithm_version)
+                               data_normalizer, labels_normalizer, algorithm_version=algorithm_version)
     out = dict(it.izip(('kcv_err_ts', 'kcv_err_tr'), stage1_out))
 
     # KCV MINIMUM SELECTION
@@ -138,36 +140,37 @@ def model_selection(data, labels, test_data, test_labels,
 
     return out
 
+
 def model_selection_perm(data, labels, test_data, test_labels,
-                    mu_range, tau_range, lambda_range,
-                    cv_splits, cv_error_function, error_function,
-                    data_normalizer=None, labels_normalizer=None,
-                    sparse=False, regularized=True,
-                    return_predictions=False, random_seed = None, input_key = None):
+                         mu_range, tau_range, lambda_range,
+                         cv_splits, cv_error_function, error_function,
+                         data_normalizer=None, labels_normalizer=None,
+                         sparse=False, regularized=True,
+                         return_predictions=False, random_seed=None, input_key=None):
     """
     XXX WITH PERMUTATION ON VALIDATION SET
     """
 
-    ### Use a seed to initialize the random number generator
+    # Use a seed to initialize the random number generator
     np.random.seed(random_seed)
 
     # shuffling
     idx = np.arange(len(labels))
     np.random.shuffle(idx)
     labels_perm = labels[idx]
-    
+
     # STAGE I
     # stage1_out = minimal_model_perm(data, labels, mu_range[0],
     #                            tau_range, lambda_range,
     #                            cv_splits, cv_error_function,
     #                            data_normalizer, labels_normalizer)
-    
+
     stage1_out = minimal_model(data, labels_perm, mu_range[0],
                                tau_range, lambda_range,
                                cv_splits, cv_error_function,
                                data_normalizer, labels_normalizer, input_key)
     out = dict(it.izip(('kcv_err_ts', 'kcv_err_tr'), stage1_out))
-    
+
     # KCV MINIMUM SELECTION
     err_ts = out['kcv_err_ts']
     tau_opt_idxs, lambda_opt_idxs = np.where(err_ts == err_ts.min())
@@ -183,26 +186,27 @@ def model_selection_perm(data, labels, test_data, test_labels,
     #                            error_function,
     #                            data_normalizer, labels_normalizer,
     #                            return_predictions)
-    
+
     stage2_out = nested_models(data, labels_perm,
                                test_data, test_labels,
                                mu_range, out['tau_opt'], out['lambda_opt'],
                                error_function,
                                data_normalizer, labels_normalizer,
                                return_predictions)
-    
+
     # emergency_log("XXX AFTER STAGE2\n")
-    
+
     keys = ['beta_list', 'selected_list', 'err_ts_list', 'err_tr_list']
     if return_predictions:
         keys.append('prediction_ts_list')
         keys.append('prediction_tr_list')
 
     out.update(it.izip(keys, stage2_out))
-    
+
     # emergency_log("XXX AFTER UPDATE\n")
-    
+
     return out
+
 
 def _minimum_selection(tau_idxs, lambda_idxs, sparse=False, regularized=False):
     r"""Selection of the miminum error coordinates.
@@ -223,9 +227,10 @@ def _minimum_selection(tau_idxs, lambda_idxs, sparse=False, regularized=False):
 
     return tau_idx, lam_idx
 
+
 def minimal_model(data, labels, mu, tau_range, lambda_range,
                   cv_splits, error_function,
-                  data_normalizer=None, labels_normalizer=None, input_key = None, algorithm_version = 'CPU'):
+                  data_normalizer=None, labels_normalizer=None, input_key=None, algorithm_version='CPU'):
     r"""Minimal model selection.
 
     Given a supervised training set (``data`` and ``labels``), for a fixed
@@ -290,15 +295,14 @@ def minimal_model(data, labels, mu, tau_range, lambda_range,
         the given data splits.
 
     """
-     
-    ### Load the correct version of the algorithm
+
+    # Load the correct version of the algorithm
     if algorithm_version == 'CPU':
         from l1l2py.algorithms import l1l2_path
     elif algorithm_version == 'GPU':
         from l1l2py.algorithms_cuda import l1l2_path
     else:
         raise Exception('Unknown algorithm version')
-        
 
     err_ts = list()
     err_tr = list()
@@ -317,10 +321,11 @@ def minimal_model(data, labels, mu, tau_range, lambda_range,
 
         # Builds a classifier for each value of tau
 
-        beta_casc = l1l2_path(data_tr, labels_tr, mu, tau_range[:max_tau_num], input_key = input_key)
+        beta_casc = l1l2_path(data_tr, labels_tr, mu, tau_range[
+                              :max_tau_num], input_key=input_key)
 
         if len(beta_casc) == 0:
-            
+
             raise ValueError("the given range of 'tau' values produces all "
                              "void solutions with the given data splits")
 
@@ -349,6 +354,7 @@ def minimal_model(data, labels, mu, tau_range, lambda_range,
     err_tr = np.asarray([a[:max_tau_num] for a in err_tr]).mean(axis=0)
 
     return err_ts, err_tr
+
 
 def nested_models(data, labels, test_data, test_labels,
                   mu_range, tau, lambda_, error_function,
