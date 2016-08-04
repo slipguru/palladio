@@ -34,9 +34,9 @@ try:
     from scipy import linalg as la
 except ImportError:
     from numpy import linalg as la
-    
+
 def emergency_log(message, file_path = '/tmp/emergency_log.txt'):
-    
+
     if not file_path is None:
         with open(file_path, 'a') as lf:
             lf.write(message)
@@ -187,14 +187,14 @@ def l1l2_path(data, labels, mu, tau_range, beta=None, kmax=100000,
         `l1l2` solutions with at least one non-zero element.
 
     """
-    
+
     if not input_key is None:
         emergency_log_file = '/tmp/{}.txt'.format(input_key)
     else:
         emergency_log_file = None
-    
+
     # emergency_log("l1l2_path [1]\n", emergency_log_file)
-    
+
     from collections import deque
     n, p = data.shape
 
@@ -202,7 +202,7 @@ def l1l2_path(data, labels, mu, tau_range, beta=None, kmax=100000,
         beta_ls = ridge_regression(data, labels)
     if beta is None:
         beta = np.zeros((p, 1))
-        
+
     # emergency_log("l1l2_path [2]\n", emergency_log_file)
 
     out = deque()
@@ -213,7 +213,7 @@ def l1l2_path(data, labels, mu, tau_range, beta=None, kmax=100000,
         else:
             beta_next = l1l2_regularization(data, labels, mu, tau, beta,
                                             kmax, tolerance, adaptive=adaptive)
-            
+
         # emergency_log("l1l2_path [3] [inside tau]\n", emergency_log_file)
 
         nonzero = len(beta_next.nonzero()[0])

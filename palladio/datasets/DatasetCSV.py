@@ -72,9 +72,8 @@ class DatasetCSV(Dataset):
         # for data only.
         self._dataset_options.pop('usecols', None)
         pd_labels = pd.read_csv(labels_path, **self._dataset_options)
-
         if poslab is None:
-            uv = np.sort(np.unique(pd_labels.values))
+            uv = np.sort(np.unique(pd_labels.as_matrix()))
             if len(uv) != 2:
                 raise Exception("More than two unique values in the labels "
                                 "array.")

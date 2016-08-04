@@ -8,9 +8,12 @@
 import numpy as np
 import l1l2py
 
+
 class PDException(Exception):
     """Exception raised by ``PALLADIO`` classes and functions."""
+
     pass
+
 
 class RangesScaler(object):
     """Given data and labels helps to scale L1L2 parameters ranges properly.
@@ -29,6 +32,7 @@ class RangesScaler(object):
     norm_labels : :class:`numpy.ndarray`
         Normalized labels vector.
     """
+
     def __init__(self, data, labels, data_normalizer=None,
                  labels_normalizer=None):
 
@@ -43,7 +47,7 @@ class RangesScaler(object):
             self.norm_labels = labels_normalizer(self.norm_labels)
 
     def tau_range(self, trange):
-        """Returns a scaled tau range.
+        """Return a scaled tau range.
 
         Tau scaling factor is the maximum tau value to avoid and empty solution
         (where all variables are discarded).
@@ -76,7 +80,7 @@ class RangesScaler(object):
         return trange * self.tau_scaling_factor
 
     def mu_range(self, mrange):
-        """Returns a scaled mu range.
+        """Return a scaled mu range.
 
         Mu scaling factor is estimated on the maximum eigenvalue of the
         correlation matrix and is used to simplify the parameters choice.
@@ -133,11 +137,11 @@ class RangesScaler(object):
             evals = np.linalg.eigvalsh(tmp)
             num = evals.max() + evals.min()
 
-        return (num/(2.*n))
+        return (num / (2. * n))
 
 
 def signatures(splits_results, frequency_threshold=0.0):
-    """Returns (almost) nested signatures for each correlation value.
+    """Return (almost) nested signatures for each correlation value.
 
     The function returns 3 lists where each item refers to a signature
     (for increasing value of linear correlation).
@@ -180,7 +184,7 @@ def signatures(splits_results, frequency_threshold=0.0):
 
     # Variables are ordered and filtered by frequency threshold
     sorted_idxs = np.argsort(selection_freqs, axis=1)
-    sorted_idxs = (sorted_idxs.T)[::-1].T # Reverse order
+    sorted_idxs = (sorted_idxs.T)[::-1].T  # Reverse order
 
     # ... ordering
     for i, si in enumerate(sorted_idxs):
@@ -190,7 +194,7 @@ def signatures(splits_results, frequency_threshold=0.0):
     # ... filtering
     threshold_mask = (selection_freqs >= frequency_threshold)
 
-    ## Signatures Ordered and Filtered!
+    # Signatures Ordered and Filtered!
     sign_totals = list()
     sign_freqs = list()
     sign_idxs = list()
@@ -203,7 +207,7 @@ def signatures(splits_results, frequency_threshold=0.0):
 
 
 def selection_summary(splits_results):
-    """Counts how many times each variables was selected.
+    """Count how many times each variables was selected.
 
     Parameters
     ----------
@@ -221,7 +225,7 @@ def selection_summary(splits_results):
 
 
 def confusion_matrix(labels, predictions):
-    """Calculates a confusion matrix.
+    """Calculate a confusion matrix.
 
     From given real and predicted labels, the function calculated
     a confusion matrix as a double nested dictionary.
@@ -264,7 +268,7 @@ def confusion_matrix(labels, predictions):
 
 
 def classification_measures(confusion_matrix, positive_label=None):
-    """Calculates some classification measures.
+    """Calculate some classification measures.
 
     Measures are calculated from a given confusion matrix
     (see :func:`confusion_matrix` for a detailed description of the
@@ -323,9 +327,9 @@ def classification_measures(confusion_matrix, positive_label=None):
 
     labels = confusion_matrix['T'].keys()
 
-    if not positive_label is None:
+    if positive_label is not None:
         P = positive_label
-        if not P in labels:
+        if P not in labels:
             raise PDException('label %s not found.' % positive_label)
 
         N = set(labels).difference([positive_label]).pop()
@@ -339,23 +343,23 @@ def classification_measures(confusion_matrix, positive_label=None):
     FN = confusion_matrix['F'][N]
     # ----------------------------------------------
 
-    summary = dict({P:dict(), N:dict()})
+    summary = dict({P: dict(), N: dict()})
 
     summary[P]['predictive_value'] = TP / float(TP + FP)
     summary[P]['true_rate'] = TP / float(TP + FN)           # sensitivity
 
-    summary[N]['predictive_value'] = TN /  float(TN + FN)
+    summary[N]['predictive_value'] = TN / float(TN + FN)
     summary[N]['true_rate'] = TN / float(TN + FP)           # specificity
 
     summary['accuracy'] = (TP + TN) / float(TP + FP + FN + TN)
     summary['balanced_accuracy'] = 0.5 * (summary[P]['true_rate'] +
                                           summary[N]['true_rate'])
 
-    den = ( (TP + FP) * (TP + FN) * (TN + FP) * (TN + FN) )
-    summary['MCC'] = ( ((TP * TN) - (FP * FN)) /
-                       (1.0 if den == 0 else np.sqrt(den)) )
+    den = ((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN))
+    summary['MCC'] = (((TP * TN) - (FP * FN)) /
+                      (1.0 if den == 0 else np.sqrt(den)))
 
-    if not positive_label is None:
+    if positive_label is not None:
         summary['sensitivity'] = summary[P]['true_rate']
         summary['specificity'] = summary[N]['true_rate']
 
@@ -363,8 +367,8 @@ def classification_measures(confusion_matrix, positive_label=None):
         summary['recall'] = summary['sensitivity']
 
         summary['F_measure'] = (
-                    2. * ((summary['precision'] * summary['recall']) /
-                          (summary['precision'] + summary['recall']))
+            2. * ((summary['precision'] * summary['recall']) /
+                  (summary['precision'] + summary['recall']))
         )
 
     return summary

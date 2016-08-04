@@ -171,7 +171,6 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
 
     # TODO: fix this and make it more general
     if config.learner_class == l1l2Classifier:
-    # if isinstance(config.learner_class, l1l2Classifier):
         # since it requires the labels, it can't be done before they are loaded
         ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())
         config.learner_params['ms_split'] = ms_split
@@ -191,13 +190,14 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
     # additional steps such as rescaling parameters etc.
     clf.setup(Xtr, Ytr, Xts, Yts)
 
-    # Workaround: this is gonna work only if clf is an l1l2Classifier
+    # TODO
+    # Workaround: this is gonna work only if clf is an l1l2Classifier or ElasticNetCV
     try:
         param_1_range = clf._tau_range
         param_2_range = clf._lambda_range
     except:
-        param_1_range = None
-        param_2_range = None
+        param_1_range = clf.l1_ratio_range
+        param_2_range = clf.alpha_range
     ###
 
     result = clf.run()
@@ -264,21 +264,21 @@ def main(config_path):
     data, labels, _ = dataset.load_dataset(config_dir)
 
     # Session folder
-    result_path = os.path.join(config_dir, config.result_path) # session base dir
+    result_path = os.path.join(config_dir, config.result_path)  # session base dir
     experiments_folder_path = os.path.join(result_path, 'experiments')
 
     # Create base session folder
     # Also copy dataset files inside it
     if rank == 0:
-
         # Create main session folder
         if not os.path.exists(result_path):
             os.mkdir(result_path)
         else:
-            raise Exception("Session folder {} already exists, aborting.".format(result_path))
+            raise Exception("Session folder {} already exists, aborting."
+                            .format(result_path))
 
-        # Create experiments folder (where all experiments sub-folders will be created)
-
+        # Create experiments folder (where all experiments sub-folders will
+        # be created)
         os.mkdir(experiments_folder_path)
 
         shutil.copy(config_path, os.path.join(result_path, 'config.py'))
@@ -359,12 +359,6 @@ def main(config_path):
 
         if not experiment_completed:
             print("[{}_{}] failed to complete experiment {}, max resubmissions limit reached".format(name, rank, i))
-
-
-
-
-
-
 
     if IS_MPI_JOB:
         ### Wait for all experiments to finish before taking the time
