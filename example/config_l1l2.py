@@ -15,10 +15,10 @@ import l1l2py
 
 dataset_class = DatasetCSV
 
-### The list of all files required for the experiments
+# The list of all files required for the experiments
 dataset_files = {
-    'data' : 'data/gedm.csv',
-    'labels' : 'data/labels.csv'
+    'data': 'data/gedm.csv',
+    'labels': 'data/labels.csv'
 }
 
 dataset_options = {
@@ -45,9 +45,9 @@ N_jobs_regular = 100
 # (labels in the training sets are randomly shuffled)
 N_jobs_permutation = 100
 
-### The ratio of the dataset held out for model assessment
-### It should be of the form 1/M
-test_set_ratio = float(1)/4
+# The ratio of the dataset held out for model assessment
+# It should be of the form 1/M
+test_set_ratio = float(1) / 4
 
 #######################
 ### LEARNER OPTIONS ###
@@ -58,8 +58,9 @@ learner_class = l1l2Classifier
 #~~ L1l2 Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # * Ranges will be sorted from smaller to bigger value!
 # * See l1l2py.tools.{geometric_range, linear_range}
-tau_range = l1l2py.tools.geometric_range(1e-3, 0.5, 20) # * MAX_TAU
-# mu_range = l1l2py.tools.geometric_range(1e-3, 1.0, 3)   # * CORRELATION_FACTOR
+tau_range = l1l2py.tools.geometric_range(1e-3, 0.5, 20)  # * MAX_TAU
+# mu_range = l1l2py.tools.geometric_range(1e-3, 1.0, 3)   # *
+# CORRELATION_FACTOR
 mu = 1e-3  # * CORRELATION_FACTOR
 lambda_range = l1l2py.tools.geometric_range(1e0, 1e4, 10)
 
@@ -81,17 +82,17 @@ error = l1l2py.tools.balanced_classification_error
 
 learner_params = {
     # 'mu_range' : mu_range,
-    'gpu_processes' : [0, 2],
-    'mu' : mu,
-    'tau_range' : tau_range,
-    'lambda_range' : lambda_range,
-    'data_normalizer' : data_normalizer,
-    'labels_normalizer' : labels_normalizer,
-    'cv_error' : cv_error,
-    'error' : error,
-    'sparse' : sparse,
-    'regularized' : regularized,
-    'return_predictions' : return_predictions
+    'gpu_processes': [0, 2],
+    'mu': mu,
+    'tau_range': tau_range,
+    'lambda_range': lambda_range,
+    'data_normalizer': data_normalizer,
+    'labels_normalizer': labels_normalizer,
+    'cv_error': cv_error,
+    'error': error,
+    'sparse': sparse,
+    'regularized': regularized,
+    'return_predictions': return_predictions
 }
 
 #~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

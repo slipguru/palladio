@@ -5,6 +5,7 @@ from .classification import Classification
 
 import l1l2py
 
+
 class l1l2Classifier(Classification):
 
     def __init__(self, params):
@@ -20,8 +21,8 @@ class l1l2Classifier(Classification):
         self._Yts = Yts
 
         rs = pd_utils.RangesScaler(Xtr, Ytr,
-                                     self._params['data_normalizer'],
-                                     self._params['labels_normalizer'])
+                                   self._params['data_normalizer'],
+                                   self._params['labels_normalizer'])
 
         self._tau_range = rs.tau_range(self._params['tau_range'])
         self._mu_range = rs.mu_range(np.array([self._params['mu']]))
@@ -34,41 +35,38 @@ class l1l2Classifier(Classification):
         else:
             self._algorithm_version = 'CPU'
 
-
     def get_algorithm_version(self):
 
         return self._algorithm_version
 
-
     def run(self):
-
 
         # Execution
         result = l1l2py.model_selection(
             self._Xtr, self._Ytr, self._Xts, self._Yts,
             self._mu_range, self._tau_range, self._lambda_range,
-            self.get_param('ms_split'), self.get_param('cv_error'), self.get_param('error'),
-            data_normalizer = self.get_param('data_normalizer'),
-            labels_normalizer = self.get_param('labels_normalizer'),
-            sparse = self.get_param('sparse'),
-            regularized = self.get_param('regularized'),
-            return_predictions = self.get_param('return_predictions'),
-            algorithm_version = self.get_algorithm_version()
-            )
+            self.get_param('ms_split'), self.get_param(
+                'cv_error'), self.get_param('error'),
+            data_normalizer=self.get_param('data_normalizer'),
+            labels_normalizer=self.get_param('labels_normalizer'),
+            sparse=self.get_param('sparse'),
+            regularized=self.get_param('regularized'),
+            return_predictions=self.get_param('return_predictions'),
+            algorithm_version=self.get_algorithm_version()
+        )
 
-        ### Return only the first element of the list, which is the one related to the smallest value of mu
-        ### BEGIN
+        # Return only the first element of the list, which is the one related to the smallest value of mu
+        # BEGIN
         result['selected_list'] = result['selected_list'][0]
         result['beta_list'] = result['beta_list'][0]
 
         result['prediction_ts_list'] = result['prediction_ts_list'][0].ravel()
         if 'prediction_tr_list' in result.keys():
-            result['prediction_tr_list'] = result['prediction_tr_list'][0].ravel()
+            result['prediction_tr_list'] = result[
+                'prediction_tr_list'][0].ravel()
 
-        ### END
-
+        # END
 
         return result
-
 
     pass

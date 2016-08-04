@@ -26,7 +26,9 @@ dataset_options = {
     'delimiter' : ',',
     'samples_on' : 'col', # or 'row': samples on cols or rows
     # 'data_preprocessing' : None,
-    'positive_label' : None # Indicates the positive class in case of 2-class task
+    'positive_label' : None, # Indicates the positive class in case of 2-class task
+    'header' : 0,
+    'index_col' : 0
 }
 
 #######################
@@ -36,11 +38,11 @@ dataset_options = {
 result_path = 'golub_palladio_test_2step'
 
 # The number of "regular" experiment
-N_jobs_regular = 2
+N_jobs_regular = 100
 
 # The number of instances for the permutation tests
 # (labels in the training sets are randomly shuffled)
-N_jobs_permutation = 2
+N_jobs_permutation = 100
 
 ### The ratio of the dataset held out for model assessment
 ### It should be of the form 1/M
@@ -78,6 +80,7 @@ error = l1l2py.tools.balanced_classification_error
 
 learner_params = {
     # 'mu_range' : mu_range,
+    'gpu_processes' : [0, 2],
     'mu' : mu,
     'tau_range' : tau_range,
     'lambda_range' : lambda_range,
@@ -89,6 +92,5 @@ learner_params = {
     'regularized' : regularized,
     'return_predictions' : return_predictions
 }
-
 #~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 frequency_threshold = 0.75
