@@ -6,7 +6,7 @@ from sklearn.linear_model import ElasticNet  # feature selection
 from sklearn.linear_model import RidgeClassifier  # overshrink prevention
 
 from palladio.wrappers.classification import Classification
-from l1l2signature import utils as l1l2_utils
+from palladio import utils as pd_utils
 
 # Legacy import
 try:
@@ -43,11 +43,12 @@ class LinearTwoStepClassifier(Classification):
     def setup(self, Xtr, Ytr, Xts, Yts):
         super(LinearTwoStepClassifier, self).setup(Xtr, Ytr, Xts, Yts)
 
-        rs = l1l2_utils.RangesScaler(Xtr, Ytr,
-                                     self._params['data_normalizer'],
-                                     self._params['labels_normalizer'])
+        rs = pd_utils.RangesScaler(Xtr, Ytr,
+                                   self._params['data_normalizer'],
+                                   self._params['labels_normalizer'])
 
-        self._tau_range = rs.tau_range(self._params['tau_range'])
+        _tau_range = rs.tau_range(self._params['tau_range'])
+        self._tau_range = np.sort(_tau_range)[::-1]  # reversed
         self._mu_range = rs.mu_range(np.array([self._params['mu']]))
 
         # The lambda range implies using the l1l2py objective function, so we
@@ -84,9 +85,21 @@ class LinearTwoStepClassifier(Classification):
         result['err_ts_list'] = ts_err
         result['err_tr_list'] = tr_err
         # TODO: save the kcv_err_ts and (if possible) training
-        result['kcv_err_ts'] = np.zeros((len(self._tau_range),
-                                        len(self._lambda_range)))
+        kcv_err_ts = np.empty((len(self._tau_range),
+                               len(self._lambda_range)))
+        r = 0  # row index
+        c = 0  # column index
+        for entry in clf.grid_scores_:
+            # each entry is like [params: {'mu': xxx, 'lam': xxx, 'tau': xxx}]
+            #                     mean: xxx, ...]
+            mean_error = entry[1]
+            kcv_err_ts[r, c] = mean_error
+            r += 1
+            if r >= len(self._tau_range): r = 0; c += 1
 
+        result['kcv_err_ts'] = kcv_err_ts
+        result['kcv_err_tr'] = np.zeros((len(self._tau_range),
+                                         len(self._lambda_range)))
         return result
 
 
@@ -151,15 +164,15 @@ class LinearTwoStepTransformer(BaseEstimator):
         fs = ElasticNet(l1_ratio=l1_ratio, alpha=alpha)
         fs.fit(X, y)
 
-        sel_idx = np.nonzero(fs.coef_)
+        self.sel_idx = np.nonzero(fs.coef_)[0]
         # check for empty solutions
-        if len(sel_idx[0]) != 0:
+        if len(self.sel_idx) != 0:
             # Transoform lambda to alpha
             alpha = self._to_ridge_alpha(self._lambda)
 
             # Learn model on selected features
             mdl = RidgeClassifier(alpha=alpha)
-            mdl.fit(X[:, sel_idx], y)
+            mdl.fit(X[:, self.sel_idx], y)
 
             # Save wheights
             self.coef_ = mdl.coef_
@@ -168,13 +181,17 @@ class LinearTwoStepTransformer(BaseEstimator):
             self.coef_ = fs.coef_
 
     def predict(self, X):
+        # TODO: define a better policy to handle empty solutions
+        if len(self.coef_.ravel()) != len(self.sel_idx):
+            self.coef_ = self.coef_.ravel()[self.sel_idx]
+
         if len(self.data_norm_factors) > 1:
             # trainig data are standardized
-            return np.dot((X - self.data_norm_factors[0]) /
-                          self.data_norm_factors[1], self.coef_)
+            X_nrm = (X - self.data_norm_factors[0]) / self.data_norm_factors[1]
         else:
             # trainig data are recentered
-            return np.dot(X - self.data_norm_factors, self.coef_)
+            X_nrm = X - self.data_norm_factors
+        return np.dot(X_nrm[:, self.sel_idx], self.coef_.ravel())
 
     def get_params(self, deep=None):  # the keyword argument deep is unused
         return {'tau': self._tau, 'mu': self._mu, 'lam': self._lambda,
