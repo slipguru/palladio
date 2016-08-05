@@ -193,7 +193,7 @@ def main(base_folder):
     _positive_label = config.dataset_options['positive_label']
     _N_jobs_regular = config.N_jobs_regular
     _N_jobs_permutation = config.N_jobs_permutation
-    _learner = config.learner_class()
+    _learner = config.learner_class(None)
     param_names = _learner.param_names
 
     threshold = int(config.N_jobs_regular * config.frequency_threshold)
