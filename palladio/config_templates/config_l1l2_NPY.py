@@ -1,14 +1,11 @@
-# Configuration file example for PALLADIO
-# version: '0.4
+"""Configuration file example for PALLADIO  version: 0.4."""
 
 from palladio.wrappers.l1l2 import l1l2Classifier
-
 from palladio.datasets import DatasetNPY
-
 import l1l2py
 
 #####################
-### DATASET PATHS ###
+#  DATASET PATHS ###
 #####################
 
 # * All the path are w.r.t. config file path
@@ -25,13 +22,12 @@ dataset_files = {
 dataset_options = {
     'delimiter': ',',
     'samples_on': 'row',  # or 'row': samples on cols or rows
-    'positive_label': 1,  # positive class in case of 2-class task
-    'header': 0,
-    'index_col': 0
+    'positive_label': None  # positive class in case of 2-class task
 }
 
+
 #######################
-### SESSION OPTIONS ###
+#   SESSION OPTIONS ###
 #######################
 
 result_path = 'golub_palladio_test_l1l2'
@@ -48,12 +44,12 @@ N_jobs_permutation = 100
 test_set_ratio = float(1) / 4
 
 #######################
-### LEARNER OPTIONS ###
+#   LEARNER OPTIONS ###
 #######################
 
 learner_class = l1l2Classifier
 
-#~~ L1l2 Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~ L1l2 Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # * Ranges will be sorted from smaller to bigger value!
 # * See l1l2py.tools.{geometric_range, linear_range}
 tau_range = l1l2py.tools.geometric_range(1e-3, 0.5, 20)  # * MAX_TAU
@@ -64,23 +60,23 @@ lambda_range = l1l2py.tools.geometric_range(1e0, 1e4, 10)
 
 sparse, regularized, return_predictions = (True, False, True)
 
-#~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 data_normalizer = l1l2py.tools.center
 labels_normalizer = None
 
-#~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 internal_k = 3
 cv_splitting = l1l2py.tools.stratified_kfold_splits
 
-#~~ Errors functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~ Errors functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # * See l1l2py.tools.{regression_error, classification_error,
 #                     balanced_classification_error}
 cv_error = l1l2py.tools.regression_error
 error = l1l2py.tools.balanced_classification_error
 
 learner_params = {
-    # 'mu_range' : mu_range,
-    'gpu_processes': [0, 2],
+    # 'gpu_processes': [0, 2],
+    'gpu_processes': [],
     'mu': mu,
     'tau_range': tau_range,
     'lambda_range': lambda_range,
@@ -93,5 +89,5 @@ learner_params = {
     'return_predictions': return_predictions
 }
 
-#~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 frequency_threshold = 0.75

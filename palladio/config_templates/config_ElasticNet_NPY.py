@@ -1,10 +1,8 @@
-# Configuration file example for PALLADIO
-# version: '0.4
+"""Configuration file example for PALLADIO  version: 0.4."""
 
 import numpy as np
 from palladio.wrappers.elastic_net import ElasticNetClassifier
 from palladio.datasets import DatasetNPY
-
 import l1l2py
 
 #####################
@@ -25,9 +23,7 @@ dataset_files = {
 dataset_options = {
     'delimiter': ',',
     'samples_on': 'row',  # or 'row': samples on cols or rows
-    'positive_label': 1,  # positive class in case of 2-class task
-    'header': 0,
-    'index_col': 0
+    'positive_label': None  # positive class in case of 2-class task
 }
 
 #######################
