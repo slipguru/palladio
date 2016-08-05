@@ -18,8 +18,7 @@ except ImportError:
 class ElasticNetClassifier(Classification):
     """Feature selection and learning combined.
 
-    [step 1]: FEATURE SELECTION
-    The feature selection step is obtained minimizing the Elastic-Net objective
+    Feature selection is obtained minimizing the Elastic-Net objective
     function:
 
     1 / (2 * n_samples) * ||y - Xw||^2_2 +
@@ -29,15 +28,6 @@ class ElasticNetClassifier(Classification):
     specifically, if l1_ratio = 1 this is equivalent to the Lasso functional,
     while if alpha = 0 no feature selection is performed and all features are
     passed to the second step.
-
-    [step 2]: LEARNING
-    The final model is given training a Ridge classifier on the restricted set
-    of features identified at the previous step. The Ridge functional is:
-
-    1 / (2 * n_samples) * ||y - Xw||^2_2 + lambda * ||w||^2_2
-
-    specifically, when alpha = 0 this is equivalent to the ordinary least
-    squares solution.
     """
     def __init__(self, params=None):
         super(ElasticNetClassifier, self).__init__(params)
