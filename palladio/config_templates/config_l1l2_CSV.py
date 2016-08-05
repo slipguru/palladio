@@ -34,7 +34,7 @@ dataset_options = {
 #   SESSION OPTIONS ###
 #######################
 
-result_path = 'golub_palladio_test_l1l2'
+result_path = 'palladio_test_l1l2'
 
 # The number of "regular" experiment
 N_jobs_regular = 100

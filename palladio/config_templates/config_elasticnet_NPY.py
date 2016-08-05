@@ -21,7 +21,6 @@ dataset_files = {
 }
 
 dataset_options = {
-    'delimiter': ',',
     'samples_on': 'row',  # or 'row': samples on cols or rows
     'positive_label': None  # positive class in case of 2-class task
 }
@@ -30,7 +29,7 @@ dataset_options = {
 #   SESSION OPTIONS ###
 #######################
 
-result_path = 'dummy_palladio_test_2step'
+result_path = 'palladio_test_enet'
 
 # The number of "regular" experiment
 N_jobs_regular = 100

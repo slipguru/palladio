@@ -30,12 +30,11 @@ dataset_options = {
     'index_col': 0
 }
 
-
 #######################
 #   SESSION OPTIONS ###
 #######################
 
-result_path = 'dummy_palladio_test_2step'
+result_path = 'palladio_test_enet'
 
 # The number of "regular" experiment
 N_jobs_regular = 100
