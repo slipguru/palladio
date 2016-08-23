@@ -31,7 +31,7 @@ class ElasticNetClassifier(Classification):
     """
     def __init__(self, params=None):
         super(ElasticNetClassifier, self).__init__(params)
-        self.param_names = [r'l_1 ratio', r'\alpha']  # BEWARE: use LaTeX names
+        self.param_names = [r'\alpha',r'l_1 ratio']  # BEWARE: use LaTeX names
 
     def setup(self, Xtr, Ytr, Xts, Yts):
         super(ElasticNetClassifier, self).setup(Xtr, Ytr, Xts, Yts)
