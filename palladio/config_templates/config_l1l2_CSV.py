@@ -79,7 +79,7 @@ cv_error = l1l2py.tools.regression_error
 error = l1l2py.tools.balanced_classification_error
 
 learner_params = {
-    # 'gpu_processes': [0, 2],
+    # 'gpu_processes': [0, 2, 4],
     'gpu_processes': [],
     'mu': mu,
     'tau_range': tau_range,
