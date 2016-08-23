@@ -334,11 +334,12 @@ def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular,
              color=colorsHex['lightGreen'], label='Real signature')
     plt.plot(100 * thresh_axis, sel_perm, marker='h', alpha=0.8,
              color=colorsHex['lightRed'], label='Permutation signature')
-    plt.axvline(x=100 - threshold, ymin=0, ymax=n_feat, ls='--', lw=0.5,
+    plt.axvline(x=threshold, ymin=0, ymax=n_feat, ls='--', lw=0.5,
                 color='k', label='Threshold')
     plt.legend()
     plt.xlabel("Selection frequency %", fontsize="large")
     plt.ylabel("Number of selected features", fontsize="large")
+    plt.xlim(thresh_axis[-1]*100, thresh_axis[0]*100)
 
     plt.savefig(os.path.join(base_folder, 'selected_over_threshold.pdf'))
 
