@@ -417,8 +417,8 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
 
     # fig.colorbar()
     ax.set_title('average KCV error of ' + exp + ' experiments')
-    ax.set_ylabel(r"$log_{10}(" + param_names[0] + ")$")
-    ax.set_xlabel(r"$log_{10}(" + param_names[1] + ")$")
+    ax.set_ylabel(r"$log_{10}(" + param_names[1] + ")$")
+    ax.set_xlabel(r"$log_{10}(" + param_names[0] + ")$")
     ax.set_zlabel("avg kcv err")
     ax.legend(legend_handles, legend_labels[:len(legend_handles)], loc='best')
 
