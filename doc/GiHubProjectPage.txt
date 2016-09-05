@@ -1,10 +1,12 @@
-### Welcome to PALLADIO.
-PALLADIO is a machine learning framework whose purpose is to provide robust and reproducible results when dealing with data where the signal to noise ratio is low; it also provides tools to determine whether the dataset being analyzed contains any signal at all.
-PALLADIO works by repeating the same experiment many times, each time resampling the training and the test set so that the outcome is reliable as it is not determined by a single partition of the dataset. Besides, using permutation tests, a measure of how much experiments produce a reliable result is provided.
-Since all experiments performed are independent, PALLADIO is designed so that it can exploit a cluster where it is available.
+### Overview
+PALLADIO is a data analytics framework that is able to obtain unbiased and statistically robust variable selection on high-dimensional datasets. The framework uses several parallel computing paradigms which allows to critically reduce the computational time.
+
+The framework is completely open source and it is released under GNU General Public License v3.0. PALLADIO id developed in Python to benefit from its ease of integration with other programming languages and protocols such as C++, CUDA and MPI as well as from its maintainability. 
+
+PALLADIO is designed for HPC clusters architectures. Job distribution is carried out by MPI and it integrates CUDA kernels to deal with massively parallel element-wise operations.
 
 ### Dependencies
-ADENINE is developed using Python 2.7 and inherits its main functionalities from:
+PALLADIO is developed using Python 2.7 and inherits its main functionalities from:
 * numpy
 * scipy
 * scikit-learn
@@ -20,4 +22,3 @@ Having trouble with PALLADIO? Check out our [documentation](http://www.slipguru.
 * matteo [dot] barbieri [at] dibris [dot] unige [dot] it
 * samuele [dot] fiorini [at] dibris [dot] unige [dot] it
 * federico [dot] tomasi [at] dibris [dot] unige [dot] it
-
