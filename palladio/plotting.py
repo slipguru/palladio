@@ -113,7 +113,8 @@ def distributions(v_regular, v_permutation, base_folder, metric,
     # kstest = stats.kstest(v_regular*100, 'norm', args=(mu, sigma))
 
     # Wilcoxon rank sum test
-    rstest = stats.ranksums(v_regular, v_permutation)
+    # rstest = stats.ranksums(v_regular, v_permutation)
+    rstest = stats.wilcoxon(v_regular, v_permutation)
 
     filemode = 'w' if first_run else 'a'
     with open(os.path.join(base_folder, 'stats.txt'), filemode) as f:
@@ -121,7 +122,8 @@ def distributions(v_regular, v_permutation, base_folder, metric,
         # f.write("Testing distributions")
         f.write("\n------------------------------------------\n")
         f.write("Metric : {}\n".format(metric))
-        f.write("Wilcoxon Rank-Sum test p-value: {0:.3e}\n".format(rstest[1]))
+        # f.write("Wilcoxon Rank-Sum test p-value: {0:.3e}\n".format(rstest[1]))
+        f.write("Wilcoxon Signed-rank test p-value: {0:.3e}\n".format(rstest[1]))
         f.write("\n")
 
         f.write("Regular experiments, {}\n".format(metric))
@@ -131,7 +133,8 @@ def distributions(v_regular, v_permutation, base_folder, metric,
         f.write("Mean = {0:.2f}, STD = {1:.2f}\n".format(perm_mean, perm_std))
 
     # print("Kolmogorov-Smirnov test: {}".format(kstest))
-    print("[{}] Wilcoxon Rank-Sum test: {}".format(metric, rstest))
+    # print("[{}] Wilcoxon Rank-Sum test: {}".format(metric, rstest))
+    print("[{}] Wilcoxon Signed-rank test: {}".format(metric, rstest))
 
     if metric.lower() not in ['mcc']:
         plt.xlabel("{} (%)".format(metric), fontsize="large")
@@ -153,8 +156,10 @@ def distributions(v_regular, v_permutation, base_folder, metric,
 
     # fig.text(0.1, 0.01, "Kolmogorov-Smirnov test p-value: {0:.3e}\n"
     # .format(kstest[1]), fontsize=18)
-    fig.text(0.1, 0.005, "Wilcoxon Rank-Sum test p-value: {0:.3e}\n"
+    fig.text(0.1, 0.005, "Wilcoxon Signed-Rank test p-value: {0:.3e}\n"
                          .format(rstest[1]), fontsize=18)
+    # fig.text(0.1, 0.005, "Wilcoxon Rank-Sum test p-value: {0:.3e}\n"
+    #                      .format(rstest[1]), fontsize=18)
 
     plt.savefig(os.path.join(base_folder, 'permutation_{}_distribution.pdf'
                                           .format(metric)))
