@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 import os
 import imp
+import shutil
 import argparse
 import numpy as np
 import matplotlib; matplotlib.use('Agg')
@@ -228,6 +229,16 @@ def main(base_folder):
                                  key=selected_regular.__getitem__)
     sorted_keys_permutation = sorted(selected_permutation,
                                      key=selected_permutation.__getitem__)
+
+    # create a new folder for the analysis, called 'analysis'
+    base_folder = os.path.join(base_folder, 'analysis')
+    if not os.path.exists(base_folder):
+        os.makedirs(base_folder)
+
+    # firstly, if exists, copy there the report.txt
+    shutil.copy(
+        os.path.abspath(os.path.join(base_folder, os.pardir, 'report.txt')),
+        base_folder)
 
     with open(os.path.join(base_folder, 'signature_regular.txt'), 'w') as f:
         line_drawn = False
