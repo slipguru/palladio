@@ -39,6 +39,8 @@ if __name__ == '__main__':
                 os.path.join(args.deployment_folder, "pd_run.py"))
     shutil.copy(os.path.join(scripts_folder, "pd_analysis.py"),
                 os.path.join(args.deployment_folder, "pd_analysis.py"))
+    shutil.copy(os.path.join(scripts_folder, "pd_test.py"),
+                os.path.join(args.deployment_folder, "pd_test.py"))
     shutil.copy(os.path.join(scripts_folder, "clean_palladio_libs.sh"),
                 os.path.join(args.deployment_folder, "clean_palladio_libs.sh"))
 
