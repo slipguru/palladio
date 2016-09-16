@@ -5,6 +5,7 @@ import imp
 import shutil
 import argparse
 import numpy as np
+import pandas as pd
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -239,6 +240,17 @@ def main(base_folder):
     shutil.copy(
         os.path.abspath(os.path.join(base_folder, os.pardir, 'report.txt')),
         base_folder)
+
+    # Dump the selected features in a pkl as pandas DataFrame
+    selected_todf = list()
+    for k in sorted_keys_regular:
+        selected_todf.append(selected_regular[k])
+    df_selected = pd.DataFrame(data=selected_todf, index=sorted_keys_regular,
+                               columns=['Selection frequency'])
+    df_selected.sort(columns=['Selection frequency'], ascending=False,
+                     inplace=True)
+    df_selected.to_pickle(os.path.join(base_folder, 'signature_regular.pkl'))
+    print os.path.join(base_folder, 'signature_regular.pkl')
 
     with open(os.path.join(base_folder, 'signature_regular.txt'), 'w') as f:
         line_drawn = False
