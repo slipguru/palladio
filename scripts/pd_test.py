@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """Test the obtained palladio model on an independent test set."""
 
+import matplotlib; matplotlib.use('Agg')
+
 import os
 import sys
 import imp
@@ -93,7 +95,7 @@ def main(args):
         ts_err.append(summary['balanced_accuracy'])
 
     # Get the optimal threshold
-    opt_thresh = thresh[np.argmax(ts_err)]
+    opt_thresh = thresh[np.where(ts_err == np.max(ts_err))[0][-1]]
     print("* The suggested selection frequency "
           "threshold is {}%".format(int(opt_thresh)))
 
@@ -106,6 +108,7 @@ def main(args):
                    ncol=2, mode="expand", borderaxespad=0.)
     sns.plt.xlabel('Selection frequency threshold (%)')
     sns.plt.ylabel('Score')
+    sns.plt.ylim([np.min(ts_err)-0.01, np.max(ts_err)+0.01])
     sns.plt.savefig(os.path.join(analysis_path, 'test_errors.png'))
 
     # Save selected variables
