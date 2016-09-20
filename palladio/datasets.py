@@ -126,9 +126,13 @@ class DatasetCSV(Dataset):
             import sys
             sys.stderr.write("Feature names specified are not unique. "
                              "Assigning a unique label.")
-            feature_names = np.array(feature_names)
-            for _, __ in enumerate(feature_names):
-                feature_names[_] += '_{}'.format(_)
+            feature_names_u = np.array(feature_names)
+            for _, __ in enumerate(feature_names_u):
+                feature_names_u[_] += '_{}'.format(_)
+            np.savetxt("id_correspondence.csv",
+                       np.stack((np.array(feature_names),
+                                 feature_names_u), axis=-1),
+                       delimiter=",", fmt='%s')
 
         # if not self.get_option('data_preprocessing') is None:
         # ### TODO Check!!!
