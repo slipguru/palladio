@@ -269,9 +269,9 @@ def feature_frequencies(sorted_keys, frequencies, base_folder, threshold=75):
 
     # ## Rotate x ticks
     for item in ax.get_xticklabels():
-        item.set_rotation(45)
+        item.set_rotation(90)
 
-    plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
+    # plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
     # ## plot a horizontal line at the height of the selected threshold
     threshold_line = plt.axhline(y=threshold, ls='--', lw=0.5, color='k')
 
@@ -293,6 +293,7 @@ def feature_frequencies(sorted_keys, frequencies, base_folder, threshold=75):
     plt.xlabel("Feature names", fontsize="large")
     plt.ylabel("Absolute Frequency", fontsize="large")
 
+    plt.tight_layout()
     plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
 
 
