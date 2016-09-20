@@ -75,6 +75,7 @@ def main(args):
 
     # Build incremental test sets
     ts_err = list()
+    beta_list = list()
     for t in thresh:
         idx = np.where(signature.values >= t)[0]
         selected = var_names[idx]
@@ -85,6 +86,7 @@ def main(args):
 
         # Training
         beta = model(X_tr, y_tr)
+        beta_list.append(beta)
 
         # Test
         y_pred = np.sign(np.dot(X_ts, beta)).ravel()
@@ -98,6 +100,12 @@ def main(args):
     opt_thresh = thresh[np.where(ts_err == np.max(ts_err))[0][-1]]
     print("* The suggested selection frequency "
           "threshold is {}%".format(int(opt_thresh)))
+
+    # Store the optimal model
+    opt_beta = beta_list[np.where(ts_err == np.max(ts_err))[0][-1]]
+    with open(os.path.join(analysis_path, 'beta.pkl'),'w') as f:
+        pkl.dump(opt_beta, f)
+
 
     # Make plot
     sns.plt.plot(thresh, ts_err, '-o', label='Balanced accuracy')
