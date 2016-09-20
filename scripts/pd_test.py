@@ -62,9 +62,8 @@ def main(args):
 
     # Define the learner class
     if args.learner.lower() in ['rls', 'tikhonov', 'ridge']:
-        # from palladio.wrappers.extensions import RLSCV
-        # model = RLSCV()
-        pass
+        from palladio.wrappers.extensions import RLSCV
+        model = lambda x, y: RLSCV(x, y)
     elif args.learner.lower() in ['ols', 'leastquares', 'ls']:
         import l1l2py
         model = lambda x, y: l1l2py.algorithms.ridge_regression(x, y, mu=0)
