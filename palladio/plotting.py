@@ -98,15 +98,17 @@ def distributions(v_regular, v_permutation, base_folder, metric,
     perm_std = np.nanstd(v_permutation)
 
     sns.distplot(v_permutation * scale,
-                 # label="Permutation tests \nMean = {0:.2f}, STD = {1:.2f}"
-                 label="Permutation batch \nMean = {0:.2f}, STD = {1:.2f}"
+                 # label="Permutation batch \nMean = {0:.2f}, STD = {1:.2f}"
+                 # .format(perm_mean, perm_std),
+                 label="Permutation batch \nMean = {0:2.1f}, STD = {1:2.1f}"
                        .format(perm_mean, perm_std),
                  color=colorsHex['lightRed'], ax=ax,
                  hist_kws={'alpha': 0.8}, **args)
     sns.distplot(v_regular * scale,
-                 # label="Regular experiments \nMean = {0:.2f}, STD = {1:.2f}"
-                 label="Regular batch \nMean = {0:.2f}, STD = {1:.2f}"
-                       .format(reg_mean, reg_std),
+                 # label="Regular batch \nMean = {0:.2f}, STD = {1:.2f}"
+                        # .format(reg_mean, reg_std),
+                 label="Regular batch \nMean = {0:2.1f}, STD = {1:2.1f}"
+                       .format(reg_mean*100, reg_std*100),
                  color=colorsHex['lightGreen'], ax=ax,
                  hist_kws={'alpha': 0.8}, **args)
 
