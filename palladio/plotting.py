@@ -98,12 +98,14 @@ def distributions(v_regular, v_permutation, base_folder, metric,
     perm_std = np.nanstd(v_permutation)
 
     sns.distplot(v_permutation * scale,
-                 label="Permutation tests \nMean = {0:.2f}, STD = {1:.2f}"
+                 # label="Permutation tests \nMean = {0:.2f}, STD = {1:.2f}"
+                 label="Permutation batch \nMean = {0:.2f}, STD = {1:.2f}"
                        .format(perm_mean, perm_std),
                  color=colorsHex['lightRed'], ax=ax,
                  hist_kws={'alpha': 0.8}, **args)
     sns.distplot(v_regular * scale,
-                 label="Regular experiments \nMean = {0:.2f}, STD = {1:.2f}"
+                 # label="Regular experiments \nMean = {0:.2f}, STD = {1:.2f}"
+                 label="Regular batch \nMean = {0:.2f}, STD = {1:.2f}"
                        .format(reg_mean, reg_std),
                  color=colorsHex['lightGreen'], ax=ax,
                  hist_kws={'alpha': 0.8}, **args)
@@ -126,10 +128,12 @@ def distributions(v_regular, v_permutation, base_folder, metric,
         f.write("Wilcoxon Signed-rank test p-value: {0:.3e}\n".format(rstest[1]))
         f.write("\n")
 
-        f.write("Regular experiments, {}\n".format(metric))
+        # f.write("Regular experiments, {}\n".format(metric))
+        f.write("Regular batch, {}\n".format(metric))
         f.write("Mean = {0:.2f}, STD = {1:.2f}\n".format(reg_mean, reg_std))
 
-        f.write("Permutation tests, {}\n".format(metric))
+        # f.write("Permutation tests, {}\n".format(metric))
+        f.write("Permutation batch, {}\n".format(metric))
         f.write("Mean = {0:.2f}, STD = {1:.2f}\n".format(perm_mean, perm_std))
 
     # print("Kolmogorov-Smirnov test: {}".format(kstest))
@@ -209,7 +213,8 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm,
 
     plt.legend(
         (s_t, s_p, threshold_line),
-        ('Real signature', 'Permutation signature', 'Threshold'),
+        # ('Real signature', 'Permutation signature', 'Threshold'),
+        ('Regular batch', 'Permutation batch', 'Threshold'),
         scatterpoints=1,
         loc='upper right',
         ncol=1,
@@ -336,10 +341,14 @@ def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular,
 
     # make plot
     plt.figure()
+    # plt.plot(100 * thresh_axis, sel_true, marker='h', alpha=0.8,
+    #          color=colorsHex['lightGreen'], label='Real signature')
+    # plt.plot(100 * thresh_axis, sel_perm, marker='h', alpha=0.8,
+    #          color=colorsHex['lightRed'], label='Permutation signature')
     plt.plot(100 * thresh_axis, sel_true, marker='h', alpha=0.8,
-             color=colorsHex['lightGreen'], label='Real signature')
+             color=colorsHex['lightGreen'], label='Regular batch')
     plt.plot(100 * thresh_axis, sel_perm, marker='h', alpha=0.8,
-             color=colorsHex['lightRed'], label='Permutation signature')
+             color=colorsHex['lightRed'], label='Permutation batch')
     plt.axvline(x=threshold, ymin=0, ymax=n_feat, ls='--', lw=0.5,
                 color='k', label='Threshold')
     plt.legend()
