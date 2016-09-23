@@ -100,14 +100,14 @@ def distributions(v_regular, v_permutation, base_folder, metric,
     sns.distplot(v_permutation * scale,
                  # label="Permutation batch \nMean = {0:.2f}, STD = {1:.2f}"
                  # .format(perm_mean, perm_std),
-                 label="Permutation batch \nMean = {0:2.1f}, STD = {1:2.1f}"
-                       .format(perm_mean, perm_std),
+                 label="Permutation batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
+                       .format(perm_mean*100, perm_std*100),
                  color=colorsHex['lightRed'], ax=ax,
                  hist_kws={'alpha': 0.8}, **args)
     sns.distplot(v_regular * scale,
                  # label="Regular batch \nMean = {0:.2f}, STD = {1:.2f}"
                         # .format(reg_mean, reg_std),
-                 label="Regular batch \nMean = {0:2.1f}, STD = {1:2.1f}"
+                 label="Regular batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
                        .format(reg_mean*100, reg_std*100),
                  color=colorsHex['lightGreen'], ax=ax,
                  hist_kws={'alpha': 0.8}, **args)
@@ -132,11 +132,11 @@ def distributions(v_regular, v_permutation, base_folder, metric,
 
         # f.write("Regular experiments, {}\n".format(metric))
         f.write("Regular batch, {}\n".format(metric))
-        f.write("Mean = {0:.2f}, STD = {1:.2f}\n".format(reg_mean, reg_std))
+        f.write("Mean = {0:.2f}, SD = {1:.2f}\n".format(reg_mean, reg_std))
 
         # f.write("Permutation tests, {}\n".format(metric))
         f.write("Permutation batch, {}\n".format(metric))
-        f.write("Mean = {0:.2f}, STD = {1:.2f}\n".format(perm_mean, perm_std))
+        f.write("Mean = {0:.2f}, SD = {1:.2f}\n".format(perm_mean, perm_std))
 
     # print("Kolmogorov-Smirnov test: {}".format(kstest))
     # print("[{}] Wilcoxon Rank-Sum test: {}".format(metric, rstest))
