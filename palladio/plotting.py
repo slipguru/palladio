@@ -1,7 +1,10 @@
 # -*- coding: UTF-8 -*-
 import os
 # import pandas as pd
-import matplotlib; matplotlib.use('Agg')
+import matplotlib
+matplotlib.use('Agg')  # create plots from remote
+matplotlib.rcParams['pdf.fonttype'] = 42  # avoid bitmapped fonts in pdf
+matplotlib.rcParams['ps.fonttype'] = 42
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import Rectangle
