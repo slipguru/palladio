@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Test the obtained palladio model on an independent test set."""
 
-import matplotlib; matplotlib.use('Agg')
 
 import os
 import sys
@@ -10,8 +9,14 @@ import argparse
 import numpy as np
 import pandas as pd
 import cPickle as pkl
-import seaborn as sns
 from palladio import utils
+
+import matplotlib
+matplotlib.use('Agg')  # create plots from remote
+matplotlib.rcParams['pdf.fonttype'] = 42  # avoid bitmapped fonts in pdf
+matplotlib.rcParams['ps.fonttype'] = 42
+
+import seaborn as sns
 
 # TODO: add more learning machines
 __learners__ = ['ols', 'leastquares', 'ls', 'rls', 'tikhonov', 'ridge']

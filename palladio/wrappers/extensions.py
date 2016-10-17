@@ -77,7 +77,11 @@ def RLSCV(data, labels, cv_split=5, log_mu_range=(-9, 0, 20)):
                            log_mu_range[2]) * _mu_scaling_factor(data)
 
     # Kfold starts here
-    kf = KFold(n=n, n_folds=cv_split)
+    try:
+        kf = KFold(n=n, n_folds=cv_split)
+    except Exception:
+        kf = KFold(n_splits=cv_split).split(data)
+
     jobs = []  # multiprocessing job list
     results = mp.Manager().dict()  # dictionary shared among processess
 
@@ -123,19 +127,9 @@ def RLSCV(data, labels, cv_split=5, log_mu_range=(-9, 0, 20)):
     # Refit and return the best model
     beta = ridge_regression(data, labels, opt_mu)
 
-    ### DEBUG ###
-    import matplotlib.pyplot as plt
-    import time
-    plt.clf()
-    plt.semilogx(mu_range, avg_tr_err, '-o', label='tr')
-    plt.semilogx(mu_range, avg_vld_err, '-o', label='vld')
-    plt.legend()
-    plt.savefig('/home/samu/Desktop/tmp/kfold'+sec_to_timestring(time.time())+'.png')
-    #############
-
     return beta
 
-## DEBUG
+
 def sec_to_timestring(seconds):
     """Transform seconds into a formatted time string.
 
