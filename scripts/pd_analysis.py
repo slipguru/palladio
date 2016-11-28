@@ -17,7 +17,7 @@ from palladio import plotting
 
 
 def analyze_experiment(exp_folder, config, poslab):
-
+    """TODO."""
     with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
         result = pkl.load(f)
 

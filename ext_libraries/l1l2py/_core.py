@@ -25,14 +25,13 @@ double optimization variable selection.
 # You should have received a copy of the GNU General Public License
 # along with L1L2Py. If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ['model_selection', 'minimal_model', 'nested_models']
 
 import numpy as np
 import itertools as it
 
 from l1l2py.algorithms import ridge_regression, l1l2_regularization
 
-# import random
+__all__ = ('model_selection', 'minimal_model', 'nested_models')
 
 
 def emergency_log(message, file_path='/tmp/emergency_log.txt'):
@@ -107,12 +106,12 @@ def model_selection(data, labels, test_data, test_labels,
             training set.
 
     """
-
     # STAGE I
     stage1_out = minimal_model(data, labels, mu_range[0],
                                tau_range, lambda_range,
                                cv_splits, cv_error_function,
-                               data_normalizer, labels_normalizer, algorithm_version=algorithm_version)
+                               data_normalizer, labels_normalizer,
+                               algorithm_version=algorithm_version)
     out = dict(it.izip(('kcv_err_ts', 'kcv_err_tr'), stage1_out))
 
     # KCV MINIMUM SELECTION
