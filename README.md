@@ -8,7 +8,7 @@ PALLADIO works by repeating the same experiment many times, each time resampling
 Since all experiments performed are independent, PALLADIO is designed so that it can exploit a cluster where it is available.
 
 ### Dependencies
-ADENINE is developed using Python 2.7 and inherits its main functionalities from:
+PALLADIO is developed using Python 2.7 and inherits its main functionalities from:
 * numpy
 * scipy
 * scikit-learn
