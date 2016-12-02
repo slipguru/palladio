@@ -74,6 +74,10 @@ def distributions(v_regular, v_permutation, base_folder, metric,
         If not first_run, append the logs to a single file. Otherwise append
         logs to a cleared file.
     """
+    if np.any(np.equal(v_regular, None)) or \
+            np.any(np.equal(v_permutation, None)):
+        print("Cannot create {} plot due to some nan values".format(metric))
+        return
     # scaling factor for percentage plot
     if metric.lower() not in ['mcc']:
         scale = 100
@@ -104,14 +108,14 @@ def distributions(v_regular, v_permutation, base_folder, metric,
                  # label="Permutation batch \nMean = {0:.2f}, STD = {1:.2f}"
                  # .format(perm_mean, perm_std),
                  label="Permutation batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
-                       .format(perm_mean*100, perm_std*100),
+                       .format(perm_mean * 100, perm_std * 100),
                  color=colorsHex['lightRed'], ax=ax,
                  hist_kws={'alpha': 0.8}, **args)
     sns.distplot(v_regular * scale,
                  # label="Regular batch \nMean = {0:.2f}, STD = {1:.2f}"
-                        # .format(reg_mean, reg_std),
+                 #        .format(reg_mean, reg_std),
                  label="Regular batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
-                       .format(reg_mean*100, reg_std*100),
+                       .format(reg_mean * 100, reg_std * 100),
                  color=colorsHex['lightGreen'], ax=ax,
                  hist_kws={'alpha': 0.8}, **args)
 

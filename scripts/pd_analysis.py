@@ -50,9 +50,12 @@ def analyze_experiment(exp_folder, config, poslab):
     MCC = (((TP * TN) - (FP * FN)) / (1.0 if den == 0 else np.sqrt(den)))
 
     if poslab is not None:
-        precision = TP / float(TP + FP)
-        recall = TP / float(TP + FN)
-        F1 = 2.0 * ((precision * recall) / (precision + recall))
+        precision = TP / float(TP + FP) if TP + FP != 0 else None
+        recall = TP / float(TP + FN) if TP + FN != 0 else None
+        if precision is None or recall is None or precision + recall == 0:
+            F1 = None
+        else:
+            F1 = 2.0 * ((precision * recall) / (precision + recall))
     else:
         precision = recall = F1 = None
 
@@ -247,10 +250,10 @@ def main(base_folder):
         selected_todf.append(selected_regular[k])
     df_selected = pd.DataFrame(data=selected_todf, index=sorted_keys_regular,
                                columns=['Selection frequency'])
-    df_selected.sort(columns=['Selection frequency'], ascending=False,
-                     inplace=True)
+    df_selected.sort_values(['Selection frequency'], ascending=False,
+                            inplace=True)
     df_selected.to_pickle(os.path.join(base_folder, 'signature_regular.pkl'))
-    print os.path.join(base_folder, 'signature_regular.pkl')
+    # print os.path.join(base_folder, 'signature_regular.pkl')
 
     with open(os.path.join(base_folder, 'signature_regular.txt'), 'w') as f:
         line_drawn = False
@@ -298,7 +301,8 @@ def main(base_folder):
 
     for kcv_err, exp in zip([kcv_err_regular, kcv_err_permutation],
                             ['regular', 'permutation']):
-        plotting.kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names)
+        plotting.kcv_err_surfaces(
+            kcv_err, exp, base_folder, param_ranges, param_names)
 
 
 if __name__ == '__main__':

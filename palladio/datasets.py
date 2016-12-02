@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import cPickle as pkl
 
-__all__ = ['DatasetCSV', 'DatasetNPY']
+__all__ = ('DatasetCSV', 'DatasetNPY')
 
 
 class Dataset(object):
@@ -73,11 +73,12 @@ class Dataset(object):
         # print("\n{} created".format(session_folder))
 
         for link_name in self._dataset_files.keys():
-            #os.link(
+            # os.link(
             shutil.copy2(
                 os.path.join(base_path, self.get_file(link_name)),  # SRC
                 os.path.join(session_folder, link_name)             # DST
             )
+
 
 class DatasetCSV(Dataset):
     """Dataset composed by data matrix and labels vector.
@@ -90,13 +91,11 @@ class DatasetCSV(Dataset):
 
         Parameters
         ----------
-
         base_path : string
             The base path relative to which files are stored.
 
         Returns
         -------
-
         data : ndarray
             The :math:`n \\times p` data matrix .
 
@@ -110,9 +109,7 @@ class DatasetCSV(Dataset):
         data_path = os.path.join(base_path, self.get_file('data'))
         labels_path = os.path.join(base_path, self.get_file('labels'))
 
-        ##################
         # DATA
-        ##################
         poslab = self._dataset_options.pop('positive_label', None)
         samples_on = self._dataset_options.pop('samples_on', 'col')
         pd_data = pd.read_csv(data_path, **self._dataset_options)
@@ -125,10 +122,10 @@ class DatasetCSV(Dataset):
         if feature_names.shape[0] != np.unique(feature_names).shape[0]:
             import sys
             sys.stderr.write("Feature names specified are not unique. "
-                             "Assigning a unique label.")
-            feature_names_u = np.array(feature_names)
-            for _, __ in enumerate(feature_names_u):
-                feature_names_u[_] += '_{}'.format(_)
+                             "Assigning a unique label.\n")
+            feature_names_u = np.array(feature_names, dtype=str)
+            for it, _ in enumerate(feature_names_u):
+                feature_names_u[it] += '_{}'.format(it)
             np.savetxt("id_correspondence.csv",
                        np.stack((np.array(feature_names),
                                  feature_names_u), axis=-1),
@@ -179,7 +176,7 @@ class DatasetNPY(Dataset):
     """
 
     def load_dataset(self, base_path):
-        """Read data matrix and labels vector from files.
+        r"""Read data matrix and labels vector from files.
 
         Requires a .pkl file containing a dictionary storing
         samples and features names (keys ``index`` and
@@ -209,9 +206,7 @@ class DatasetNPY(Dataset):
         labels_path = os.path.join(base_path, self.get_file('labels'))
         indcol_path = os.path.join(base_path, self.get_file('indcol'))
 
-        #####################
-        ### DATA + LABELS ###
-        #####################
+        # DATA + LABELS
         data = np.load(data_path)
         labels = np.load(labels_path)
 
@@ -233,31 +228,22 @@ class DatasetNPY(Dataset):
         #     self.get_option('data_preprocessing').load_data(pd_data)
         #     pd_data = self.get_option('data_preprocessing').process()
 
-        #######################
-        ### LABELS TO -1/+1 ###
-        #######################
-
+        # LABELS TO -1/+1
         if not self.get_option('positive_label') is None:
             poslab = self.get_option('positive_label')
         else:
             uv = np.sort(np.unique(labels))
-
             if len(uv) != 2:
                 raise Exception(
                     "More than two unique values in the labels array")
 
             poslab = uv[0]
 
-        # Auxiliary function required to convert the labels to
-        # -1/+1
-        def _toPlusMinus(x):
-            """Converts the values in the labels"""
-            if x == poslab:
-                return +1.0
-            else:
-                return -1.0
+        def _to_plus_minus(x):
+            """Convert labels to -1 / +1."""
+            return +1. if x == poslab else -1.
 
-        labels_mapped = map(_toPlusMinus, labels)
+        labels_mapped = map(_to_plus_minus, labels)
         labels = np.array(labels_mapped)
         if data.shape[0] != labels.shape[0]:
             raise ValueError("The number of samples in data do not correspond "
