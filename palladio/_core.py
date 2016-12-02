@@ -1,9 +1,11 @@
+"""Module to distribute jobs among machines."""
+
 import os
 import imp
 import shutil
+import time
 import cPickle as pkl
 import numpy as np
-import time
 
 from hashlib import sha512
 
@@ -21,8 +23,8 @@ try:
 
     IS_MPI_JOB = True
 
-except:
-
+except ImportError as e:
+    print("mpi4py module not found. Palladio cannot run on multiple machines.")
     comm = None
     size = 1
     rank = 0
@@ -31,6 +33,7 @@ except:
     IS_MPI_JOB = False
 
 MAX_RESUBMISSIONS = 2
+
 
 def generate_job_list(N_jobs_regular, N_jobs_permutation):
     """Generate a vector used to distribute jobs among nodes.
@@ -62,7 +65,7 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
     # The total number of jobs
     N_jobs_total = N_jobs_permutation + N_jobs_regular
 
-    # A vector representing the type of experiment: 1 for permutation, 0 for regular
+    # A vector representing the type of experiment: 1 -permutation, 0 -regular
     type_vector = np.ones((N_jobs_total,))
     type_vector[N_jobs_permutation:] = 0
     np.random.shuffle(type_vector)
@@ -72,7 +75,7 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
 
 def run_experiment(data, labels, config_dir, config, is_permutation_test,
                    experiments_folder_path, custom_name):
-    """Run a single independent experiment.
+    r"""Run a single independent experiment.
 
     Perform a single experiment, which is divided in three main stages:
 
@@ -113,7 +116,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
         by two numbers which can be used to identify the experiment, for
         debugging purposes.
     """
-    result_path = os.path.join(config_dir, config.result_path)  # result base dir
+    # result_path = os.path.join(config_dir, config.result_path)
 
     # Create experiment folders
     result_dir = os.path.join(experiments_folder_path, custom_name)
@@ -136,14 +139,17 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
 
     # Split the dataset in learning and test set
     # Use a trick to keep the original splitting strategy
-    aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))), rseed=rseed)
-    # aux_splits = config.cv_splitting(labels, int(round(1/(config.test_set_ratio))))
+    aux_splits = config.cv_splitting(
+        labels, int(round(1 / (config.test_set_ratio))), rseed=rseed)
+    # aux_splits = config.cv_splitting(
+    #    labels, int(round(1/(config.test_set_ratio))))
 
     # idx_lr = aux_splits[0][0]
     # idx_ts = aux_splits[0][1]
 
     # A quick workaround to get just the first couple of the list;
     # one iteration, then break the loop
+    # TODO necessary?
     for idx_tr, idx_ts in aux_splits:
         idx_lr = idx_tr
         idx_ts = idx_ts
@@ -183,7 +189,6 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
 
     # Create the object that will actually perform
     # the classification/feature selection
-
     clf = config.learner_class(config.learner_params)
 
     # Set the actual data and perform
@@ -238,10 +243,7 @@ def main(config_path):
     if rank == 0:
         t0 = time.time()
 
-    ##########################
-    # LOAD CONFIGURATION
-    ##########################
-
+    # Load config
     config_dir = os.path.dirname(config_path)
 
     # For some reason, it must be atomic
@@ -249,10 +251,7 @@ def main(config_path):
     config = imp.load_source('config', config_path)
     imp.release_lock()
 
-    ####################
-    # LOAD DATASET
-    ####################
-
+    # Load dataset
     if rank == 0:
         print("Loading dataset...")
 
@@ -264,19 +263,19 @@ def main(config_path):
     data, labels, _ = dataset.load_dataset(config_dir)
 
     # Session folder
-    result_path = os.path.join(config_dir, config.result_path)  # session base dir
+    result_path = os.path.join(config_dir, config.result_path)
     experiments_folder_path = os.path.join(result_path, 'experiments')
 
     # Create base session folder
     # Also copy dataset files inside it
     if rank == 0:
         # Create main session folder
-        if not os.path.exists(result_path):
-            os.mkdir(result_path)
-        else:
-            raise Exception("Session folder {} already exists, aborting."
-                            .format(result_path))
+        if os.path.exists(result_path):
+            shutil.move(result_path, result_path[:-1] + '_old')
+            # raise Exception("Session folder {} already exists, aborting."
+            #                 .format(result_path))
 
+        os.mkdir(result_path)
         # Create experiments folder (where all experiments sub-folders will
         # be created)
         os.mkdir(experiments_folder_path)
@@ -303,47 +302,51 @@ def main(config_path):
     else:
         job_list = None
 
-    ### XXX Fix for single machine!!!
-    ### Distribute job list with broadcast
+    # XXX Fix for single machine!!!
+    # Distribute job list with broadcast
     job_list = comm.bcast(job_list, root=0)
+    print(job_list)
 
-    ### Compute which jobs each process has to handle
+    # Compute which jobs each process has to handle
     N_jobs_total = N_jobs_permutation + N_jobs_regular
+    jobs_per_proc = N_jobs_total / size
+    exceeding_jobs = N_jobs_total % size
 
-    jobs_per_proc = N_jobs_total/size
-    exceeding_jobs = N_jobs_total%size
-
-    ### compute the local offset
-    heavy_jobs = min(rank, exceeding_jobs) # jobs that make one extra iteration
+    # compute the local offset
+    heavy_jobs = min(rank, exceeding_jobs)  # jobs that make one extra iter
     light_jobs = rank - heavy_jobs
-    offset = heavy_jobs*(jobs_per_proc + 1) + light_jobs*jobs_per_proc
-    idx = np.arange(offset, offset + jobs_per_proc + int(rank < exceeding_jobs))
+    offset = heavy_jobs * (jobs_per_proc + 1) + light_jobs * jobs_per_proc
+    idx = np.arange(
+        offset, offset + jobs_per_proc + int(rank < exceeding_jobs))
 
-    ### The jobs handled by this process
+    # The jobs handled by this process
     local_jobs = job_list[idx]
 
     # print("Job {}, handling jobs {}".format(rank, idx))
-
     for i, is_permutation_test in enumerate([bool(x) for x in local_jobs]):
+        # print("Job {}, is permutation test? {}"
+        #        .format(rank, is_permutation_test))
 
-        # print("Job {}, is permutation test? {}".format(rank, is_permutation_test))
-
-        ### Create a custom name for the experiment based on whether it is a permutation test,
-        ### the process' rank and a sequential number
-        custom_name = "{}_p_{}_i_{}".format(("permutation" if is_permutation_test else "regular"), rank, i)
+        # Create a custom name for the experiment based on whether it is a
+        # permutation test, the process' rank and a sequential number
+        custom_name = "{}_p_{}_i_{}".format(
+            ("permutation" if is_permutation_test else "regular"), rank, i)
         tmp_name_base = 'tmp_' + custom_name
 
         #######################
-        ### RECOVERY SYSTEM ###
+        #   RECOVERY SYSTEM ###
         #######################
 
         experiment_resubmissions = 0
         experiment_completed = False
-        while not experiment_completed and experiment_resubmissions <= MAX_RESUBMISSIONS:
-
+        while not experiment_completed and \
+                experiment_resubmissions <= MAX_RESUBMISSIONS:
             try:
-                tmp_name = tmp_name_base + '_submission_{}'.format(experiment_resubmissions+1)
-                run_experiment(data, labels, config_dir, config, is_permutation_test, experiments_folder_path, tmp_name)
+                tmp_name = tmp_name_base + '_submission_{}'.format(
+                    experiment_resubmissions + 1)
+                run_experiment(data, labels, config_dir, config,
+                               is_permutation_test, experiments_folder_path,
+                               tmp_name)
                 experiment_completed = True
 
                 shutil.move(
@@ -355,21 +358,22 @@ def main(config_path):
                 # If somethings out of the ordinary happens,
                 # resubmit the job
                 experiment_resubmissions += 1
-                print("[{}_{}] failed experiment {}, resubmission #{}\nException raised: {}".format(name, rank, i, experiment_resubmissions, e))
+                print("[{}_{}] failed experiment {}, resubmission #{}\n"
+                      "Exception raised: {}".format(
+                          name, rank, i, experiment_resubmissions, e))
 
         if not experiment_completed:
-            print("[{}_{}] failed to complete experiment {}, max resubmissions limit reached".format(name, rank, i))
+            print("[{}_{}] failed to complete experiment {}, "
+                  "max resubmissions limit reached".format(name, rank, i))
 
     if IS_MPI_JOB:
-        ### Wait for all experiments to finish before taking the time
+        # Wait for all experiments to finish before taking the time
         comm.barrier()
 
     if rank == 0:
         t100 = time.time()
-
-    if rank == 0:
         with open(os.path.join(result_path, 'report.txt'), 'w') as rf:
-
-            rf.write("Total elapsed time: {}".format(sec_to_timestring(t100-t0)))
+            rf.write("Total elapsed time: {}".format(
+                sec_to_timestring(t100 - t0)))
 
     return

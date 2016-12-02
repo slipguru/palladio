@@ -1,4 +1,8 @@
+"""Abstract method for classification wrappers."""
+
+
 class Classification(object):
+    """Abstract method for classification wrappers."""
 
     def __init__(self, params=None):
 
@@ -35,7 +39,6 @@ class Classification(object):
         """
         Returns
         ------
-
         result : dict
             Keys of the dictionary:
 
@@ -63,8 +66,5 @@ class Classification(object):
             **prediction_tr_list** : list of M two-dimensional ndarray, optional
                 [STAGE II] Prediction vectors for the models evaluated on the
                 training set.
-
-            ''
         """
-
         raise Exception("Abstract method")

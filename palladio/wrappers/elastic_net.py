@@ -3,16 +3,15 @@
 
 import numpy as np
 from sklearn.linear_model import ElasticNetCV
-
-from palladio.wrappers.classification import Classification
-from palladio import utils as pd_utils
-import l1l2py
-
 # Legacy import
 try:
     from sklearn.model_selection import GridSearchCV
 except ImportError:
     from sklearn.grid_search import GridSearchCV
+
+import l1l2py
+from palladio import utils as pd_utils
+from palladio.wrappers.classification import Classification
 
 
 class ElasticNetClassifier(Classification):
@@ -29,9 +28,10 @@ class ElasticNetClassifier(Classification):
     while if alpha = 0 no feature selection is performed and all features are
     passed to the second step.
     """
+
     def __init__(self, params=None):
         super(ElasticNetClassifier, self).__init__(params)
-        self.param_names = [r'\alpha',r'l_1 ratio']  # BEWARE: use LaTeX names
+        self.param_names = [r'\alpha', r'l_1 ratio']  # BEWARE: use LaTeX names
 
     def setup(self, Xtr, Ytr, Xts, Yts):
         super(ElasticNetClassifier, self).setup(Xtr, Ytr, Xts, Yts)
@@ -44,7 +44,6 @@ class ElasticNetClassifier(Classification):
         self.alpha_range = self._params['alpha_range'] * rs.mu_scaling_factor
 
     def run(self):
-
         # Check if the data neeed to be normalized
         _normalize = (self._params['data_normalizer'] ==
                       l1l2py.tools.standardize)

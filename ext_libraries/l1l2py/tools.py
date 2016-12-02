@@ -4,32 +4,33 @@ In this module are implemented some common function to use in combination
 with the rest of the package.
 
 """
-## This code is written by Salvatore Masecchia <salvatore.masecchia@unige.it>
-## and Annalisa Barla <annalisa.barla@unige.it>
-## Copyright (C) 2010 SlipGURU -
-## Statistical Learning and Image Processing Genoa University Research Group
-## Via Dodecaneso, 35 - 16146 Genova, ITALY.
-##
-## This file is part of L1L2Py.
-##
-## L1L2Py is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
-##
-## L1L2Py is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with L1L2Py. If not, see <http://www.gnu.org/licenses/>.
-
-__all__ = ['linear_range', 'geometric_range', 'standardize', 'center',
-           'classification_error', 'balanced_classification_error',
-           'regression_error', 'kfold_splits', 'stratified_kfold_splits']
+# This code is written by Salvatore Masecchia <salvatore.masecchia@unige.it>
+# and Annalisa Barla <annalisa.barla@unige.it>
+# Copyright (C) 2010 SlipGURU -
+# Statistical Learning and Image Processing Genoa University Research Group
+# Via Dodecaneso, 35 - 16146 Genova, ITALY.
+#
+# This file is part of L1L2Py.
+#
+# L1L2Py is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# L1L2Py is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with L1L2Py. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+
+__all__ = ('linear_range', 'geometric_range', 'standardize', 'center',
+           'classification_error', 'balanced_classification_error',
+           'regression_error', 'kfold_splits', 'stratified_kfold_splits')
+
 
 # Ranges functions ------------------------------------------------------------
 def linear_range(min_value, max_value, number):
@@ -297,8 +298,8 @@ def classification_error(labels, predictions):
     """
     labels = np.asarray(labels).ravel()
     predictions = np.asarray(predictions).ravel()
-    
-    difference = (np.sign(labels) != np.sign(predictions))  
+
+    difference = (np.sign(labels) != np.sign(predictions))
     return len(*difference.nonzero()) / float(len(labels))
 
 def balanced_classification_error(labels, predictions, error_weights=None):
@@ -424,9 +425,10 @@ def kfold_splits(labels, k, rseed=0):
     random.seed(rseed)
     indexes = range(len(labels))
     random.shuffle(indexes)
-    random.seed() #restores random generation from a random seed
+    random.seed()  # restores random generation from a random seed
 
     return _splits(indexes, k)
+
 
 def stratified_kfold_splits(labels, k, rseed=0):
     r"""Sstratified k-fold cross validation splits.
@@ -472,7 +474,8 @@ def stratified_kfold_splits(labels, k, rseed=0):
     >>> l1l2py.tools.stratified_kfold_splits(labels, 1)
     Traceback (most recent call last):
         ...
-    ValueError: 'k' must be greater than one and smaller or equal than number of positive and negative samples
+    ValueError: 'k' must be greater than one and smaller or equal than number
+    of positive and negative samples
 
     """
     classes = np.unique(labels)
@@ -490,30 +493,29 @@ def stratified_kfold_splits(labels, k, rseed=0):
     random.seed(rseed)
     random.shuffle(n_indexes)
     n_splits = _splits(n_indexes, k)
-    
+
     random.shuffle(p_indexes)
     p_splits = _splits(p_indexes, k)
-    random.seed() #restores random generation from a random seed
+    random.seed()  # restores random generation from a random seed
 
     splits = list()
     for ns, ps in zip(n_splits, p_splits):
         train = ns[0] + ps[0]
         test = ns[1] + ps[1]
-        splits.append( (train, test) )
+        splits.append((train, test))
 
     return splits
 
-def _splits(indexes, k):
-    r"""Splits the 'indexes' list in input in k disjoint chunks.
 
-    """
+def _splits(indexes, k):
+    """Split the 'indexes' list in input in k disjoint chunks."""
     return [(indexes[:start] + indexes[end:], indexes[start:end])
-                for start, end in _split_dimensions(len(indexes), k)]
+            for start, end in _split_dimensions(len(indexes), k)]
+
 
 def _split_dimensions(num_items, num_splits):
-    r"""Generator wich gives the pairs of indexes to split 'num_items' data
+    """Generator wich gives the pairs of indexes to split 'num_items' data
        in 'num_splits' chunks.
-
     """
     start = 0
     remaining_items = float(num_items)

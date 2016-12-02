@@ -2,16 +2,16 @@
 """Main palladio script."""
 
 import os
-import sys
 import argparse
 
-from palladio import main
+import palladio as pd
 
-__extensions__ = ('csv', 'npy')  # list of allowed data extesions
-__models__ = ('l1l2', 'elasticnet', 'logit')  # list of implmenented methods
+DATA_EXT = ('csv', 'npy')  # list of allowed data extesions
+MODELS = ('l1l2', 'elasticnet', 'logit')  # list of implmenented methods
 
-# Script entry ----------------------------------------------------------------
-if __name__ == '__main__':
+
+def init_main():
+    """Start palladio run."""
     from palladio import __version__
     parser = argparse.ArgumentParser(description='palladio script for '
                                                  'running the framework.')
@@ -31,21 +31,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.create:
-        import shutil
-        import palladio as pd
-
         # Argument check
-        if args.format.lower() not in __extensions__:
-            sys.stderr.write("Format {} not understood. Please specify one"
+        if args.format.lower() not in DATA_EXT:
+            raise ValueError("Format '{}' not understood. Please specify one"
                              "of {}.\n".format(args.format.lower(),
-                                               __extensions__))
-            sys.exit(-1)
+                                               DATA_EXT))
 
-        if args.model.lower() not in __models__:
-            sys.stderr.write("Model {} not understood. Please specify one"
+        if args.model.lower() not in MODELS:
+            raise ValueError("Model '{}' not understood. Please specify one"
                              "of {}.\n".format(args.model.lower(),
-                                               __models__))
-            sys.exit(-1)
+                                               MODELS))
 
         # Define which config_file needs to be loaded
         config_file = 'config_' + args.model.lower() + \
@@ -59,7 +54,13 @@ if __name__ == '__main__':
         # Check if the file already exists
         if os.path.exists(args.configuration_file):
             parser.error("palladio configuration file already exists")
+
         # Copy the config file
-        shutil.copy(std_config_path, args.configuration_file)
+        from shutil import copy
+        copy(std_config_path, args.configuration_file)
     else:
-        main(os.path.abspath(args.configuration_file))
+        pd.main(os.path.abspath(args.configuration_file))
+
+
+if __name__ == '__main__':
+    init_main()

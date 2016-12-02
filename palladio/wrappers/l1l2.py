@@ -1,13 +1,13 @@
-# -*- coding: UTF-8 -*-
+"""Wrapper for l1l2."""
 import numpy as np
 
-from palladio import utils as pd_utils
-from .classification import Classification
-
 import l1l2py
+from palladio import utils as pd_utils
+from palladio.wrappers.classification import Classification
 
 
 class l1l2Classifier(Classification):
+    """Select features using l1l2."""
 
     def __init__(self, params):
 
@@ -38,11 +38,9 @@ class l1l2Classifier(Classification):
             self._algorithm_version = 'CPU'
 
     def get_algorithm_version(self):
-
         return self._algorithm_version
 
     def run(self):
-
         # Execution
         result = l1l2py.model_selection(
             self._Xtr, self._Ytr, self._Xts, self._Yts,
@@ -57,8 +55,8 @@ class l1l2Classifier(Classification):
             algorithm_version=self.get_algorithm_version()
         )
 
-        # Return only the first element of the list, which is the one related to the smallest value of mu
-        # BEGIN
+        # Return only the first element of the list, which is the one related
+        # to the smallest value of mu
         result['selected_list'] = result['selected_list'][0]
         result['beta_list'] = result['beta_list'][0]
 
@@ -67,8 +65,4 @@ class l1l2Classifier(Classification):
             result['prediction_tr_list'] = result[
                 'prediction_tr_list'][0].ravel()
 
-        # END
-
         return result
-
-    pass
