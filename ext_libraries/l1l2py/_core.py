@@ -301,7 +301,7 @@ def minimal_model(data, labels, mu, tau_range, lambda_range,
     elif algorithm_version == 'GPU':
         from l1l2py.algorithms_cuda import l1l2_path
     else:
-        raise Exception('Unknown algorithm version')
+        raise ValueError('Unknown algorithm version')
 
     err_ts = list()
     err_tr = list()
@@ -310,12 +310,12 @@ def minimal_model(data, labels, mu, tau_range, lambda_range,
     for train_idxs, test_idxs in cv_splits:
         # First create a view and then normalize (eventually)
         data_tr, data_ts = data[train_idxs, :], data[test_idxs, :]
-        if not data_normalizer is None:
+        if data_normalizer is not None:
             data_tr, data_ts = data_normalizer(data_tr, data_ts)
 
-        #labels_tr, labels_ts = labels[train_idxs, :], labels[test_idxs, :]
+        # labels_tr, labels_ts = labels[train_idxs, :], labels[test_idxs, :]
         labels_tr, labels_ts = labels[train_idxs], labels[test_idxs]
-        if not labels_normalizer is None:
+        if labels_normalizer is not None:
             labels_tr, labels_ts = labels_normalizer(labels_tr, labels_ts)
 
         # Builds a classifier for each value of tau
@@ -324,7 +324,6 @@ def minimal_model(data, labels, mu, tau_range, lambda_range,
                               :max_tau_num], input_key=input_key)
 
         if len(beta_casc) == 0:
-
             raise ValueError("the given range of 'tau' values produces all "
                              "void solutions with the given data splits")
 
