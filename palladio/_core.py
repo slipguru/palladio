@@ -302,10 +302,9 @@ def main(config_path):
     else:
         job_list = None
 
-    # XXX Fix for single machine!!!
     # Distribute job list with broadcast
-    job_list = comm.bcast(job_list, root=0)
-    print(job_list)
+    if comm is not None:
+        job_list = comm.bcast(job_list, root=0)
 
     # Compute which jobs each process has to handle
     N_jobs_total = N_jobs_permutation + N_jobs_regular
@@ -355,6 +354,7 @@ def main(config_path):
                 )
                 print("[{}_{}] finished experiment {}".format(name, rank, i))
             except Exception as e:
+                # raise
                 # If somethings out of the ordinary happens,
                 # resubmit the job
                 experiment_resubmissions += 1

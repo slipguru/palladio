@@ -8,7 +8,7 @@ from sklearn.linear_model import Lasso, LinearRegression
 from palladio.wrappers.classification import Classification
 
 
-class lasso_olsClassifier(Classification):
+class LassoOlsClassifier(Classification):
     """Select features using lasso, then adjust weights with OLS.
 
     From
