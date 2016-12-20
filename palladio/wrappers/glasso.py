@@ -3,9 +3,11 @@ import numpy as np
 
 from sklearn.metrics import accuracy_score
 from sklearn.cross_validation import StratifiedKFold
+from sklearn.grid_search import GridSearchCV
 
 from lightning.classification import FistaClassifier
 
+import l1l2py
 from palladio import utils as pd_utils
 from palladio.wrappers.classification import Classification
 
@@ -80,137 +82,51 @@ class GroupLassoClassifier(Classification):
 
     def run(self):
         """Perform run."""
+        if self._params['data_normalizer'] == l1l2py.tools.center:
+            out = self._params['data_normalizer'](self._Xtr, self._Xts, True)
+            self._Xtr = out[0]
+            self._Xts = out[1]
+
+        if self._params['labels_normalizer'] == l1l2py.tools.center:
+            out = self._params['labels_normalizer'](self._Ytr, self._Yts, True)
+            self._Ytr = out[0]
+            self._Yts = out[1]
+
         # Model selection phase
         internal_k = self._params['internal_k']
 
-        # Perform k splits once
-        skf = StratifiedKFold(self._Ytr, n_folds=internal_k)
-
-        # store the mean accuracies for each model
-        acc_list = np.empty((len(self._params['tau_range']),))
-
         TAU_MAX = self.get_l1_bound()
-        # print("TAU_MAX = {}".format(TAU_MAX))
 
-        for i, tau_scaling in enumerate(self._params['tau_range']):
-            tau = TAU_MAX * tau_scaling
-            # print("{}-th value of tau ({})".format(i+1, tau))
-
-            acc = 0.
-            # number of solutions which consisted of only zeros
-            # (early stopping for too big tau)
-            N_allzeros = 0
-
-            for idx_tr, idx_ts in skf:
-                Xk_tr = self._Xtr[idx_tr, :]
-                Xk_ts = self._Xtr[idx_ts, :]
-
-                Yk_tr = self._Ytr[idx_tr]
-                Yk_ts = self._Ytr[idx_ts]
-
-                clf = FistaClassifier(penalty='l1/l2', alpha=tau)
-                clf.fit(Xk_tr, Yk_tr)  # fit the model
-
-                # extract only nonzero coefficients
-                selected_features = np.argwhere(clf.coef_).ravel()
-                # print("Selected {} features".format(len(selected_features)))
-
-                # if len(selected_features) == 0:
-                #     # If no features are selected, just assign all samples to
-                #     # the most common class (in the training set)
-                #     N_allzeros += 1
-                #     Yk_lr = np.ones((len(Yk_ts),)) * np.sign(Yk_tr.sum() + 0.1)
-                #
-                # else:
-                #     # Else, run OLS and get weights for coefficients NOT
-                #     # affected by shrinking
-                #     Xk_tr2 = Xk_tr[:, selected_features]
-                #     Xk_ts2 = Xk_ts[:, selected_features]
-                #
-                #     clf = FistaClassifier(penalty='l1/l2')
-                #     clf.fit(Xk_tr2, Yk_tr)  # fit the model
-                #     Yk_lr = clf.predict(Xk_ts2)  # predict test data
-                #     Yk_lr = np.sign(Yk_lr)  # take the sign
-                if len(selected_features) == 0:
-                    # If no features are selected, just assign all samples to
-                    # the most common class (in the training set)
-                    N_allzeros += 1
-                    Yk_lr = np.ones((len(Yk_ts),)) * np.sign(Yk_tr.sum() + 0.1)
-
-                else:
-                    # Else, run OLS and get weights for coefficients NOT
-                    # affected by shrinking
-                    Xk_tr2 = Xk_tr[:, selected_features]
-                    Xk_ts2 = Xk_ts[:, selected_features]
-
-                    Yk_lr = clf.predict(Xk_ts)  # predict test data
-                    Yk_lr = np.sign(Yk_lr)  # take the sign
-
-                acc += accuracy_score(Yk_ts, Yk_lr)
-
-            acc_list[i] = acc / internal_k
-
-            if N_allzeros == internal_k:
-                # All k-fold splits returned empty solutions, stop here as
-                # bigger values of tau would return empty solutions as well
-                print("The {}-th value of tau ({}) returned only empty "
-                      "solutions".format(i + 1, tau))
-                break
-
-        # Final train with the best choice for tau
-        best_tau_idx = np.argmax(acc_list)
-        # best_tau = self._params['tau_range'][best_tau_idx]
-        best_tau = self._params['tau_range'][best_tau_idx] * TAU_MAX
-
-        clf = FistaClassifier(penalty='l1/l2', alpha=best_tau)
-        clf.fit(self._Xtr, self._Ytr)  # fit the model
+        clf = FistaClassifier(penalty='l1/l2')
+        gs = GridSearchCV(clf, {'alpha': self._params['tau_range'] * TAU_MAX})
+        gs.fit(self._Xtr, self._Ytr)  # fit the model
 
         # extract only nonzero coefficients
-        # selected_features = np.argwhere(clf.coef_)[0]
-        selected_features = np.argwhere(clf.coef_).ravel()
+        coefs = gs.best_estimator_.coef_
+        selected_features = np.argwhere(coefs).ravel()
 
-        # if len(selected_features) == 0:
-        #     print("WARNING: the allegedly best solution (tau = {}) was "
-        #           " empty".format(best_tau))
-        #
-        #     sign = np.sign(np.sum(self._Ytr) + 0.1)
-        #     Y_lr = np.ones((len(self._Yts)),) * sign
-        #     Y_lr_tr = np.ones((len(self._Ytr)),) * sign
-        #
-        # else:
-        #     X_tr2 = self._Xtr[:, selected_features]
-        #     X_ts2 = self._Xts[:, selected_features]
-        #
-        #     clf = LinearRegression()
-        #     clf.fit(X_tr2, self._Ytr)  # fit the model
-        #
-        #     Y_lr = clf.predict(X_ts2)  # predict test data
-        #     Y_lr = np.sign(Y_lr)  # take the sign
-        #
-        #     Y_lr_tr = clf.predict(X_tr2)  # predict training data
-        #     Y_lr_tr = np.sign(Y_lr_tr)  # take the sign
-        if len(selected_features) == 0:
-            print("WARNING: the allegedly best solution (tau = {}) was "
-                  " empty".format(best_tau))
+        # predict test
+        Y_pred_ts = gs.best_estimator_.predict(self._Xts)
+        Y_pred_ts = gs.best_estimator_.predict(self._Xtr)
 
-            sign = np.sign(np.sum(self._Ytr) + 0.1)
-            Y_lr = np.ones((len(self._Yts)),) * sign
-            Y_lr_tr = np.ones((len(self._Ytr)),) * sign
-
-        else:
-            X_tr2 = self._Xtr[:, selected_features]
-            X_ts2 = self._Xts[:, selected_features]
-
-            Y_lr = clf.predict(self._Xts)  # predict test data
-            Y_lr = np.sign(Y_lr)  # take the sign
-
-            Y_lr_tr = clf.predict(self._Xtr)  # predict training data
-            Y_lr_tr = np.sign(Y_lr_tr)  # take the sign
+        # Get performance
+        err_fun = self._params['error']  # config error function
+        ts_err = err_fun(self._Yts, Y_pred_ts)
+        # tr_err = err_fun(self._Ytr, Y_pred_tr)
+        tr_err = np.min(gs.cv_results_['mean_train_score'])
 
         result = {}
         result['selected_list'] = selected_features
         # result['beta_list'] = result['beta_list'][0]
-        result['prediction_ts_list'] = Y_lr
-        result['prediction_tr_list'] = Y_lr_tr
+        result['prediction_ts_list'] = Y_pred_ts
+        result['prediction_tr_list'] = Y_pred_ts
         result['labels_ts'] = self._Yts
+
+        result['beta_list'] = clf.coef_.tolist()
+        result['err_ts_list'] = ts_err
+        result['err_tr_list'] = tr_err
+        result['kcv_err_ts'] = np.mean(clf.mse_path_, axis=2)
+        # TODO: define a policy for the training error
+        result['kcv_err_tr'] = np.zeros((len(self.l1_ratio_range),
+                                         len(self.alpha_range)))
         return result

@@ -58,6 +58,7 @@ class ElasticNetClassifier(Classification):
             self._Ytr = out[0]
             self._Yts = out[1]
 
+        # TODO porting to GridSearchCV + Elastic net
         clf = ElasticNetCV(l1_ratio=self.l1_ratio_range,
                            alphas=self.alpha_range,
                            cv=self._params['internal_k'],
