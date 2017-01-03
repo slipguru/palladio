@@ -3,7 +3,7 @@ import numpy as np
 
 from sklearn.metrics import accuracy_score
 from sklearn.cross_validation import StratifiedKFold
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 from lightning.classification import FistaClassifier
 
@@ -21,12 +21,8 @@ class GroupLassoClassifier(Classification):
 
     def __init__(self, params):
         """TODO."""
-        self._params = params
+        super(GroupLassoClassifier, self).__init__(params)
         self.param_names = [r'\tau', r'\lambda']
-
-    # def setup(self, Xtr, Ytr, Xts, Yts):
-    #     """Setup for the lasso_olsClassifier."""
-    #     Classification.setup(self, Xtr, Ytr, Xts, Yts)
 
     def setup(self, Xtr, Ytr, Xts, Yts):
 
@@ -106,8 +102,8 @@ class GroupLassoClassifier(Classification):
         selected_features = np.argwhere(coefs).ravel()
 
         # predict test
+        Y_pred_tr = gs.best_estimator_.predict(self._Xtr)
         Y_pred_ts = gs.best_estimator_.predict(self._Xts)
-        Y_pred_ts = gs.best_estimator_.predict(self._Xtr)
 
         # Get performance
         err_fun = self._params['error']  # config error function
@@ -117,16 +113,15 @@ class GroupLassoClassifier(Classification):
 
         result = {}
         result['selected_list'] = selected_features
-        # result['beta_list'] = result['beta_list'][0]
+        result['prediction_tr_list'] = Y_pred_tr
         result['prediction_ts_list'] = Y_pred_ts
-        result['prediction_tr_list'] = Y_pred_ts
         result['labels_ts'] = self._Yts
 
-        result['beta_list'] = clf.coef_.tolist()
+        # result['beta_list'] = result['beta_list'][0]
+        result['beta_list'] = coefs.tolist()
         result['err_ts_list'] = ts_err
         result['err_tr_list'] = tr_err
-        result['kcv_err_ts'] = np.mean(clf.mse_path_, axis=2)
-        # TODO: define a policy for the training error
-        result['kcv_err_tr'] = np.zeros((len(self.l1_ratio_range),
-                                         len(self.alpha_range)))
+
+        result['kcv_err_ts'] = gs.cv_results_['mean_test_score']
+        result['kcv_err_tr'] = gs.cv_results_['mean_train_score']
         return result

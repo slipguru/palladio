@@ -3,24 +3,18 @@ import numpy as np
 
 import l1l2py
 from palladio import utils as pd_utils
-from palladio.wrappers.classification import Classification
+from palladio.wrappers import Classification
 
 
 class l1l2Classifier(Classification):
     """Select features using l1l2."""
 
     def __init__(self, params):
-
-        self._params = params
+        super(l1l2Classifier, self).__init__(params)
         self.param_names = [r'\tau', r'\lambda']
 
     def setup(self, Xtr, Ytr, Xts, Yts):
-
-        self._Xtr = Xtr
-        self._Ytr = Ytr
-
-        self._Xts = Xts
-        self._Yts = Yts
+        super(l1l2Classifier, self).setup(Xtr, Ytr, Xts, Yts)
 
         rs = pd_utils.RangesScaler(Xtr, Ytr,
                                    self._params['data_normalizer'],

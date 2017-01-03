@@ -419,12 +419,13 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
 
     # error surface
     for k, c in zip(avg_err.keys(), cmaps):
-        ZZ = avg_err[k]
+        ZZ = avg_err[k]  # .reshape(
+        # param_ranges[0].shape[0], param_ranges[1].shape[0])
 
         # xx = np.arange(0,mode[0]) # FIX THIS!!! we need the actual values for tau and lambda
         # yy = np.arange(0,mode[1])
-        xx = np.log10(param_ranges[0]) # tau
-        yy = np.log10(param_ranges[1]) # lambda
+        xx = np.log10(param_ranges[0])  # tau
+        yy = np.log10(param_ranges[1])  # lambda
         XX, YY = np.meshgrid(xx, yy)
 
         surf = ax.plot_surface(
@@ -435,6 +436,8 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
 
     # plot minimum
     ZZ = avg_err['ts']
+    # TODO
+    # print(np.where(ZZ == np.min(ZZ)))
     x_min_idxs, y_min_idxs = np.where(ZZ == np.min(ZZ))
     ax.plot(xx[x_min_idxs], yy[y_min_idxs],
             ZZ[x_min_idxs, y_min_idxs], 'o', c=colorsHex['darkBlue'])

@@ -229,7 +229,8 @@ def _minimum_selection(tau_idxs, lambda_idxs, sparse=False, regularized=False):
 
 def minimal_model(data, labels, mu, tau_range, lambda_range,
                   cv_splits, error_function,
-                  data_normalizer=None, labels_normalizer=None, input_key=None, algorithm_version='CPU'):
+                  data_normalizer=None, labels_normalizer=None, input_key=None,
+                  algorithm_version='CPU'):
     r"""Minimal model selection.
 
     Given a supervised training set (``data`` and ``labels``), for a fixed
@@ -422,10 +423,10 @@ def nested_models(data, labels, test_data, test_labels,
 
     """
 
-    if not data_normalizer is None:
+    if data_normalizer is not None:
         data, test_data = data_normalizer(data, test_data)
 
-    if not labels_normalizer is None:
+    if labels_normalizer is not None:
         labels, test_labels = labels_normalizer(labels, test_labels)
 
     beta_list = list()
