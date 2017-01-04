@@ -1,7 +1,7 @@
 """Configuration file example for PALLADIO  version: 0.4."""
 
 import numpy as np
-from palladio.wrappers.elastic_net import ElasticNetClassifier
+from palladio.wrappers import ElasticNetClassifier
 from palladio.datasets import DatasetCSV
 import l1l2py
 

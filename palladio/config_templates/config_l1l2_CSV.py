@@ -1,6 +1,6 @@
 """Configuration file example for PALLADIO  version: 0.4."""
 
-from palladio.wrappers.l1l2 import l1l2Classifier
+from palladio.wrappers import l1l2Classifier
 from palladio.datasets import DatasetCSV
 
 import l1l2py
