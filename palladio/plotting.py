@@ -91,7 +91,7 @@ def distributions(v_regular, v_permutation, base_folder, metric,
 
     fig, ax = plt.subplots(figsize=(18, 10))
 
-    args = {
+    kwargs = {
         'norm_hist': False,
         'kde': False,
         'bins': _bins,
@@ -104,20 +104,20 @@ def distributions(v_regular, v_permutation, base_folder, metric,
     perm_mean = np.nanmean(v_permutation)
     perm_std = np.nanstd(v_permutation)
 
-    sns.distplot(v_permutation * scale,
+    sns.distplot(v_permutation[~np.isnan(v_permutation)] * scale,
                  # label="Permutation batch \nMean = {0:.2f}, STD = {1:.2f}"
                  # .format(perm_mean, perm_std),
                  label="Permutation batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
                        .format(perm_mean * 100, perm_std * 100),
                  color=colorsHex['lightRed'], ax=ax,
-                 hist_kws={'alpha': 0.8}, **args)
-    sns.distplot(v_regular * scale,
+                 hist_kws={'alpha': 0.8}, **kwargs)
+    sns.distplot(v_regular[~np.isnan(v_regular)] * scale,
                  # label="Regular batch \nMean = {0:.2f}, STD = {1:.2f}"
                  #        .format(reg_mean, reg_std),
                  label="Regular batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
                        .format(reg_mean * 100, reg_std * 100),
                  color=colorsHex['lightGreen'], ax=ax,
-                 hist_kws={'alpha': 0.8}, **args)
+                 hist_kws={'alpha': 0.8}, **kwargs)
 
     # Fit a gaussian with permutation data (DEPRECATED)
     # (mu, sigma) = stats.norm.fit(v_permutation*100)
@@ -419,16 +419,15 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
 
     # error surface
     for k, c in zip(avg_err.keys(), cmaps):
-        ZZ = avg_err[k]  # .reshape(
-        # param_ranges[0].shape[0], param_ranges[1].shape[0])
+        ZZ = avg_err[k]
 
-        # xx = np.arange(0,mode[0]) # FIX THIS!!! we need the actual values for tau and lambda
-        # yy = np.arange(0,mode[1])
-        xx = np.log10(param_ranges[0])  # tau
+        # xx = np.log10(param_ranges[0])  # tau
+        # NOTE: If ZZ has somw missing rows, it means that some tau was too big
+        xx = np.log10(param_ranges[0][:ZZ.shape[0]])  # tau
         yy = np.log10(param_ranges[1])  # lambda
         XX, YY = np.meshgrid(xx, yy)
 
-        surf = ax.plot_surface(
+        ax.plot_surface(
             XX, YY, ZZ.T,
             rstride=1, cstride=1, linewidth=0, antialiased=False, cmap=c)
 
@@ -436,8 +435,6 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
 
     # plot minimum
     ZZ = avg_err['ts']
-    # TODO
-    # print(np.where(ZZ == np.min(ZZ)))
     x_min_idxs, y_min_idxs = np.where(ZZ == np.min(ZZ))
     ax.plot(xx[x_min_idxs], yy[y_min_idxs],
             ZZ[x_min_idxs, y_min_idxs], 'o', c=colorsHex['darkBlue'])
@@ -449,5 +446,4 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
     ax.set_zlabel("avg kcv err")
     ax.legend(legend_handles, legend_labels[:len(legend_handles)], loc='best')
 
-    # plt.legend()
     plt.savefig(os.path.join(base_folder, 'kcv_err_' + exp + '.pdf'))
