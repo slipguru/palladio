@@ -37,6 +37,9 @@ class Dataset(object):
         self._dataset_options = dataset_options
         self._poslab = dataset_options['positive_label']
 
+    def get_positive_label(self):
+        return self._poslab
+
     def get_file(self, file_key):
         return self._dataset_files[file_key]
 
@@ -50,10 +53,10 @@ class Dataset(object):
         return self._dataset_options
 
     def load_dataset(self, base_path):
-        raise Exception("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def copy_files(self, base_path, session_folder):
-        """Create a hard link of all dataset files inside the session folder
+        """Create a hard link of all dataset files inside the session folder.
 
         Create a hard link of all files required by the dataset,
         conveniently renaming them (the destination name is the

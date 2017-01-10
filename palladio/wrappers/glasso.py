@@ -2,7 +2,7 @@
 import numpy as np
 
 from sklearn.metrics import accuracy_score
-from sklearn.cross_validation import StratifiedKFold
+# from sklearn.cross_validation import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
 
 from lightning.classification import FistaClassifier

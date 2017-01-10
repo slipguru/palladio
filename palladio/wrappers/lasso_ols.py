@@ -2,7 +2,7 @@
 import numpy as np
 
 from sklearn.metrics import accuracy_score
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.linear_model import Lasso, LinearRegression
 
 from palladio.wrappers.classification import Classification
