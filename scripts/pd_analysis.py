@@ -38,11 +38,14 @@ def analyze_experiment(exp_folder, config, poslab):
     # Y_lr = np.sign(Y_lr-0.1)
 
     # evaluate performance metrics
+    print(result)
     TP = np.sum((Y_lr == 1) * (Y_ts == Y_lr))
     FP = np.sum((Y_lr == 1) * (Y_ts != Y_lr))
     TN = np.sum((Y_lr == -1) * (Y_ts == Y_lr))
     FN = np.sum((Y_lr == -1) * (Y_ts != Y_lr))
 
+    if float(TP + FP + FN + TN) == 0:
+        raise ValueError("Sum of TP, FP FN and TN is zero. Why?")
     accuracy = (TP + TN) / float(TP + FP + FN + TN)
     balanced_accuracy = 0.5 * ((TP / float(TP + FN)) + (TN / float(TN + FP)))
 
@@ -126,9 +129,11 @@ def analyze_experiments(base_folder, config):
     kcv_err_permutation = {'tr': list(), 'ts': list()}
 
     experiments_folder = os.path.join(base_folder, 'experiments')
-    for exp_folder in [os.path.join(experiments_folder, x) for x in os.listdir(experiments_folder)]:
+    for exp_folder in os.listdir(experiments_folder):
+        exp_folder = os.path.join(experiments_folder, exp_folder)
         if os.path.isdir(exp_folder):
-            analysis_result = analyze_experiment(exp_folder, config, dataset._poslab)
+            analysis_result = analyze_experiment(
+                exp_folder, config, dataset.get_positive_label())
 
             selected_probesets = feature_names[analysis_result['selected_list']]
 
@@ -194,6 +199,7 @@ def analyze_experiments(base_folder, config):
 
 
 def main(base_folder):
+    """Main for pd_analysis.py."""
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
     _positive_label = config.dataset_options['positive_label']
     _N_jobs_regular = config.N_jobs_regular

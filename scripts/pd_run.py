@@ -6,8 +6,8 @@ import argparse
 
 import palladio as pd
 
-DATA_EXT = ('csv', 'npy')  # list of allowed data extesions
-MODELS = ('l1l2', 'elasticnet', 'logit')  # list of implmenented methods
+DATA_EXT = ('csv', 'npy')  # list of allowed data extensions
+MODELS = ('l1l2', 'elasticnet', 'logit')  # implemented methods
 
 
 def init_main():
