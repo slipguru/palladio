@@ -11,6 +11,16 @@ import l1l2py
 from palladio import utils as pd_utils
 from palladio.wrappers import Classification
 
+
+def predict(self, *args, **kwargs):
+    """Predict method for classifiers.
+
+    It must be defined outside a function to be pickable.
+    """
+    y_pred = super(type(self), self).predict(*args, **kwargs)
+    return np.sign(y_pred)
+
+
 def make_classifier(estimator, params={}):
     """Make a classifier for a possible regressor.
 
@@ -28,10 +38,6 @@ def make_classifier(estimator, params={}):
         has been overwritten in order to return only the sign of the results.
         Note: this assumes that labels are 1 and -1.
     """
-    def predict(self, *args, **kwargs):
-        y_pred = super(type(self), self).predict(*args, **kwargs)
-        return np.sign(y_pred)
-
     params['predict'] = predict
     params.setdefault('score', accuracy_score)
     return type('GenericClassifier', (estimator,), params)()
