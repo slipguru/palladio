@@ -21,7 +21,7 @@ def predict(self, *args, **kwargs):
     return np.sign(y_pred)
 
 
-def make_classifier(estimator, params={}):
+def make_classifier(estimator, params=None):
     """Make a classifier for a possible regressor.
 
     Parameters
