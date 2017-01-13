@@ -4,63 +4,37 @@ import numpy as np
 
 from sklearn.linear_model import ElasticNet
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import make_scorer
+from sklearn.metrics import accuracy_score
+
 
 import l1l2py
 from palladio import utils as pd_utils
 from palladio.wrappers import Classification
 
-
-# class GenericClassifier(object):
-#     def __init__(self, estimator=None, *args, **kwargs):
-#
-#         self._estimator = type(estimator)(*args, **kwargs)
-#
-#         self.score = make_scorer(
-#             l1l2py.tools.balanced_classification_error,
-#             greater_is_better=False)
-#
-#     def __getattr__(self, name):
-#         attr = getattr(self._estimator, name)
-#         if not callable(attr):
-#             return attr
-#
-#         def handlerFunction(*args, **kwargs):
-#             # print("calling", name,args,kwargs)
-#             return attr(*args, **kwargs)
-#         return handlerFunction
-#
-#     def predict(self, *args, **kwargs):
-#         y_pred = self._estimator.predict(*args, **kwargs)
-#         return y_pred
-
-class GenericClassifier():
-    def __init__(self, *args, **kwargs):
-        super(GenericClassifier, self).__init__(*args, **kwargs)
-
-        self.score = make_scorer(
-            l1l2py.tools.balanced_classification_error,
-            greater_is_better=False)
-
-    def predict(self, *args, **kwargs):
-        y_pred = self._estimator.predict(*args, **kwargs)
-        return y_pred
-
-
-def make_classifier(estimator):
+def make_classifier(estimator, params={}):
     """Make a classifier for a possible regressor.
 
     Parameters
     ----------
     estimator : sklearn-like class
         It must contain at least a fit and predict method.
+    params : dict, optional
+        Parameters of the classifier.
+
+    Returns
+    -------
+    generic_classifier : class
+        sklearn-like class that is a subclass of estimator. The predict method
+        has been overwritten in order to return only the sign of the results.
+        Note: this assumes that labels are 1 and -1.
     """
-    # return GenericClassifier(estimator)
-    args = dict(estimator.__dict__)
-    # args['score'] = make_scorer(
-    #     l1l2py.tools.balanced_classification_error, greater_is_better=False)
-    from sklearn.base import ClassifierMixin
-    return type('GenericClassifier', (type(estimator), ClassifierMixin), args)
+    def predict(self, *args, **kwargs):
+        y_pred = super(type(self), self).predict(*args, **kwargs)
+        return np.sign(y_pred)
+
+    params['predict'] = predict
+    params.setdefault('score', accuracy_score)
+    return type('GenericClassifier', (estimator,), params)()
 
 
 class PipelineClassifier(Classification):

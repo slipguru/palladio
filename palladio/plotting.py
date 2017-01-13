@@ -426,6 +426,7 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
         xx = np.log10(param_ranges[0][:ZZ.shape[0]])  # tau
         yy = np.log10(param_ranges[1])  # lambda
         XX, YY = np.meshgrid(xx, yy)
+        ZZ = ZZ.reshape(xx.shape[0], yy.shape[0])
 
         ax.plot_surface(
             XX, YY, ZZ.T,
@@ -434,7 +435,7 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
         legend_handles.append(Rectangle((0, 0), 1, 1, fc=fc[k]))  # proxy handle
 
     # plot minimum
-    ZZ = avg_err['ts']
+    ZZ = avg_err['ts'].reshape(XX.shape[0], YY.shape[0])
     x_min_idxs, y_min_idxs = np.where(ZZ == np.min(ZZ))
     ax.plot(xx[x_min_idxs], yy[y_min_idxs],
             ZZ[x_min_idxs, y_min_idxs], 'o', c=colorsHex['darkBlue'])
