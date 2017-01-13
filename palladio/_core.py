@@ -10,7 +10,7 @@ import numpy as np
 from hashlib import sha512
 
 from .utils import sec_to_timestring
-from .wrappers.l1l2 import l1l2Classifier  # need to check type
+from .wrappers import l1l2Classifier  # need to check type
 
 # Initialize GLOBAL MPI variables (or dummy ones for the single process case)
 try:
@@ -139,6 +139,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
 
     # Split the dataset in learning and test set
     # Use a trick to keep the original splitting strategy
+    # XXX see sklearn.model_selection.train_test_split
     aux_splits = config.cv_splitting(
         labels, int(round(1 / (config.test_set_ratio))), rseed=rseed)
     # aux_splits = config.cv_splitting(
@@ -354,7 +355,7 @@ def main(config_path):
                 )
                 print("[{}_{}] finished experiment {}".format(name, rank, i))
             except Exception as e:
-                # raise
+                raise
                 # If somethings out of the ordinary happens,
                 # resubmit the job
                 experiment_resubmissions += 1
