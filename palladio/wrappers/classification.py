@@ -7,7 +7,7 @@ class Classification(object):
     def __init__(self, params=None):
 
         self._params = params
-        self.param_names = [None, None]
+        self.param_names = None
 
         self._data_normalizer = None
         self._labels_normalizer = None

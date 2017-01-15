@@ -77,23 +77,27 @@ class PipelineClassifier(Classification):
 
     def normalize():
         raise NotImplementedError()
-        if self._params['data_normalizer'] == l1l2py.tools.center:
-            out = self._params['data_normalizer'](self._Xtr, self._Xts, True)
-            self._Xtr = out[0]
-            self._Xts = out[1]
-
-            if self._params['labels_normalizer'] == l1l2py.tools.center:
-                out = self._params['labels_normalizer'](self._Ytr, self._Yts, True)
-                self._Ytr = out[0]
-                self._Yts = out[1]
+        # if self._params['data_normalizer'] == l1l2py.tools.center:
+        #     out = self._params['data_normalizer'](self._Xtr, self._Xts, True)
+        #     self._Xtr = out[0]
+        #     self._Xts = out[1]
+        #
+        #     if self._params['labels_normalizer'] == l1l2py.tools.center:
+        #         out = self._params['labels_normalizer'](self._Ytr, self._Yts, True)
+        #         self._Ytr = out[0]
+        #         self._Yts = out[1]
 
     def run(self):
-        # Check if the data need to be normalized
+
+        ### TODO Check if the data need to be normalized
+        ### TODO These params must be
         clf = self.clf(**self._params)
+
         param_grid = {
             'alpha': self.alpha_range,
             'l1_ratio': self.l1_ratio_range
         }
+
         gs = GridSearchCV(estimator=clf, param_grid=param_grid,
                           cv=self._params['internal_k'], n_jobs=-1)
         gs.fit(self._Xtr, self._Ytr)

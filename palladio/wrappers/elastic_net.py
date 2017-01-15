@@ -5,10 +5,8 @@ import numpy as np
 from sklearn.linear_model import ElasticNet
 from sklearn.model_selection import GridSearchCV
 
-import l1l2py
 from palladio import utils as pd_utils
 from palladio.wrappers import Classification
-
 
 class ElasticNetClassifier(Classification):
     """Feature selection and learning combined.
@@ -31,10 +29,6 @@ class ElasticNetClassifier(Classification):
 
     def setup(self, Xtr, Ytr, Xts, Yts):
         super(ElasticNetClassifier, self).setup(Xtr, Ytr, Xts, Yts)
-
-        rs = pd_utils.RangesScaler(Xtr, Ytr,
-                                   self._params['data_normalizer'],
-                                   self._params['labels_normalizer'])
 
         self.l1_ratio_range = self._params['l1_ratio_range'][::-1]
         self.alpha_range = self._params['alpha_range']  # * rs.mu_scaling_factor
