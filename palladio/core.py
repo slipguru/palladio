@@ -9,9 +9,10 @@ from sklearn.model_selection import train_test_split
 
 from palladio.wrappers import l1l2Classifier  # need to check type
 from palladio.wrappers import PipelineClassifier
+from palladio.utils import set_module_defaults
 
 
-def generate_job_list(N_jobs_regular, N_jobs_permutation):
+def generate_job_list(n_regular, n_permutation):
     """Generate a vector used to distribute jobs among nodes.
 
     Given the total number of processes, generate a list of jobs distributing
@@ -21,11 +22,11 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
 
     Parameters
     ----------
-    N_jobs_regular : int
+    n_regular : int
         The number of *regular* jobs, i.e. experiments where the labels
         have not been randomly shuffled.
 
-    N_jobs_permutation : int
+    n_permutation : int
         The number of experiments for the permutation test, i.e. experiments
         where the labels *in the training set* will be randomly shuffled in
         order to disrupt any relationship between data and labels.
@@ -38,33 +39,15 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
         experiment where labels *in the training set* are randomly shuffled
         is performed.
     """
-    # The total number of jobs
-    N_jobs_total = N_jobs_permutation + N_jobs_regular
-
-    # A vector representing the type of experiment: 1 -permutation, 0 -regular
-    type_vector = np.ones((N_jobs_total,))
-    type_vector[N_jobs_permutation:] = 0
+    type_vector = np.ones(n_permutation + n_regular, dtype=bool)
+    type_vector[n_permutation:] = False
     np.random.shuffle(type_vector)
 
     return type_vector
 
 
-def set_module_defaults(module, dictionary):
-    """Set default variables of a module, given a dictionary.
-
-    TODO: move into utils
-
-    Used after the loading of the configuration file to set some defaults.
-    """
-    for k, v in dictionary.iteritems():
-        try:
-            getattr(module, k)
-        except AttributeError:
-            setattr(module, k, v)
-
-
 def run_experiment(data, labels, config_dir, config, is_permutation_test,
-                   experiments_folder_path, custom_name):
+                   experiments_folder_path, custom_name, rank=None):
     r"""Run a single independent experiment.
 
     Perform a single experiment, which is divided in three main stages:
@@ -106,33 +89,12 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
         by two numbers which can be used to identify the experiment, for
         debugging purposes.
     """
-    # result_path = os.path.join(config_dir, config.result_path)
-
     # Create experiment folders
     result_dir = os.path.join(experiments_folder_path, custom_name)
     os.mkdir(result_dir)
 
-    # if np.random.random() > 0.9:
-    #     raise Exception("Random mistake!!! sh*t happens!")
-
-    # Produce a seed for the pseudo random generator
-    rseed = 0
-    # aux = sha512(name).digest()  # hash the machine's name
-    # # extract integers from the sha
-    # for c in aux:
-    #     try:
-    #         rseed += int(c)
-    #     except ValueError:
-    #         pass
-    rseed = time.time()
-    rseed += rank
-
-    # Split the dataset in learning and test set
-    # Use a trick to keep the original splitting strategy
-    # aux_splits = config.cv_splitting(
-    #     labels, int(round(1 / (config.test_set_ratio))), rseed=rseed)
     Xtr, Xts, ytr, yts = train_test_split(
-        data, labels, test_size=config.test_set_ratio, random_state=int(rseed))
+        data, labels, test_size=config.test_set_ratio)
 
     # Compute the ranges of the parameters using only the learning set
     if is_permutation_test:

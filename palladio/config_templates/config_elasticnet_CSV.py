@@ -1,9 +1,12 @@
-"""Configuration file example for PALLADIO  version: 0.4."""
+# Configuration file example for PALLADIO
+# version: 0.5
 
 import numpy as np
 from palladio.wrappers import ElasticNetClassifier
+from sklearn.linear_model import ElasticNet
+from sklearn.metrics import accuracy_score
+
 from palladio.datasets import DatasetCSV
-import l1l2py
 
 #####################
 #   DATASET PATHS ###
@@ -16,18 +19,12 @@ dataset_class = DatasetCSV
 # The list of all files required for the experiments
 dataset_files = {
     'data': 'data/gedm.csv',
-    'labels': 'data/labels.csv'
+    'labels': 'data/labels.csv',
 }
 
 dataset_options = {
-    'positive_label': None,  # the positive class in case of 2-class task
-    'samples_on': 'col',  # or 'row': samples on cols or rows
-    # 'data_preprocessing' : None,
-
-    # other options for pandas.read_csv
-    'delimiter': ',',
-    'header': 0,
-    'index_col': 0
+    'samples_on': 'row',  # or 'row': samples on cols or rows
+    'positive_label': 1,  # positive class in case of 2-class task
 }
 
 #######################
@@ -45,40 +42,39 @@ N_jobs_permutation = 100
 
 # The ratio of the dataset held out for model assessment
 # It should be of the form 1/M
-test_set_ratio = float(1) / 4
+test_set_ratio = 1 / 4.
 
 #######################
 #  LEARNER OPTIONS  ###
 #######################
 
-learner_class = ElasticNetClassifier
+learner = ElasticNetClassifier
+force_classifier = False
+
+learner_options = {
+    'fit_intercept': True
+}
+
 
 # ~~ Elastic-Net Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l1_ratio_range = np.logspace(0.5, 0, 10)
-alpha_range = np.logspace(-1, 0, 20)  # * CORRELATION_FACTOR
+param_grid = {
+    'l1_ratio': np.logspace(0.5, 0, 10),
+    'alpha': np.logspace(-1, 0, 20)
+}
 
 # ~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-data_normalizer = l1l2py.tools.center
-labels_normalizer = None
+# data_normalizer = l1l2py.tools.center
+# labels_normalizer = None
 
 # ~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-internal_k = 3
-cv_splitting = l1l2py.tools.stratified_kfold_splits
-
-# ~~ Errors functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# * See l1l2py.tools.{regression_error, classification_error,
-#                     balanced_classification_error}
-cv_error = l1l2py.tools.regression_error
-error = l1l2py.tools.balanced_classification_error
-
-learner_params = {
-    'l1_ratio_range': l1_ratio_range,
-    'alpha_range': alpha_range,
-    'data_normalizer': data_normalizer,
-    'labels_normalizer': labels_normalizer,
-    'cv_error': cv_error,
-    'error': error
+cv_options = {
+    'param_grid': param_grid,
+    'cv': 3,
+    'scoring': 'accuracy',
+    'n_jobs': -1
 }
+
+final_scoring = accuracy_score
 
 # ~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 frequency_threshold = 0.75

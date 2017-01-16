@@ -388,6 +388,18 @@ def _check_unique_labels(labels):
     return unique_labels, class1, class2
 
 
+def set_module_defaults(module, dictionary):
+    """Set default variables of a module, given a dictionary.
+
+    Used after the loading of the configuration file to set some defaults.
+    """
+    for k, v in dictionary.iteritems():
+        try:
+            getattr(module, k)
+        except AttributeError:
+            setattr(module, k, v)
+
+
 def sec_to_timestring(seconds):
     """Transform seconds into a formatted time string.
 
