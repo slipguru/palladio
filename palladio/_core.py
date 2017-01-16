@@ -8,6 +8,7 @@ import cPickle as pkl
 import numpy as np
 
 from hashlib import sha512
+from sklearn.model_selection import train_test_split
 
 from .utils import sec_to_timestring
 from .wrappers import l1l2Classifier  # need to check type
@@ -156,7 +157,6 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
     # XXX see sklearn.model_selection.train_test_split
     # aux_splits = config.cv_splitting(
     #     labels, int(round(1 / (config.test_set_ratio))), rseed=rseed)
-    from sklearn.model_selection import train_test_split
     Xtr, Xts, ytr, yts = train_test_split(
         data, labels, test_size=config.test_set_ratio, random_state=int(rseed))
 
@@ -193,17 +193,34 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
 
     # Set the actual data and perform
     # additional steps such as rescaling parameters etc.
-    clf.setup(Xtr, ytr, Xts, yts)
 
-    # Workaround: this is gonna work only if clf is an l1l2Classifier or ElasticNetCV
-    # try:
-    #     param_1_range = clf._tau_range
-    #     param_2_range = clf._lambda_range
-    # except:
-    #     param_1_range = clf.l1_ratio_range
-    #     param_2_range = clf.alpha_range
-    # ###
-    result = clf.run()
+    # clf.setup(Xtr, ytr, Xts, yts)
+    # result = clf.run()
+    clf.fit(Xtr, ytr)
+    ytr_pred = clf.predict(Xtr)
+    yts_pred = clf.predict(Xts)
+
+    # Get performance
+    tr_err = 1 - clf.scoring(ytr, ytr_pred)
+    ts_err = 1 - clf.scoring(yts, yts_pred)
+
+    # Save results
+    result = dict()
+    best_clf = clf.gs_.best_estimator_
+    result['selected_list'] = np.nonzero(best_clf.coef_)[0].tolist()
+    result['beta_list'] = best_clf.coef_.tolist()
+    result['prediction_ts_list'] = yts_pred
+    result['prediction_tr_list'] = ytr_pred
+    result['err_tr_list'] = tr_err  # learning error
+    result['err_ts_list'] = ts_err  # test error
+
+    # print(gs.cv_results_)
+
+    result['kcv_err_tr'] = 1 - np.clip(
+        clf.gs_.cv_results_['mean_train_score'], 0, 1)  # training score
+    result['kcv_err_ts'] = 1 - np.clip(
+        clf.gs_.cv_results_['mean_test_score'], 0, 1)  # validation score
+    result['best_params'] = clf.gs_.best_params_
     result['labels_ts'] = yts  # also save labels
 
     # save results
@@ -219,8 +236,6 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
 
     with open(os.path.join(result_dir, 'in_split.pkl'), 'w') as f:
         pkl.dump(in_split, f, pkl.HIGHEST_PROTOCOL)
-
-    return
 
 
 def main(config_path):

@@ -5,10 +5,8 @@ import numpy as np
 from sklearn.linear_model import ElasticNet
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
+from sklearn.utils.validation import check_is_fitted
 
-
-import l1l2py
-from palladio import utils as pd_utils
 from palladio.wrappers import Classification
 
 
@@ -52,12 +50,6 @@ class ElasticNetClassifier(ElasticNet):
     pickable, therefore statically defined.
     """
 
-    # def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
-    #              normalize=False, precompute=False, max_iter=1000, copy_X=True,
-    #              tol=0.0001, warm_start=False, positive=False,
-    #              random_state=None, selection='cyclic', score=None):
-    #     """Init for ElasticNetClassifier."""
-    #     super(ElasticNetClassifier, self).__init__()
     predict = predict
     score = accuracy_score
 
@@ -80,6 +72,7 @@ class PipelineClassifier(Classification):
         #     self.param_names = param_names
 
     def setup(self, Xtr, Ytr, Xts, Yts):
+        """Deprecated. Use fit predict instead."""
         super(PipelineClassifier, self).setup(Xtr, Ytr, Xts, Yts)
 
     def normalize_data(self):
@@ -97,7 +90,33 @@ class PipelineClassifier(Classification):
         #         self._Ytr = out[0]
         #         self._Yts = out[1]
 
+    def fit(self, X, y=None):
+        """Fitting function on the data."""
+        if self.data_normalizer is not None:
+            X = self.normalize_data(X)
+
+        if self.label_normalizer is not None:
+            y = self.normalize_label(y)
+
+        if self.force_classifier:
+            clf = make_classifier(self.learner, params=self.learner_options)
+        else:
+            clf = self.learner(**self.learner_options)
+
+        self.gs_ = GridSearchCV(estimator=clf, **self.cv_options)
+        self.gs_.fit(X, y)
+
+    def predict(self, X):
+        """Predicting function."""
+        check_is_fitted(self, "gs_")
+        return self.gs_.predict(X)
+
+    def scoring(self, y_true, y_pred):
+        """Score the result."""
+        return self.final_scoring(y_true, y_pred)
+
     def run(self):
+        """Deprecated. Run fit and predict instead."""
         # TODO Check if the data need to be normalized
         if self.data_normalizer is not None:
             self.normalize_data()
@@ -114,22 +133,24 @@ class PipelineClassifier(Classification):
         gs.fit(self._Xtr, self._Ytr)
 
         # Evaluate prediction on test set
-        clf = gs.best_estimator_
         Y_pred_ts = gs.predict(self._Xts)
         Y_pred_tr = gs.predict(self._Xtr)
 
         # Get performance
-        ts_err = self.final_scoring(self._Yts, Y_pred_ts)
-        tr_err = self.final_scoring(self._Ytr, Y_pred_tr)
+        tr_err = 1 - self.final_scoring(self._Ytr, Y_pred_tr)
+        ts_err = 1 - self.final_scoring(self._Yts, Y_pred_ts)
 
         # Save results
         result = dict()
+        clf = gs.best_estimator_
         result['selected_list'] = np.nonzero(clf.coef_)[0].tolist()
         result['beta_list'] = clf.coef_.tolist()
         result['prediction_ts_list'] = Y_pred_ts
         result['prediction_tr_list'] = Y_pred_tr
         result['err_tr_list'] = tr_err  # learning error
         result['err_ts_list'] = ts_err  # test error
+
+        # print(gs.cv_results_)
 
         result['kcv_err_tr'] = 1 - np.clip(
             gs.cv_results_['mean_train_score'], 0, 1)  # training score

@@ -307,10 +307,11 @@ def main(base_folder):
                                      config.N_jobs_permutation,
                                      base_folder, threshold=threshold)
 
-    for kcv_err, exp in zip([kcv_err_regular, kcv_err_permutation],
-                            ['regular', 'permutation']):
-        plotting.kcv_err_surfaces(
-            kcv_err, exp, base_folder, param_ranges, param_names)
+    plotting.kcv_err_surfaces(
+        kcv_err_regular, 'regular', base_folder, param_ranges, param_names)
+    plotting.kcv_err_surfaces(
+        kcv_err_permutation, 'permutation', base_folder, param_ranges,
+        param_names)
 
 
 if __name__ == '__main__':
