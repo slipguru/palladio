@@ -38,7 +38,7 @@ def analyze_experiment(exp_folder, config, poslab):
     # Y_lr = np.sign(Y_lr-0.1)
 
     # evaluate performance metrics
-    print(result)
+    # print(result)
     TP = np.sum((Y_lr == 1) * (Y_ts == Y_lr))
     FP = np.sum((Y_lr == 1) * (Y_ts != Y_lr))
     TN = np.sum((Y_lr == -1) * (Y_ts == Y_lr))
@@ -78,7 +78,7 @@ def analyze_experiment(exp_folder, config, poslab):
     analysis_results['kcv_err_tr'] = result['kcv_err_tr']
 
     # save params ranges
-    analysis_results['param_ranges'] = in_split['param_ranges']
+    # analysis_results['param_ranges'] = in_split['param_ranges']
 
     return analysis_results
 
@@ -175,7 +175,7 @@ def analyze_experiments(base_folder, config):
                 print "error"
 
     # store the actual parameters ranges
-    param_ranges = analysis_result['param_ranges']
+    # param_ranges = analysis_result['param_ranges']
     out = {'v_regular': np.array(balanced_acc_regular),
            'v_permutation': np.array(balanced_acc_permutation),
            'acc_regular': np.array(acc_regular),
@@ -192,7 +192,7 @@ def analyze_experiments(base_folder, config):
            'selected_permutation': selected_permutation,
            'kcv_err_regular': kcv_err_regular,
            'kcv_err_permutation': kcv_err_permutation,
-           'param_ranges': param_ranges
+        #    'param_ranges': param_ranges
            }
 
     return out
@@ -204,8 +204,9 @@ def main(base_folder):
     _positive_label = config.dataset_options['positive_label']
     _N_jobs_regular = config.N_jobs_regular
     _N_jobs_permutation = config.N_jobs_permutation
-    _learner = config.learner_class(None)
-    param_names = _learner.param_names
+    # _learner = config.learner_class(None)
+    # param_names = _learner.param_names
+    param_names = list(config.param_grid.keys())
 
     threshold = int(config.N_jobs_regular * config.frequency_threshold)
 
@@ -232,7 +233,8 @@ def main(base_folder):
     kcv_err_regular = out['kcv_err_regular']
     kcv_err_permutation = out['kcv_err_permutation']
 
-    param_ranges = out['param_ranges']
+    # param_ranges = out['param_ranges']
+    param_ranges = [config.param_grid[x] for x in param_names]
 
     # Manually sorting stuff
     sorted_keys_regular = sorted(selected_regular,

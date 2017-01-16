@@ -38,24 +38,54 @@ def make_classifier(estimator, params=None):
         has been overwritten in order to return only the sign of the results.
         Note: this assumes that labels are 1 and -1.
     """
+    if params is None:
+        params = {}
     params['predict'] = predict
     params.setdefault('score', accuracy_score)
     return type('GenericClassifier', (estimator,), params)()
 
 
+class ElasticNetClassifier(ElasticNet):
+    """Class to extend elastic-net in case of classification.
+
+    In case in which n_jobs != 1 for GridSearchCV, the estimator class must be
+    pickable, therefore statically defined.
+    """
+
+    # def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
+    #              normalize=False, precompute=False, max_iter=1000, copy_X=True,
+    #              tol=0.0001, warm_start=False, positive=False,
+    #              random_state=None, selection='cyclic', score=None):
+    #     """Init for ElasticNetClassifier."""
+    #     super(ElasticNetClassifier, self).__init__()
+    predict = predict
+    score = accuracy_score
+
+
 class PipelineClassifier(Classification):
     """General pipeline for sklearn-classifiers."""
 
-    def __init__(self, clf, params=None, param_names=None):
-        super(PipelineClassifier, self).__init__(params)
-        self.clf = clf
-        if param_names is not None:
-            self.param_names = param_names
+    def __init__(self, learner, learner_options=None,
+                 cv_options=None,
+                 final_scoring='accuracy',
+                 data_normalizer=None,
+                 label_normalizer=None, force_classifier=False):
+        super(PipelineClassifier, self).__init__(
+            learner_options=learner_options,
+            cv_options=cv_options, final_scoring=final_scoring,
+            data_normalizer=data_normalizer, label_normalizer=label_normalizer,
+            force_classifier=force_classifier)
+        self.learner = learner
+        # if param_names is not None:
+        #     self.param_names = param_names
 
     def setup(self, Xtr, Ytr, Xts, Yts):
         super(PipelineClassifier, self).setup(Xtr, Ytr, Xts, Yts)
 
-    def normalize():
+    def normalize_data(self):
+        raise NotImplementedError()
+
+    def normalize_label(self):
         raise NotImplementedError()
         # if self._params['data_normalizer'] == l1l2py.tools.center:
         #     out = self._params['data_normalizer'](self._Xtr, self._Xts, True)
@@ -68,18 +98,19 @@ class PipelineClassifier(Classification):
         #         self._Yts = out[1]
 
     def run(self):
+        # TODO Check if the data need to be normalized
+        if self.data_normalizer is not None:
+            self.normalize_data()
 
-        ### TODO Check if the data need to be normalized
-        ### TODO These params must be
-        clf = self.clf(**self._params)
+        if self.label_normalizer is not None:
+            self.normalize_label()
 
-        param_grid = {
-            'alpha': self.alpha_range,
-            'l1_ratio': self.l1_ratio_range
-        }
+        if self.force_classifier:
+            clf = make_classifier(self.learner, params=self.learner_options)
+        else:
+            clf = self.learner(**self.learner_options)
 
-        gs = GridSearchCV(estimator=clf, param_grid=param_grid,
-                          cv=self._params['internal_k'], n_jobs=-1)
+        gs = GridSearchCV(estimator=clf, **self.cv_options)
         gs.fit(self._Xtr, self._Ytr)
 
         # Evaluate prediction on test set
@@ -88,9 +119,8 @@ class PipelineClassifier(Classification):
         Y_pred_tr = gs.predict(self._Xtr)
 
         # Get performance
-        err_fun = self._params['error']  # config error function
-        ts_err = err_fun(self._Yts, Y_pred_ts)
-        tr_err = err_fun(self._Ytr, Y_pred_tr)
+        ts_err = self.final_scoring(self._Yts, Y_pred_ts)
+        tr_err = self.final_scoring(self._Ytr, Y_pred_tr)
 
         # Save results
         result = dict()

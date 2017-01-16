@@ -73,6 +73,20 @@ def generate_job_list(N_jobs_regular, N_jobs_permutation):
     return type_vector
 
 
+def set_module_defaults(module, dictionary):
+    """Set default variables of a module, given a dictionary.
+
+    TODO: move into utils
+
+    Used after the loading of the configuration file to set some defaults.
+    """
+    for k, v in dictionary.iteritems():
+        try:
+            getattr(module, k)
+        except AttributeError:
+            setattr(module, k, v)
+
+
 def run_experiment(data, labels, config_dir, config, is_permutation_test,
                    experiments_folder_path, custom_name):
     r"""Run a single independent experiment.
@@ -140,76 +154,57 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
     # Split the dataset in learning and test set
     # Use a trick to keep the original splitting strategy
     # XXX see sklearn.model_selection.train_test_split
-    aux_splits = config.cv_splitting(
-        labels, int(round(1 / (config.test_set_ratio))), rseed=rseed)
     # aux_splits = config.cv_splitting(
-    #    labels, int(round(1/(config.test_set_ratio))))
-
-    # idx_lr = aux_splits[0][0]
-    # idx_ts = aux_splits[0][1]
-
-    # A quick workaround to get just the first couple of the list;
-    # one iteration, then break the loop
-    # TODO necessary?
-    for idx_tr, idx_ts in aux_splits:
-        idx_lr = idx_tr
-        idx_ts = idx_ts
-        break
-
-    data_lr = data[idx_lr, :]
-    labels_lr = labels[idx_lr]
-
-    data_ts = data[idx_ts, :]
-    labels_ts = labels[idx_ts]
+    #     labels, int(round(1 / (config.test_set_ratio))), rseed=rseed)
+    from sklearn.model_selection import train_test_split
+    Xtr, Xts, ytr, yts = train_test_split(
+        data, labels, test_size=config.test_set_ratio, random_state=int(rseed))
 
     # Compute the ranges of the parameters using only the learning set
-    # TODO FIX
     if is_permutation_test:
-        labels_perm = labels_lr.copy()
-        np.random.shuffle(labels_perm)
-
-    Xtr = data_lr
-    Ytr = labels_perm if is_permutation_test else labels_lr
-    Xts = data_ts
-    Yts = labels_ts
+        np.random.shuffle(ytr)
 
     # Setup the internal splitting for model selection
-    int_k = config.internal_k
 
     # TODO: fix this and make it more general
-    if config.learner_class == l1l2Classifier:
+    if config.learner == l1l2Classifier:
+        int_k = config.cv_options['cv']
         # since it requires the labels, it can't be done before they are loaded
-        ms_split = config.cv_splitting(Ytr, int_k, rseed=time.clock())
+        ms_split = config.cv_splitting(ytr, int_k, rseed=time.clock())
         config.learner_params['ms_split'] = ms_split
+
+        # Add process rank
+        config.learner_params['process_rank'] = rank
+
+        # Create the object that will actually perform
+        # the classification/feature selection
+        clf = config.learner_class(config.learner_params)
     else:
-        config.learner_params['internal_k'] = int_k
+        set_module_defaults(config, {
+            'data_normalizer': None,
+            'label_normalizer': None,
+        })
         ms_split = None
-
-    # Add process rank
-    config.learner_params['process_rank'] = rank
-
-    # Create the object that will actually perform
-    # the classification/feature selection
-    clf = config.learner_class(config.learner_params)
+        from palladio.wrappers.pipeline import PipelineClassifier
+        clf = PipelineClassifier(
+            config.learner, config.learner_options, config.cv_options,
+            config.final_scoring, config.data_normalizer,
+            config.label_normalizer, config.force_classifier)
 
     # Set the actual data and perform
     # additional steps such as rescaling parameters etc.
-    clf.setup(Xtr, Ytr, Xts, Yts)
+    clf.setup(Xtr, ytr, Xts, yts)
 
-    # TODO
     # Workaround: this is gonna work only if clf is an l1l2Classifier or ElasticNetCV
-    try:
-        param_1_range = clf._tau_range
-        param_2_range = clf._lambda_range
-    except:
-        param_1_range = clf.l1_ratio_range
-        param_2_range = clf.alpha_range
-    ###
-
+    # try:
+    #     param_1_range = clf._tau_range
+    #     param_2_range = clf._lambda_range
+    # except:
+    #     param_1_range = clf.l1_ratio_range
+    #     param_2_range = clf.alpha_range
+    # ###
     result = clf.run()
-
-    # result = out['result']
-    result['labels_ts'] = labels_ts  # also save labels
+    result['labels_ts'] = yts  # also save labels
 
     # save results
     with open(os.path.join(result_dir, 'result.pkl'), 'w') as f:
@@ -218,8 +213,8 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
     in_split = {
         'ms_split': ms_split,
         # 'outer_split': aux_splits[0]
-        'outer_split': (idx_lr, idx_ts),
-        'param_ranges': (param_1_range, param_2_range)
+        # 'outer_split': (idx_lr, idx_ts),
+        # 'param_ranges': (param_1_range, param_2_range)
     }
 
     with open(os.path.join(result_dir, 'in_split.pkl'), 'w') as f:

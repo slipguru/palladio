@@ -1,16 +1,24 @@
 """Abstract method for classification wrappers."""
+from sklearn.metrics import accuracy_score
 
 
 class Classification(object):
     """Abstract method for classification wrappers."""
 
-    def __init__(self, params=None):
+    def __init__(self, learner_options=None, cv_options=None,
+                 final_scoring='accuracy', data_normalizer=None,
+                 label_normalizer=None, force_classifier=False):
 
-        self._params = params
-        self.param_names = None
+        self.learner_options = {} if learner_options is None \
+            else learner_options
+        # self.param_grid = {} if param_grid is None else param_grid
+        self.cv_options = {} if cv_options is None else cv_options
+        self.final_scoring = accuracy_score if final_scoring is 'accuracy' \
+            else final_scoring
 
-        self._data_normalizer = None
-        self._labels_normalizer = None
+        self.data_normalizer = data_normalizer
+        self.label_normalizer = label_normalizer
+        self.force_classifier = force_classifier
 
     def setup(self, Xtr, Ytr, Xts, Yts):
 
@@ -20,8 +28,8 @@ class Classification(object):
         self._Xts = Xts
         self._Yts = Yts
 
-    def get_param(self, param_name):
-        return self._params[param_name]
+    # def get_param(self, param_name):
+    #     return self._params[param_name]
 
     def getXtr(self):
         return self._Xtr

@@ -50,17 +50,19 @@ test_set_ratio = float(1) / 4
 #######################
 
 # learner_class = make_classifier(ElasticNet())
-learner = 'elastic-net'
+# learner = 'elastic-net'
+learner = ElasticNet
+make_classifier = True
 
 learner_options = {
-    'fit_intercept' : True
+    'fit_intercept': True
 }
 
 
 # ~~ Elastic-Net Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 param_grid = {
-    'l1_ratio_range' :  np.logspace(0.5, 0, 10),
-    'alpha_range' : np.logspace(-1, 0, 20)
+    'l1_ratio_range': np.logspace(0.5, 0, 10),
+    'alpha_range': np.logspace(-1, 0, 20)
 }
 
 # ~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,10 +70,10 @@ param_grid = {
 # labels_normalizer = None
 
 # ~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cv_options {
-    'param_grid' : param_grid,
-    'cv' : 3,
-    'scoring' : 'accuracy',
+cv_options = {
+    'param_grid': param_grid,
+    'cv': 3,
+    'scoring': 'accuracy',
 }
 
 final_scoring = accuracy_score

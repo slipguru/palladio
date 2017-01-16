@@ -172,6 +172,8 @@ class DatasetCSV(Dataset):
 
         # Convert labels to -1/+1
         pd_labels_mapped = pd_labels.applymap(_to_plus_minus)
+        if np.unique(pd_labels_mapped).shape[0] != 2:
+            raise ValueError("labels are not those of a bi-class problem")
 
         data = pd_data.as_matrix()
         labels = pd_labels_mapped.as_matrix().ravel()
