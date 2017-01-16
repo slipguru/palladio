@@ -5,6 +5,6 @@ Annalisa Barla
 
 FreeBSD License
 """
-from ._core import main
+from palladio.job_distribution import main
 
 __version__ = "0.5"

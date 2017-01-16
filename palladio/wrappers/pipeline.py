@@ -106,6 +106,10 @@ class PipelineClassifier(Classification):
         self.gs_ = GridSearchCV(estimator=clf, **self.cv_options)
         self.gs_.fit(X, y)
 
+    def get_cv_result(self):
+        check_is_fitted(self, 'gs_')
+        return self.gs_.cv_results_
+
     def predict(self, X):
         """Predicting function."""
         check_is_fitted(self, "gs_")
