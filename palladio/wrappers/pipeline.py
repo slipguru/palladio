@@ -75,10 +75,10 @@ class PipelineClassifier(Classification):
         """Deprecated. Use fit predict instead."""
         super(PipelineClassifier, self).setup(Xtr, Ytr, Xts, Yts)
 
-    def normalize_data(self):
+    def normalize_data(self, X):
         raise NotImplementedError()
 
-    def normalize_label(self):
+    def normalize_label(self, X):
         raise NotImplementedError()
         # if self._params['data_normalizer'] == l1l2py.tools.center:
         #     out = self._params['data_normalizer'](self._Xtr, self._Xts, True)
@@ -98,7 +98,6 @@ class PipelineClassifier(Classification):
         if self.label_normalizer is not None:
             y = self.normalize_label(y)
 
-
         if self.force_classifier:
             clf = make_classifier(self.learner, params=self.learner_options)
         elif callable(self.learner):
@@ -110,9 +109,17 @@ class PipelineClassifier(Classification):
         self.gs_ = GridSearchCV(estimator=clf, **self.cv_options)
         self.gs_.fit(X, y)
 
-    def get_cv_result(self):
+    @property
+    def cv_results_(self):
+        """Get GridSearchCV results."""
         check_is_fitted(self, 'gs_')
         return self.gs_.cv_results_
+
+    @property
+    def best_params_(self):
+        """Get GridSearchCV best_params."""
+        check_is_fitted(self, 'gs_')
+        return self.gs_.best_params_
 
     def predict(self, X):
         """Predicting function."""
@@ -157,8 +164,6 @@ class PipelineClassifier(Classification):
         result['prediction_tr_list'] = Y_pred_tr
         result['err_tr_list'] = tr_err  # learning error
         result['err_ts_list'] = ts_err  # test error
-
-        # print(gs.cv_results_)
 
         result['kcv_err_tr'] = 1 - np.clip(
             gs.cv_results_['mean_train_score'], 0, 1)  # training score

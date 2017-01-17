@@ -41,7 +41,7 @@ class Dataset(object):
         self.negative_label = dataset_options.get('negative_label', None)
         self.multiclass = dataset_options.get('multiclass', False)
         if self.positive_label is None and not self.multiclass:
-            raise ValueError(
+            warnings.warn(
                 "Positive label unspecified for binary classification "
                 "problems. If you want a multiclass learning, please "
                 "specify multiclass=True in the dataset_options dictionary.")

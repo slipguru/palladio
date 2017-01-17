@@ -120,6 +120,10 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
         set_module_defaults(config, {
             'data_normalizer': None,
             'label_normalizer': None,
+            'learner_options': {},
+            'cv_options': {},
+            'final_scoring': 'accuracy',
+            'force_classifier': False,
         })
         ms_split = None
         clf = PipelineClassifier(
@@ -138,16 +142,16 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
         ts_err = 1 - clf.scoring(yts, yts_pred)
 
         # Save results
-        result = clf.get_cv_result()
+        result = clf.cv_results_
         result['prediction_ts_list'] = yts_pred
         result['prediction_tr_list'] = ytr_pred
         result['err_tr_list'] = tr_err  # learning error
         result['err_ts_list'] = ts_err  # test error
         result['kcv_err_tr'] = 1 - np.clip(
-            clf.gs_.cv_results_['mean_train_score'], 0, 1)  # training score
+            result['mean_train_score'], 0, 1)  # training score
         result['kcv_err_ts'] = 1 - np.clip(
-            clf.gs_.cv_results_['mean_test_score'], 0, 1)  # validation score
-        result['best_params'] = clf.gs_.best_params_
+            result['mean_test_score'], 0, 1)  # validation score
+        result['best_params'] = clf.best_params_
 
         try:
             coef_ = clf.gs_.best_estimator_.coef_

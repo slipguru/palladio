@@ -436,7 +436,6 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
 
     # plot minimum
     ZZ = avg_err['ts'].reshape(xx.shape[0], yy.shape[0])
-    print(ZZ)
     x_min_idxs, y_min_idxs = np.where(ZZ == np.min(ZZ))
     ax.plot(xx[x_min_idxs], yy[y_min_idxs],
             ZZ[x_min_idxs, y_min_idxs], 'o', c=colorsHex['darkBlue'])
