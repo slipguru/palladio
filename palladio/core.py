@@ -139,19 +139,23 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
 
         # Save results
         result = clf.get_cv_result()
-        coef_ = clf.gs_.best_estimator_.coef_
-        result['selected_list'] = np.nonzero(coef_)[0].tolist()
-        result['beta_list'] = coef_.tolist()
         result['prediction_ts_list'] = yts_pred
         result['prediction_tr_list'] = ytr_pred
         result['err_tr_list'] = tr_err  # learning error
         result['err_ts_list'] = ts_err  # test error
-
         result['kcv_err_tr'] = 1 - np.clip(
             clf.gs_.cv_results_['mean_train_score'], 0, 1)  # training score
         result['kcv_err_ts'] = 1 - np.clip(
             clf.gs_.cv_results_['mean_test_score'], 0, 1)  # validation score
         result['best_params'] = clf.gs_.best_params_
+
+        try:
+            coef_ = clf.gs_.best_estimator_.coef_
+            result['selected_list'] = np.nonzero(coef_)[0].tolist()
+            result['beta_list'] = coef_.tolist()
+        except AttributeError:
+            result['selected_list'] = None
+            result['beta_list'] = None
 
     result['labels_ts'] = yts  # also save labels
 
