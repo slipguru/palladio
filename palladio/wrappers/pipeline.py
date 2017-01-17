@@ -98,10 +98,14 @@ class PipelineClassifier(Classification):
         if self.label_normalizer is not None:
             y = self.normalize_label(y)
 
+
         if self.force_classifier:
             clf = make_classifier(self.learner, params=self.learner_options)
-        else:
+        elif callable(self.learner):
+            # self.learner = type(self.learner)
             clf = self.learner(**self.learner_options)
+        else:
+            clf = self.learner
 
         self.gs_ = GridSearchCV(estimator=clf, **self.cv_options)
         self.gs_.fit(X, y)

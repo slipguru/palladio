@@ -5,6 +5,7 @@ import shutil
 import pandas as pd
 import numpy as np
 import cPickle as pkl
+import warnings
 
 __all__ = ('DatasetCSV', 'DatasetNPY', 'DatasetXLS')
 
@@ -35,10 +36,15 @@ class Dataset(object):
             self._dataset_files = dataset_files
 
         self._dataset_options = dataset_options
-        self._poslab = dataset_options['positive_label']
-
-    def get_positive_label(self):
-        return self._poslab
+        # self._poslab = dataset_options['positive_label']
+        self.positive_label = dataset_options.get('positive_label', None)
+        self.negative_label = dataset_options.get('negative_label', None)
+        self.multiclass = dataset_options.get('multiclass', False)
+        if self.positive_label is None and not self.multiclass:
+            raise ValueError(
+                "Positive label unspecified for binary classification "
+                "problems. If you want a multiclass learning, please "
+                "specify multiclass=True in the dataset_options dictionary.")
 
     def get_file(self, file_key):
         return self._dataset_files[file_key]
@@ -115,6 +121,7 @@ class DatasetCSV(Dataset):
         # DATA
         poslab = self._dataset_options.pop('positive_label', None)
         neglab = self._dataset_options.pop('negative_label', None)
+        multiclass = self._dataset_options.pop('multiclass', False)
         samples_on = self._dataset_options.pop('samples_on', 'col')
         pd_data = pd.read_csv(data_path, **self._dataset_options)
 
@@ -124,9 +131,8 @@ class DatasetCSV(Dataset):
         # Retrieve feature names from the column names of the DataFrame
         feature_names = pd_data.columns
         if feature_names.shape[0] != np.unique(feature_names).shape[0]:
-            import sys
-            sys.stderr.write("Feature names specified are not unique. "
-                             "Assigning a unique label.\n")
+            warnings.warn("Feature names specified are not unique. "
+                          "Assigning a unique label.\n")
             feature_names_u = np.array(feature_names, dtype=str)
             for it, _ in enumerate(feature_names_u):
                 feature_names_u[it] += '_{}'.format(it)
@@ -134,14 +140,6 @@ class DatasetCSV(Dataset):
                        np.stack((np.array(feature_names),
                                  feature_names_u), axis=-1),
                        delimiter=",", fmt='%s')
-
-        # if not self.get_option('data_preprocessing') is None:
-        # ### TODO Check!!!
-        #     # if rank == 0:
-        #         # print("Preprocessing data...")
-        #
-        #     self.get_option('data_preprocessing').load_data(pd_data)
-        #     pd_data = self.get_option('data_preprocessing').process()
 
         ##################
         # LABELS
@@ -151,7 +149,7 @@ class DatasetCSV(Dataset):
         self._dataset_options.pop('usecols', None)
         pd_labels = pd.read_csv(labels_path, **self._dataset_options)
 
-        if poslab is None:
+        if poslab is None and not multiclass:
             uv = np.sort(np.unique(pd_labels.as_matrix()))
             if len(uv) != 2:
                 raise Exception("More than two unique values in the labels "
@@ -166,17 +164,14 @@ class DatasetCSV(Dataset):
             pd_labels = pd_labels[idx]
             pd_data = pd_data[idx]
 
-        def _to_plus_minus(x):
-            """Convert labels to -1 / +1."""
-            return +1. if x == poslab else -1.
-
-        # Convert labels to -1/+1
-        pd_labels_mapped = pd_labels.applymap(_to_plus_minus)
-        if np.unique(pd_labels_mapped).shape[0] != 2:
-            raise ValueError("labels are not those of a bi-class problem")
+        if not multiclass:
+            # Convert labels to -1/+1
+            pd_labels = pd_labels.applymap(lambda x: 1 if x == poslab else -1)
+            if np.unique(pd_labels).shape[0] != 2:
+                raise ValueError("labels are not those of a bi-class problem")
 
         data = pd_data.as_matrix()
-        labels = pd_labels_mapped.as_matrix().ravel()
+        labels = pd_labels.as_matrix().ravel()
         if data.shape[0] != labels.shape[0]:
             raise ValueError("The number of samples in data do not correspond "
                              "to the number of samples in labels.")

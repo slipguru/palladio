@@ -129,7 +129,7 @@ def analyze_experiments(base_folder, config):
         exp_folder = os.path.join(experiments_folder, exp_folder)
         if os.path.isdir(exp_folder):
             analysis_result = analyze_experiment(
-                exp_folder, config, dataset.get_positive_label())
+                exp_folder, config, dataset.positive_label)
 
             selected_probesets = feature_names[analysis_result['selected_list']]
 
@@ -144,7 +144,7 @@ def analyze_experiments(base_folder, config):
                 F1_regular.append(analysis_result['F1'])
 
                 # update selection
-                for p in selected_probesets:
+                for p in selected_probesets.flatten():
                     selected_regular[p] += 1
                 # update kcv errors
                 kcv_err_regular['tr'].append(analysis_result['kcv_err_tr'])
@@ -161,7 +161,7 @@ def analyze_experiments(base_folder, config):
                 F1_permutation.append(analysis_result['F1'])
 
                 # update selection
-                for p in selected_probesets:
+                for p in selected_probesets.flatten():
                     selected_permutation[p] += 1
                 # update kcv errors
                 kcv_err_permutation['tr'].append(analysis_result['kcv_err_tr'])
@@ -188,7 +188,7 @@ def analyze_experiments(base_folder, config):
            'selected_permutation': selected_permutation,
            'kcv_err_regular': kcv_err_regular,
            'kcv_err_permutation': kcv_err_permutation,
-        #    'param_ranges': param_ranges
+           # 'param_ranges': param_ranges
            }
 
     return out
@@ -197,11 +197,8 @@ def analyze_experiments(base_folder, config):
 def main(base_folder):
     """Main for pd_analysis.py."""
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
-    _positive_label = config.dataset_options['positive_label']
-    _N_jobs_regular = config.N_jobs_regular
-    _N_jobs_permutation = config.N_jobs_permutation
-    # _learner = config.learner_class(None)
-    # param_names = _learner.param_names
+    positive_label = config.dataset_options.get('positive_label', None)
+    multiclass = config.dataset_options.get('multiclass', None)
     param_names = list(config.param_grid.keys())
 
     threshold = int(config.N_jobs_regular * config.frequency_threshold)
@@ -213,7 +210,7 @@ def main(base_folder):
     acc_regular, acc_permutation = out['acc_regular'], out['acc_permutation']
     MCC_regular, MCC_permutation = out['MCC_regular'], out['MCC_permutation']
 
-    if _positive_label is not None:
+    if positive_label is not None and not multiclass:
         precision_regular = out['precision_regular']
         precision_permutation = out['precision_permutation']
 
@@ -283,7 +280,7 @@ def main(base_folder):
     plotting.distributions(v_regular, v_permutation, base_folder,
                            'Balanced Accuracy')
     plotting.distributions(MCC_regular, MCC_permutation, base_folder, 'MCC')
-    if _positive_label is not None:
+    if positive_label is not None and not multiclass:
         plotting.distributions(precision_regular, precision_permutation,
                                base_folder, 'Precision')
         plotting.distributions(recall_regular, recall_permutation, base_folder,
@@ -295,7 +292,8 @@ def main(base_folder):
 
     plotting.features_manhattan(sorted_keys_regular, selected_regular,
                                 selected_permutation, base_folder,
-                                _N_jobs_regular, _N_jobs_permutation,
+                                config.N_jobs_regular,
+                                config.N_jobs_permutation,
                                 threshold=threshold)
 
     plotting.selected_over_threshold(selected_regular, selected_permutation,

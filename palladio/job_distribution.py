@@ -29,13 +29,44 @@ DO_WORK = 100
 EXIT = 200
 
 
-def master(config):
+def master_single_machine(job_list, data, labels, config,
+                          experiments_folder_path):
+    """Run palladio on a single machine.
+
+    If mpi4py is not available or the pd_run.py is not run with mpirun,
+    use multiprocessing to parallelise the work.
+    """
+    import multiprocessing as mp
+    jobs = []
+
+    # Submit jobs
+    for i, is_permutation_test in job_list:
+        proc = mp.Process(target=worker,
+                          args=(i, data, labels, config, is_permutation_test,
+                                experiments_folder_path))
+        jobs.append(proc)
+        proc.start()
+
+    # Collect results
+    count = 0
+    for proc in jobs:
+        proc.join()
+        count += 1
+
+
+def master(config, data, labels, experiments_folder_path):
     """Distribute pipelines with mpi4py."""
     nprocs = COMM.Get_size()
-    queue = deque(list(enumerate(generate_job_list(
-        config.N_jobs_regular, config.N_jobs_permutation))))
+    job_list = list(enumerate(generate_job_list(
+        config.N_jobs_regular, config.N_jobs_permutation)))
+
+    if not IS_MPI_JOB:
+        master_single_machine(
+            job_list, data, labels, config, experiments_folder_path)
+        return
 
     count = 0
+    queue = deque(job_list)
     n_pipes = len(queue)
 
     # seed the slaves by sending work to each processor
@@ -195,7 +226,7 @@ def main(config_path):
         print('  * Data shape:', data.shape)
         print('  * Labels shape:', labels.shape)
 
-        master(config)
+        master(config, data, labels, experiments_folder_path)
     else:
         slave(data, labels, config, experiments_folder_path)
 
