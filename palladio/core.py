@@ -94,7 +94,8 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
     os.mkdir(result_dir)
 
     Xtr, Xts, ytr, yts = train_test_split(
-        data, labels, test_size=config.test_set_ratio)
+        data, labels, test_size=config.test_set_ratio,
+        random_state=abs(int(time.time() * np.random.randn())))
 
     # Compute the ranges of the parameters using only the learning set
     if is_permutation_test:

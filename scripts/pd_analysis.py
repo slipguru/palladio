@@ -7,52 +7,20 @@ import argparse
 import numpy as np
 import pandas as pd
 import matplotlib; matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import cPickle as pkl
 import warnings
 
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
-from sklearn.metrics import matthews_corrcoef
+# from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+# from sklearn.metrics import matthews_corrcoef
 from palladio import plotting
+from palladio.metrics import (accuracy_score, precision_recall_fscore_support,
+                              matthews_corrcoef, balanced_accuracy)
 
 EXPS = ('regular', 'permutation')
 
 
-# def balanced_accuracy_multiclass(y_true, y_pred):
-#     """Return a balanced accuracy in case of a multiclass learning.
-#
-#     Accordingly to
-#     https://github.com/scikit-learn/scikit-learn/issues/6747
-#     this is computed averaging the accuracy score for each class.
-#     """
-#     return np.mean(
-#         [accuracy_score((y_true == class_).astype(int),
-#                         (y_pred == class_).astype(int))
-#          for class_ in np.unique(y_true)])
-
-
-def balanced_accuracy(y_true, y_pred):
-    """Return a balanced accuracy in case of a multiclass learning.
-
-    This is computed averaging the balanced accuracy for each class.
-    """
-    perclass_balanced_accuracy = np.zeros(np.unique(y_true).shape[0])
-    for i, class_ in enumerate(np.unique(y_true)):
-        y_true_class = (y_true == class_).astype(int)
-        y_pred_class = (y_pred == class_).astype(int)
-
-        tp = np.sum((y_pred_class == 1) * (y_true_class == y_pred_class))
-        tn = np.sum((y_pred_class == 0) * (y_true_class == y_pred_class))
-        fp = np.sum((y_pred_class == 1) * (y_true_class != y_pred_class))
-        fn = np.sum((y_pred_class == 0) * (y_true_class != y_pred_class))
-        sensitivity = tp / float(tp + fn)
-        specificity = tn / float(tn + fp)
-        perclass_balanced_accuracy[i] = (sensitivity + specificity) / 2.
-    return np.mean(perclass_balanced_accuracy)
-
-
-def analyze_experiment(exp_folder, config, dataset):
-    """TODO."""
+def single_analysis(exp_folder, is_multiclass=False):
+    """Perform the analysis on a single folder."""
     with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
         result = pkl.load(f)
 
@@ -62,7 +30,7 @@ def analyze_experiment(exp_folder, config, dataset):
     analysis = {
         'accuracy': accuracy_score(y_true, y_pred),
         'balanced_accuracy': balanced_accuracy(y_true, y_pred),
-        'MCC': matthews_corrcoef(y_true, y_pred) if not dataset.multiclass
+        'MCC': matthews_corrcoef(y_true, y_pred) if not is_multiclass
         else None
     }
     analysis['precision'], analysis['recall'], analysis['F1'], _ = \
@@ -111,7 +79,7 @@ def analyze_experiments(base_folder, config):
                 print('error')
                 continue
 
-            analysis_result = analyze_experiment(exp_folder, config, dataset)
+            analysis_result = single_analysis(exp_folder, dataset.multiclass)
 
             selected_probesets = features[analysis_result['selected_list']]
             is_regular = filename.startswith(EXPS[0])
@@ -235,12 +203,16 @@ def main(base_folder):
                 param_names)
 
 
-if __name__ == '__main__':
+def parse_args():
+    """Parse arguments."""
     from palladio import __version__
-    parser = argparse.ArgumentParser(description='palladio script for '
-                                                 'analysing results.')
+    parser = argparse.ArgumentParser(
+        description='palladio script for analysing results.')
     parser.add_argument('--version', action='version',
                         version='%(prog)s v' + __version__)
     parser.add_argument("result_folder", help="specify results directory")
-    args = parser.parse_args()
-    main(args.result_folder)
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    main(parse_args().result_folder)
