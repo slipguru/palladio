@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import os
 # import pandas as pd
+import numpy as np
 import matplotlib
 matplotlib.use('Agg')  # create plots from remote
 matplotlib.rcParams['pdf.fonttype'] = 42  # avoid bitmapped fonts in pdf
@@ -11,7 +12,6 @@ from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-import numpy as np
 import seaborn as sns
 
 from scipy import stats
@@ -436,16 +436,15 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
 
     # plot minimum
     ZZ = avg_err['ts'].reshape(xx.shape[0], yy.shape[0])
-    print(ZZ)
     x_min_idxs, y_min_idxs = np.where(ZZ == np.min(ZZ))
     ax.plot(xx[x_min_idxs], yy[y_min_idxs],
             ZZ[x_min_idxs, y_min_idxs], 'o', c=colorsHex['darkBlue'])
 
     # fig.colorbar()
-    ax.set_title('average KCV error of ' + exp + ' experiments')
+    ax.set_title('average KCV error of %s experiments' % exp)
     ax.set_ylabel(r"$log_{10}(" + param_names[1] + ")$")
     ax.set_xlabel(r"$log_{10}(" + param_names[0] + ")$")
     ax.set_zlabel("avg kcv err")
     ax.legend(legend_handles, legend_labels[:len(legend_handles)], loc='best')
 
-    plt.savefig(os.path.join(base_folder, 'kcv_err_' + exp + '.pdf'))
+    plt.savefig(os.path.join(base_folder, 'kcv_err_%s.pdf' % exp))
