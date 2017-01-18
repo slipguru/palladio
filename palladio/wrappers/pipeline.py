@@ -3,9 +3,13 @@
 import numpy as np
 
 from sklearn.linear_model import ElasticNet
+from sklearn.base import ClassifierMixin
+from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.utils.validation import check_is_fitted
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import column_or_1d
 
 from palladio.wrappers import Classification
 
@@ -43,18 +47,47 @@ def make_classifier(estimator, params=None):
     return type('GenericClassifier', (estimator,), params)()
 
 
-class ElasticNetClassifier(ElasticNet):
+class ElasticNetClassifier(LinearClassifierMixin, ElasticNet):
     """Class to extend elastic-net in case of classification.
 
     In case in which n_jobs != 1 for GridSearchCV, the estimator class must be
     pickable, therefore statically defined.
     """
 
-    predict = predict
-    score = accuracy_score
+    def fit(self, X, y, check_input=True):
+        self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
+        Y = self._label_binarizer.fit_transform(y)
+        if not self._label_binarizer.y_type_.startswith('multilabel'):
+            y = column_or_1d(y, warn=True)
+        else:
+            # we don't (yet) support multi-label classification in ENet
+            raise ValueError(
+                "%s doesn't support multi-label classification" % (
+                    self.__class__.__name__))
+        super(ElasticNetClassifier, self).fit(X, Y)
+        if self.classes_.shape[0] > 2:
+            ndim = self.classes_.shape[0]
+        else:
+            ndim = 1
+        self.coef_ = self.coef_.reshape(ndim, -1)
+
+    @property
+    def classes_(self):
+        return self._label_binarizer.classes_
+
+    # def predict(self, *args, **kwargs):
+    #     """Predict method for classifiers.
+    #
+    #     It must be defined outside a function to be pickable.
+    #     """
+    #     y_pred = super(type(self), self).predict(*args, **kwargs)
+    #     return np.sign(y_pred)
+
+    # def score(self, X, y, sample_weight=None):
+    #     return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
 
-class PipelineClassifier(Classification):
+class GridSearchCVClassifier(GridSearchCV, Classification):
     """General pipeline for sklearn-classifiers."""
 
     def __init__(self, learner, learner_options=None,
@@ -62,7 +95,7 @@ class PipelineClassifier(Classification):
                  final_scoring='accuracy',
                  data_normalizer=None,
                  label_normalizer=None, force_classifier=False):
-        super(PipelineClassifier, self).__init__(
+        super(GridSearchCVClassifier, self).__init__(
             learner_options=learner_options,
             cv_options=cv_options, final_scoring=final_scoring,
             data_normalizer=data_normalizer, label_normalizer=label_normalizer,
@@ -73,7 +106,7 @@ class PipelineClassifier(Classification):
 
     def setup(self, Xtr, Ytr, Xts, Yts):
         """Deprecated. Use fit predict instead."""
-        super(PipelineClassifier, self).setup(Xtr, Ytr, Xts, Yts)
+        super(GridSearchCVClassifier, self).setup(Xtr, Ytr, Xts, Yts)
 
     def normalize_data(self, X):
         raise NotImplementedError()

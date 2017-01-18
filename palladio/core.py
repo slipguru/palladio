@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 from palladio.wrappers import l1l2Classifier  # need to check type
-from palladio.wrappers import PipelineClassifier
+from palladio.wrappers import GridSearchCVClassifier
 from palladio.utils import set_module_defaults
 
 
@@ -127,7 +127,7 @@ def run_experiment(data, labels, config_dir, config, is_permutation_test,
             'force_classifier': False,
         })
         ms_split = None
-        clf = PipelineClassifier(
+        clf = GridSearchCVClassifier(
             config.learner, config.learner_options, config.cv_options,
             config.final_scoring, config.data_normalizer,
             config.label_normalizer, config.force_classifier)
