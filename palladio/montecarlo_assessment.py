@@ -7,22 +7,26 @@ for parallel computing.
 
 import logging
 import numpy
-from mpi4py import MPI
+import numbers
 import pandas
+
+from collections import Iterable
 from sklearn.base import BaseEstimator, clone
-from sklearn.model_selection import check_cv as _check_cv
+# from sklearn.model_selection import check_cv as _check_cv
 from sklearn.metrics.scorer import check_scoring
 from sklearn.base import is_classifier
 from sklearn.model_selection._search import _check_param_grid
-from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection._split import _CVIterableWrapper
+from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.utils import check_X_y
+from sklearn.utils.multiclass import type_of_target
 from collections import deque
 
 from palladio.MPIGridSearchCV import (MPIGridSearchCVMaster,
                                       MPIGridSearchCVSlave)
 
 
-__all__ = ('MCCV')
+__all__ = ('MonteCarloAssessment')
 
 LOG = logging.getLogger(__package__)
 
@@ -133,7 +137,63 @@ def _fit_and_score_with_parameters(X, y, cv, best_parameters):
     return pandas.Series(scores)
 
 
-class MCCV(BaseEstimator):
+def _check_cv(cv=3, y=None, classifier=False, **kwargs):
+    """Input checker utility for building a cross-validator.
+
+    Parameters
+    ----------
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, if classifier is True and ``y`` is either
+        binary or multiclass, :class:`StratifiedKFold` is used. In all other
+        cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+    y : array-like, optional
+        The target variable for supervised learning problems.
+
+    classifier : boolean, optional, default False
+        Whether the task is a classification task, in which case
+        stratified KFold will be used.
+
+    kwargs : dict
+        Other parameters for StratifiedShuffleSplit or ShuffleSplit.
+
+    Returns
+    -------
+    checked_cv : a cross-validator instance.
+        The return value is a cross-validator which generates the train/test
+        splits via the ``split`` method.
+    """
+    if cv is None:
+        cv = kwargs.pop('n_splits', 0) or 10
+
+    if isinstance(cv, numbers.Integral):
+        if (classifier and (y is not None) and
+                (type_of_target(y) in ('binary', 'multiclass'))):
+            return StratifiedShuffleSplit(cv, **kwargs)
+        else:
+            return ShuffleSplit(cv, **kwargs)
+
+    if not hasattr(cv, 'split') or isinstance(cv, str):
+        if not isinstance(cv, Iterable) or isinstance(cv, str):
+            raise ValueError("Expected cv as an integer, cross-validation "
+                             "object (from sklearn.model_selection) "
+                             "or an iterable. Got %s." % cv)
+        return _CVIterableWrapper(cv)
+
+    return cv  # New style cv objects are passed without any modification
+
+
+class MonteCarloAssessment(BaseEstimator):
     """Cross-validation with nested parameter search for each training fold.
 
     The data is first split into ``cv`` train and test sets. For each training
@@ -195,8 +255,8 @@ class MCCV(BaseEstimator):
         parameters for the model.
     """
 
-    def __init__(self, estimator, scoring=None, fit_params=None,
-                 cv=None, multi_output=False, shuffle_y=False
+    def __init__(self, estimator, cv=None, scoring=None, fit_params=None,
+                 multi_output=False, shuffle_y=False,
                  n_splits=10, test_size=0.1, train_size=None,
                  random_state=None):
         self.estimator = estimator
@@ -211,22 +271,6 @@ class MCCV(BaseEstimator):
 
         # Shuffle training labels
         self.shuffle_y = shuffle_y
-
-    # def _grid_search(self, train_X, train_y):
-    #     if callable(self.inner_cv):
-    #         # inner_cv = self.inner_cv(train_X, train_y)
-    #         inner_cv = self.inner_cv.split(train_X)
-    #     else:
-    #         # inner_cv = _check_cv(self.inner_cv, train_X, train_y,
-    #         #                      classifier=is_classifier(self.estimator))
-    #         inner_cv = _check_cv(self.inner_cv, train_y,
-    #                              classifier=is_classifier(
-    #                                 self.estimator)).split(train_X)
-    #
-    #     master = MPIGridSearchCVMaster(self.param_grid, inner_cv,
-    #                                    self.estimator, self.scorer_,
-    #                                    self.fit_params)
-    #     return master.run(train_X, train_y)
 
     def _fit_single_job(self, job_list, X, y):
         cv_results_ = {}
@@ -253,9 +297,13 @@ class MCCV(BaseEstimator):
                     self.estimator.cv_results_)
         self.cv_results_ = cv_results_
 
-    def _fit_master(self, X, y, cv):
-        # param_names = list(self.param_grid.keys())
+    def _fit_master(self, X, y):
         nprocs = COMM.Get_size()
+        cv = _check_cv(self.cv, y, classifier=is_classifier(self.estimator),
+                       n_splits=self.n_splits, test_size=self.test_size,
+                       train_size=self.train_size,
+                       random_state=self.random_state)
+
         job_list = list(enumerate(cv.split(X)))
         if not IS_MPI_JOB:
             self._fit_single_job(
@@ -265,8 +313,6 @@ class MCCV(BaseEstimator):
         count = 0
         queue = deque(job_list)
         n_pipes = len(queue)
-        # best_parameters = []
-        # grid_search_results = []
         cv_results_ = {}
 
         # seed the slaves by sending work to each processor
@@ -308,7 +354,7 @@ class MCCV(BaseEstimator):
                     self.estimator.cv_results_)
             count += 1
 
-        # tell all the slaves to exit by sending an empty message with the EXIT_TAG
+        # tell all slaves to exit by sending an empty message with the EXIT_TAG
         for rankk in range(1, nprocs):
             COMM.send(0, dest=rankk, tag=EXIT)
 
@@ -345,10 +391,10 @@ class MCCV(BaseEstimator):
         """
         try:
             while True:
-                status_ = MPI.Status()
-                received = COMM.recv(source=0, tag=MPI.ANY_TAG, status=status_)
+                status = MPI.Status()
+                received = COMM.recv(source=0, tag=MPI.ANY_TAG, status=status)
                 # check the tag of the received message
-                if status_.tag == EXIT:
+                if status.tag == EXIT:
                     return
                 # do the work
                 i, (train_index, test_index) = received
@@ -373,17 +419,18 @@ class MCCV(BaseEstimator):
                 # run_experiment(data, labels, None, config,
                 #                is_permutation_test, experiments_folder_path,
                 #                tmp_name)
-                estimator = clone(self.estimator)
-                estimator.fit(X, y)
-
                 Xtr = X[train_index, :]
                 Xts = X[test_index, :]
                 ytr = y[train_index]
                 yts = y[test_index]
+
+                estimator = clone(self.estimator)
+                estimator.fit(Xtr, ytr)
+
                 # estimator = self._worker(i, Xtr, ytr)
 
-                yts_pred = estimator.predict(yts)
-                ytr_pred = estimator.predict(ytr)
+                yts_pred = estimator.predict(Xts)
+                ytr_pred = estimator.predict(Xtr)
                 lr_score = estimator.score(Xtr, ytr)
                 ts_score = estimator.score(Xts, yts)
 
@@ -422,19 +469,11 @@ class MCCV(BaseEstimator):
         """Fit the model to the training data."""
         X, y = check_X_y(X, y, force_all_finite=False,
                          multi_output=self.multi_output)
-        # _check_param_grid(self.param_grid)
-
-        # cv = _check_cv(self.cv, X, y, classifier=is_classifier(self.estimator))
-        # cv = _check_cv(self.cv, y, classifier=is_classifier(self.estimator))
-        ### TODO
-        cv = StratifiedShuffleSplit(
-            n_splits=self.n_splits, test_size=self.test_size,
-            train_size=self.train_size, self.random_state)
 
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
         if comm_rank == 0:
-            self._fit_master(X, y, cv)
+            self._fit_master(X, y)
         else:
             self._fit_slave(X, y)
 
