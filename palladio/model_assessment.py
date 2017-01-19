@@ -16,8 +16,9 @@ from sklearn.base import BaseEstimator, clone
 from sklearn.metrics.scorer import check_scoring
 from sklearn.base import is_classifier
 from sklearn.model_selection._split import _CVIterableWrapper
+from sklearn.model_selection._validation import _shuffle
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
-from sklearn.utils import check_X_y
+from sklearn.utils import check_X_y, check_random_state
 from sklearn.utils.multiclass import type_of_target
 from collections import deque
 
@@ -264,7 +265,7 @@ class ModelAssessment(BaseEstimator):
     def __init__(self, estimator, cv=None, scoring=None, fit_params=None,
                  multi_output=False, shuffle_y=False,
                  n_splits=10, test_size=0.1, train_size=None,
-                 random_state=None):
+                 random_state=None, groups=None):
         self.estimator = estimator
         self.scoring = scoring
         self.fit_params = fit_params
@@ -274,6 +275,7 @@ class ModelAssessment(BaseEstimator):
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
+        self.groups = groups
 
         # Shuffle training labels
         self.shuffle_y = shuffle_y
@@ -292,12 +294,12 @@ class ModelAssessment(BaseEstimator):
 
     def _fit_master(self, X, y):
         nprocs = COMM.Get_size()
-        cv = _check_cv(self.cv, y, classifier=is_classifier(self.estimator),
-                       n_splits=self.n_splits, test_size=self.test_size,
-                       train_size=self.train_size,
-                       random_state=self.random_state)
+        cv = _check_cv(
+            self.cv, y, classifier=is_classifier(self.estimator),
+            n_splits=self.n_splits, test_size=self.test_size,
+            train_size=self.train_size, random_state=self.random_state)
 
-        job_list = list(enumerate(cv.split(X, y)))
+        job_list = list(enumerate(cv.split(X, y, self.groups)))
         if not IS_MPI_JOB:
             self._fit_single_job(
                 job_list, X, y)
@@ -406,6 +408,9 @@ class ModelAssessment(BaseEstimator):
                 yts = y[test_index]
 
                 estimator = clone(self.estimator)
+                if self.shuffle_y:
+                    random_state = check_random_state(self.random_state)
+                    ytr = _shuffle(ytr, self.groups, random_state)
                 estimator.fit(Xtr, ytr)
 
                 yts_pred = estimator.predict(Xts)
