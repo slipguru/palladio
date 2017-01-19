@@ -376,12 +376,17 @@ class ModelAssessment(BaseEstimator):
             while True:
                 status_ = MPI.Status()
                 received = COMM.recv(source=0, tag=MPI.ANY_TAG, status=status_)
+
                 # check the tag of the received message
                 if status_.tag == EXIT:
                     return
                 # do the work
                 i, (train_index, test_index) = received
+
+                print("[{} {}]: Performing experiment {}".format(NAME, RANK, i))
+
                 cv_results_ = self._worker(i, X, y, train_index, test_index)
+                print("[{} {}]: Experiment {} completed".format(NAME, RANK, i))
                 COMM.send(cv_results_, dest=0, tag=0)
 
         except StandardError as exc:

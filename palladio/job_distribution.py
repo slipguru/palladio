@@ -9,6 +9,9 @@ from collections import deque
 
 from palladio.core import run_experiment, generate_job_list
 from palladio.utils import sec_to_timestring
+from palladio.model_assessment import ModelAssessment
+
+from sklearn.model_selection import GridSearchCV
 
 try:
     from mpi4py import MPI
@@ -29,135 +32,135 @@ DO_WORK = 100
 EXIT = 200
 
 
-def master_single_machine(job_list, data, labels, config,
-                          experiments_folder_path):
-    """Run palladio on a single machine.
+# def master_single_machine(job_list, data, labels, config,
+#                           experiments_folder_path):
+#     """Run palladio on a single machine.
+#
+#     If mpi4py is not available or the pd_run.py is not run with mpirun,
+#     use multiprocessing to parallelise the work.
+#     """
+#     import multiprocessing as mp
+#     jobs = []
+#
+#     # Submit jobs
+#     for i, is_permutation_test in job_list:
+#         proc = mp.Process(target=worker,
+#                           args=(i, data, labels, config, is_permutation_test,
+#                                 experiments_folder_path))
+#         jobs.append(proc)
+#         proc.start()
+#
+#     # Collect results
+#     count = 0
+#     for proc in jobs:
+#         proc.join()
+#         count += 1
 
-    If mpi4py is not available or the pd_run.py is not run with mpirun,
-    use multiprocessing to parallelise the work.
-    """
-    import multiprocessing as mp
-    jobs = []
-
-    # Submit jobs
-    for i, is_permutation_test in job_list:
-        proc = mp.Process(target=worker,
-                          args=(i, data, labels, config, is_permutation_test,
-                                experiments_folder_path))
-        jobs.append(proc)
-        proc.start()
-
-    # Collect results
-    count = 0
-    for proc in jobs:
-        proc.join()
-        count += 1
-
-
-def master(config, data, labels, experiments_folder_path):
-    """Distribute pipelines with mpi4py."""
-    nprocs = COMM.Get_size()
-    job_list = list(enumerate(generate_job_list(
-        config.N_jobs_regular, config.N_jobs_permutation)))
-
-    if not IS_MPI_JOB:
-        master_single_machine(
-            job_list, data, labels, config, experiments_folder_path)
-        return
-
-    count = 0
-    queue = deque(job_list)
-    n_pipes = len(queue)
-
-    # seed the slaves by sending work to each processor
-    for rankk in range(1, min(nprocs, n_pipes)):
-        pipe_tuple = queue.popleft()
-        COMM.send(pipe_tuple, dest=rankk, tag=DO_WORK)
-
-    # loop until there's no more work to do. If queue is empty skips the loop.
-    while queue:
-        pipe_tuple = queue.popleft()
-        # receive result from slave
-        status = MPI.Status()
-        COMM.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
-        # pipe_dump[pipe_id] = step_dump
-        count += 1
-        # send to the same slave new work
-        COMM.send(pipe_tuple, dest=status.source, tag=DO_WORK)
-
-    # there's no more work to do, so receive all the results from the slaves
-    for rankk in range(1, min(nprocs, n_pipes)):
-        status = MPI.Status()
-        COMM.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
-        # pipe_dump[pipe_id] = step_dump
-        count += 1
-
-    # tell all the slaves to exit by sending an empty message with the EXIT_TAG
-    for rankk in range(1, nprocs):
-        COMM.send(0, dest=rankk, tag=EXIT)
-
-
-def worker(i, data, labels, config, is_permutation_test,
-           experiments_folder_path):
-    """Implement the worker resubmission in case of errors."""
-    custom_name = "{}_p_{}_i_{}".format(
-        ("permutation" if is_permutation_test else "regular"), RANK, i)
-    tmp_name_base = 'tmp_' + custom_name
-    experiment_resubmissions = 0
-    experiment_completed = False
-    while not experiment_completed and \
-            experiment_resubmissions <= MAX_RESUBMISSIONS:
-        try:
-            tmp_name = tmp_name_base + '_submission_{}'.format(
-                experiment_resubmissions + 1)
-            run_experiment(data, labels, None, config,
-                           is_permutation_test, experiments_folder_path,
-                           tmp_name)
-            experiment_completed = True
-
-            shutil.move(
-                os.path.join(experiments_folder_path, tmp_name),
-                os.path.join(experiments_folder_path, custom_name),
-            )
-            print("[{}_{}] finished experiment {}".format(NAME, RANK, i))
-
-        except Exception as e:
-            raise
-            # If somethings out of the ordinary happens,
-            # resubmit the job
-            experiment_resubmissions += 1
-            print("[{}_{}] failed experiment {}, resubmission #{}\n"
-                  "Exception raised: {}".format(
-                      NAME, RANK, i, experiment_resubmissions, e))
-
-    if not experiment_completed:
-        print("[{}_{}] failed to complete experiment {}, "
-              "max resubmissions limit reached".format(NAME, RANK, i))
+#
+# def master(config, data, labels, experiments_folder_path):
+#     """Distribute pipelines with mpi4py."""
+#     nprocs = COMM.Get_size()
+#     job_list = list(enumerate(generate_job_list(
+#         config.N_jobs_regular, config.N_jobs_permutation)))
+#
+#     if not IS_MPI_JOB:
+#         master_single_machine(
+#             job_list, data, labels, config, experiments_folder_path)
+#         return
+#
+#     count = 0
+#     queue = deque(job_list)
+#     n_pipes = len(queue)
+#
+#     # seed the slaves by sending work to each processor
+#     for rankk in range(1, min(nprocs, n_pipes)):
+#         pipe_tuple = queue.popleft()
+#         COMM.send(pipe_tuple, dest=rankk, tag=DO_WORK)
+#
+#     # loop until there's no more work to do. If queue is empty skips the loop.
+#     while queue:
+#         pipe_tuple = queue.popleft()
+#         # receive result from slave
+#         status = MPI.Status()
+#         COMM.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+#         # pipe_dump[pipe_id] = step_dump
+#         count += 1
+#         # send to the same slave new work
+#         COMM.send(pipe_tuple, dest=status.source, tag=DO_WORK)
+#
+#     # there's no more work to do, so receive all the results from the slaves
+#     for rankk in range(1, min(nprocs, n_pipes)):
+#         status = MPI.Status()
+#         COMM.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+#         # pipe_dump[pipe_id] = step_dump
+#         count += 1
+#
+#     # tell all the slaves to exit by sending an empty message with the EXIT_TAG
+#     for rankk in range(1, nprocs):
+#         COMM.send(0, dest=rankk, tag=EXIT)
 
 
-def slave(data, labels, config, experiments_folder_path):
-    """Pipeline evaluation.
+# def worker(i, data, labels, config, is_permutation_test,
+#            experiments_folder_path):
+#     """Implement the worker resubmission in case of errors."""
+#     custom_name = "{}_p_{}_i_{}".format(
+#         ("permutation" if is_permutation_test else "regular"), RANK, i)
+#     tmp_name_base = 'tmp_' + custom_name
+#     experiment_resubmissions = 0
+#     experiment_completed = False
+#     while not experiment_completed and \
+#             experiment_resubmissions <= MAX_RESUBMISSIONS:
+#         try:
+#             tmp_name = tmp_name_base + '_submission_{}'.format(
+#                 experiment_resubmissions + 1)
+#             run_experiment(data, labels, None, config,
+#                            is_permutation_test, experiments_folder_path,
+#                            tmp_name)
+#             experiment_completed = True
+#
+#             shutil.move(
+#                 os.path.join(experiments_folder_path, tmp_name),
+#                 os.path.join(experiments_folder_path, custom_name),
+#             )
+#             print("[{}_{}] finished experiment {}".format(NAME, RANK, i))
+#
+#         except Exception as e:
+#             raise
+#             # If somethings out of the ordinary happens,
+#             # resubmit the job
+#             experiment_resubmissions += 1
+#             print("[{}_{}] failed experiment {}, resubmission #{}\n"
+#                   "Exception raised: {}".format(
+#                       NAME, RANK, i, experiment_resubmissions, e))
+#
+#     if not experiment_completed:
+#         print("[{}_{}] failed to complete experiment {}, "
+#               "max resubmissions limit reached".format(NAME, RANK, i))
 
-    Parameters
-    ----------
-    X : array of float, shape : n_samples x n_features, default : ()
-        The input data matrix.
-    """
-    try:
-        while True:
-            status_ = MPI.Status()
-            received = COMM.recv(source=0, tag=MPI.ANY_TAG, status=status_)
-            # check the tag of the received message
-            if status_.tag == EXIT:
-                return
-            # do the work
-            i, is_permutation_test = received
-            worker(i, data, labels, config, is_permutation_test,
-                   experiments_folder_path)
-            COMM.send(0, dest=0, tag=0)
 
-    except StandardError as exc:
-        print("Quitting ... TB:", str(exc))
+# def slave(data, labels, config, experiments_folder_path):
+#     """Pipeline evaluation.
+#
+#     Parameters
+#     ----------
+#     X : array of float, shape : n_samples x n_features, default : ()
+#         The input data matrix.
+#     """
+#     try:
+#         while True:
+#             status_ = MPI.Status()
+#             received = COMM.recv(source=0, tag=MPI.ANY_TAG, status=status_)
+#             # check the tag of the received message
+#             if status_.tag == EXIT:
+#                 return
+#             # do the work
+#             i, is_permutation_test = received
+#             worker(i, data, labels, config, is_permutation_test,
+#                    experiments_folder_path)
+#             COMM.send(0, dest=0, tag=0)
+#
+#     except StandardError as exc:
+#         print("Quitting ... TB:", str(exc))
 
 
 def main(config_path):
@@ -226,9 +229,32 @@ def main(config_path):
         print('  * Data shape:', data.shape)
         print('  * Labels shape:', labels.shape)
 
-        master(config, data, labels, experiments_folder_path)
+        # master(config, data, labels, experiments_folder_path)
     else:
-        slave(data, labels, config, experiments_folder_path)
+        pass
+        # slave(data, labels, config, experiments_folder_path)
+
+
+    ####### HERE ALL STUFF
+
+    ### Prepare estimator for internal loops (GridSearchCV)
+
+    ### The internal estimator (e.g. Elastic Net Classifier)
+    internal_estimator = config.learner(**config.learner_options)
+
+    ### Grid search estimator
+    internal_gridsearch = GridSearchCV(internal_estimator, **config.cv_options)
+
+
+
+    ### Perform "regular" experiments
+    external_estimator = ModelAssessment(estimator, shuffle_y=False, test_size=0.25, train_size=None)
+    external_estimator.fit(data, labels)
+
+    ### Perform "permutation" experiments
+    external_estimator = ModelAssessment(estimator, shuffle_y=True, test_size=0.25, train_size=None)
+    external_estimator.fit(data, labels)
+
 
     if IS_MPI_JOB:
         # Wait for all jobs to end

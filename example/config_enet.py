@@ -52,7 +52,7 @@ test_set_ratio = float(1) / 4
 # learner_class = make_classifier(ElasticNet())
 # learner = 'elastic-net'
 learner = ElasticNet
-make_classifier = True
+# make_classifier = True
 
 learner_options = {
     'fit_intercept': True
