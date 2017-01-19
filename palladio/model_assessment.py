@@ -4,7 +4,7 @@ This package provides nested cross-validation similar to scikit-learn's
 GridSearchCV but uses the Message Passing Interface (MPI)
 for parallel computing.
 """
-
+from __future__ import print_function
 import logging
 import numpy
 import numbers
@@ -15,18 +15,13 @@ from sklearn.base import BaseEstimator, clone
 # from sklearn.model_selection import check_cv as _check_cv
 from sklearn.metrics.scorer import check_scoring
 from sklearn.base import is_classifier
-from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection._split import _CVIterableWrapper
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.utils import check_X_y
 from sklearn.utils.multiclass import type_of_target
 from collections import deque
 
-from palladio.MPIGridSearchCV import (MPIGridSearchCVMaster,
-                                      MPIGridSearchCVSlave)
-
-
-__all__ = ('MonteCarloAssessment')
+__all__ = ('ModelAssessment')
 
 LOG = logging.getLogger(__package__)
 
@@ -193,7 +188,18 @@ def _check_cv(cv=3, y=None, classifier=False, **kwargs):
     return cv  # New style cv objects are passed without any modification
 
 
-class MonteCarloAssessment(BaseEstimator):
+def _build_cv_results(dictionary, i, lr_score, ts_score, cv_results):
+    """Function to build final cv_results_ dictionary with partial results."""
+    dictionary.setdefault('split_i', []).append(i)
+    dictionary.setdefault('learn_score', []).append(lr_score)
+    dictionary.setdefault('test_score', []).append(ts_score)
+    if cv_results is not None:
+        # In case in which the estimator is a CV object
+        dictionary.setdefault('cv_results_', []).append(
+            cv_results)
+
+
+class ModelAssessment(BaseEstimator):
     """Cross-validation with nested parameter search for each training fold.
 
     The data is first split into ``cv`` train and test sets. For each training
@@ -277,24 +283,11 @@ class MonteCarloAssessment(BaseEstimator):
         for i, (train_index, test_index) in job_list:
             LOG.info("Training fold %d", i + 1)
 
-            Xtr = X[train_index, :]
-            Xts = X[test_index, :]
-            ytr = y[train_index]
-            yts = y[test_index]
+            _, lr_score, ts_score, cv_results = self._worker(
+                i, X, y, train_index, test_index)
 
-            self.estimator.fit(Xtr, ytr)
-            yts_pred = self.estimator.predict(yts)
-            ytr_pred = self.estimator.predict(ytr)
-            lr_score = self.estimator.score(Xtr, ytr)
-            ts_score = self.estimator.score(Xts, yts)
+            _build_cv_results(cv_results_, i, lr_score, ts_score, cv_results)
 
-            cv_results_.setdefault('split_i', []).append(i)
-            cv_results_.setdefault('learn_score', []).append(lr_score)
-            cv_results_.setdefault('test_score', []).append(ts_score)
-            if hasattr(self.estimator, 'cv_results_'):
-                # In case in which the estimator is a CV object
-                cv_results_.setdefault('cv_results_', []).append(
-                    self.estimator.cv_results_)
         self.cv_results_ = cv_results_
 
     def _fit_master(self, X, y):
@@ -304,7 +297,7 @@ class MonteCarloAssessment(BaseEstimator):
                        train_size=self.train_size,
                        random_state=self.random_state)
 
-        job_list = list(enumerate(cv.split(X)))
+        job_list = list(enumerate(cv.split(X, y)))
         if not IS_MPI_JOB:
             self._fit_single_job(
                 job_list, X, y)
@@ -330,28 +323,16 @@ class MonteCarloAssessment(BaseEstimator):
             # send to the same slave new work
             COMM.send(pipe_tuple, dest=status.source, tag=DO_WORK)
 
-            cv_results_.setdefault('split_i', []).append(i)
-            cv_results_.setdefault('learn_score', []).append(lr_score)
-            cv_results_.setdefault('test_score', []).append(ts_score)
-            if cv_results is not None:
-                # In case in which the estimator is a CV object
-                cv_results_.setdefault('cv_results_', []).append(
-                    self.estimator.cv_results_)
+            _build_cv_results(cv_results_, i, lr_score, ts_score, cv_results)
             count += 1
 
-        # there's no more work to do, so receive all the results from the slaves
+        # No more work to do, so receive all the results from slaves
         for rankk in range(1, min(nprocs, n_pipes)):
             status = MPI.Status()
             i, lr_score, ts_score, cv_results = COMM.recv(
                 source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
 
-            cv_results_.setdefault('split_i', []).append(i)
-            cv_results_.setdefault('learn_score', []).append(lr_score)
-            cv_results_.setdefault('test_score', []).append(ts_score)
-            if cv_results is not None:
-                # In case in which the estimator is a CV object
-                cv_results_.setdefault('cv_results_', []).append(
-                    self.estimator.cv_results_)
+            _build_cv_results(cv_results_, i, lr_score, ts_score, cv_results)
             count += 1
 
         # tell all slaves to exit by sending an empty message with the EXIT_TAG
@@ -391,10 +372,10 @@ class MonteCarloAssessment(BaseEstimator):
         """
         try:
             while True:
-                status = MPI.Status()
-                received = COMM.recv(source=0, tag=MPI.ANY_TAG, status=status)
+                status_ = MPI.Status()
+                received = COMM.recv(source=0, tag=MPI.ANY_TAG, status=status_)
                 # check the tag of the received message
-                if status.tag == EXIT:
+                if status_.tag == EXIT:
                     return
                 # do the work
                 i, (train_index, test_index) = received
@@ -426,8 +407,6 @@ class MonteCarloAssessment(BaseEstimator):
 
                 estimator = clone(self.estimator)
                 estimator.fit(Xtr, ytr)
-
-                # estimator = self._worker(i, Xtr, ytr)
 
                 yts_pred = estimator.predict(Xts)
                 ytr_pred = estimator.predict(Xtr)
