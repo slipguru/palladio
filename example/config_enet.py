@@ -6,7 +6,8 @@ import numpy as np
 from sklearn.linear_model import ElasticNet
 from sklearn.metrics import accuracy_score
 
-from palladio.datasets import DatasetNPY
+from palladio.datasets import DatasetCSV
+# from palladio.datasets import DatasetNPY
 
 #####################
 #   DATASET PATHS ###
@@ -14,19 +15,38 @@ from palladio.datasets import DatasetNPY
 
 # * All the path are w.r.t. config file path
 
-dataset_class = DatasetNPY
+dataset_class = DatasetCSV
 
 # The list of all files required for the experiments
 dataset_files = {
-    'data': 'data.npy',
-    'labels': 'labels.npy',
-    'indcol': 'indcols.pkl'
+    'data': 'data/gedm.csv',
+    'labels': 'data/labels.csv'
 }
 
 dataset_options = {
-    'samples_on': 'row',  # or 'row': samples on cols or rows
-    'positive_label': 1,  # positive class in case of 2-class task
+    'positive_label': None,  # Indicates the positive class in case of 2-class task
+    'samples_on': 'col',  # or 'row': samples on cols or rows
+    # 'data_preprocessing' : None,
+
+    # other options for pandas.read_csv
+    'delimiter': ',',
+    'header': 0,
+    'index_col': 0
 }
+
+# dataset_class = DatasetNPY
+#
+# # The list of all files required for the experiments
+# dataset_files = {
+#     'data': 'data.npy',
+#     'labels': 'labels.npy',
+#     'indcol': 'indcols.pkl'
+# }
+#
+# dataset_options = {
+#     'samples_on': 'row',  # or 'row': samples on cols or rows
+#     'positive_label': 1,  # positive class in case of 2-class task
+# }
 
 #######################
 #   SESSION OPTIONS ###
@@ -35,11 +55,11 @@ dataset_options = {
 result_path = 'dummy_palladio_test_2step'
 
 # The number of "regular" experiment
-N_jobs_regular = 100
+N_jobs_regular = 20
 
 # The number of instances for the permutation tests
 # (labels in the training sets are randomly shuffled)
-N_jobs_permutation = 100
+N_jobs_permutation = 20
 
 # The ratio of the dataset held out for model assessment
 # It should be of the form 1/M
