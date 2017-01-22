@@ -23,6 +23,11 @@ def predict(self, *args, **kwargs):
     return np.sign(y_pred)
 
 
+#########################################################################
+#########################################################################
+### DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED ###
+#########################################################################
+#########################################################################
 def make_classifier(estimator, params=None):
     """Make a classifier for a possible regressor.
 

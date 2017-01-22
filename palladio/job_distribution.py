@@ -248,11 +248,11 @@ def main(config_path):
 
 
     ### Perform "regular" experiments
-    external_estimator = ModelAssessment(estimator, scoring = config.final_scoring, shuffle_y=False, test_size=0.25, train_size=None)
+    external_estimator = ModelAssessment(internal_gridsearch, scoring = config.final_scoring, shuffle_y=False, test_size=0.25, train_size=None)
     external_estimator.fit(data, labels)
 
     ### Perform "permutation" experiments
-    external_estimator = ModelAssessment(estimator, scoring = config.final_scoring, shuffle_y=True, test_size=0.25, train_size=None)
+    external_estimator = ModelAssessment(internal_gridsearch, scoring = config.final_scoring, shuffle_y=True, test_size=0.25, train_size=None)
     external_estimator.fit(data, labels)
 
 

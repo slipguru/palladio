@@ -2,8 +2,7 @@
 # version: '0.4
 
 import numpy as np
-# from palladio.wrappers.elastic_net import ElasticNetClassifier
-from sklearn.linear_model import ElasticNet
+from palladio.wrappers.pipeline import ElasticNetClassifier
 from sklearn.metrics import accuracy_score
 
 from palladio.datasets import DatasetCSV
@@ -52,7 +51,7 @@ dataset_options = {
 #   SESSION OPTIONS ###
 #######################
 
-result_path = 'dummy_palladio_test_2step'
+result_path = 'palladio_test_golub'
 
 # The number of "regular" experiment
 N_jobs_regular = 20
@@ -71,7 +70,7 @@ test_set_ratio = float(1) / 4
 
 # learner_class = make_classifier(ElasticNet())
 # learner = 'elastic-net'
-learner = ElasticNet
+learner = ElasticNetClassifier
 # make_classifier = True
 
 learner_options = {
@@ -82,7 +81,7 @@ learner_options = {
 # ~~ Elastic-Net Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 param_grid = {
     'l1_ratio_range': np.logspace(0.5, 0, 10),
-    'alpha_range': np.logspace(-1, 0, 20)
+    'alpha_range': np.logspace(-1, 0, 10)
 }
 
 # ~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
