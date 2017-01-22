@@ -6,7 +6,7 @@
 # PALLADIO Refactoring: Samuele Fiorini
 
 import numpy as np
-import l1l2py
+# import l1l2py
 
 
 class PDException(Exception):
