@@ -4,11 +4,18 @@ This package provides nested cross-validation similar to scikit-learn's
 GridSearchCV but uses the Message Passing Interface (MPI)
 for parallel computing.
 """
+
 from __future__ import print_function
 import logging
 import numpy
 import numbers
 import pandas
+
+### Load pickle
+try:
+    import cPickle as pkl
+except:
+    import pickle as pkl
 
 from collections import Iterable
 from sklearn.base import BaseEstimator, clone
@@ -265,7 +272,7 @@ class ModelAssessment(BaseEstimator):
     def __init__(self, estimator, cv=None, scoring=None, fit_params=None,
                  multi_output=False, shuffle_y=False,
                  n_splits=10, test_size=0.1, train_size=None,
-                 random_state=None, groups=None):
+                 random_state=None, groups=None, experiments_folder = None):
         self.estimator = estimator
         self.scoring = scoring
         self.fit_params = fit_params
@@ -276,6 +283,7 @@ class ModelAssessment(BaseEstimator):
         self.train_size = train_size
         self.random_state = random_state
         self.groups = groups
+        self.experiments_folder = experiments_folder
 
         # Shuffle training labels
         self.shuffle_y = shuffle_y
@@ -286,7 +294,7 @@ class ModelAssessment(BaseEstimator):
             LOG.info("Training fold %d", i + 1)
 
             _, lr_score, ts_score, cv_results = self._worker(
-                i, X, y, train_index, test_index)
+                i, X, y, train_index, test_index, experiments_folder, is_permutation)
 
             _build_cv_results(cv_results_, i, lr_score, ts_score, cv_results)
 
@@ -314,6 +322,8 @@ class ModelAssessment(BaseEstimator):
         for rankk in range(1, min(nprocs, n_pipes)):
             pipe_tuple = queue.popleft()
             COMM.send(pipe_tuple, dest=rankk, tag=DO_WORK)
+
+        print("Pipe tuple: {}".format(pipe_tuple))
 
         while queue:
             pipe_tuple = queue.popleft()
@@ -417,6 +427,16 @@ class ModelAssessment(BaseEstimator):
                     random_state = check_random_state(self.random_state)
                     ytr = _shuffle(ytr, self.groups, random_state)
                 estimator.fit(Xtr, ytr)
+
+                ### Dump partial results
+                if self.experiments_folder is not None:
+                    if self.shuffle_y:
+                        pkl_name = 'permutation_{}.pkl'.format(i)
+                    else:
+                        pkl_name = 'regular_{}.pkl'.format(i)
+
+                    with open(os.path.join(self.experiments_folder, pkl_name), 'w') as ff:
+                        pkl.dump(estimator, ff)
 
                 yts_pred = estimator.predict(Xts)
                 ytr_pred = estimator.predict(Xtr)
