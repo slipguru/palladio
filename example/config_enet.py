@@ -1,12 +1,11 @@
 # Configuration file example for PALLADIO
-# version: '0.4
+# version: 2.0
 
 import numpy as np
-# from palladio.wrappers.elastic_net import ElasticNetClassifier
-from sklearn.linear_model import ElasticNet
-from sklearn.metrics import accuracy_score
+from palladio.wrappers.pipeline import ElasticNetClassifier
 
-from palladio.datasets import DatasetNPY
+# from palladio.datasets import DatasetCSV as dataset_class
+from palladio.datasets import DatasetNPY as dataset_class
 
 #####################
 #   DATASET PATHS ###
@@ -14,13 +13,28 @@ from palladio.datasets import DatasetNPY
 
 # * All the path are w.r.t. config file path
 
-dataset_class = DatasetNPY
+# The list of all files required for the experiments
+# dataset_files = {
+#     'data': 'data/gedm.csv',
+#     'labels': 'data/labels.csv'
+# }
+#
+# dataset_options = {
+#     'positive_label': None,  # Indicates the positive class in case of 2-class task
+#     'samples_on': 'col',  # or 'row': samples on cols or rows
+#     # 'data_preprocessing' : None,
+#
+#     # other options for pandas.read_csv
+#     'delimiter': ',',
+#     'header': 0,
+#     'index_col': 0
+# }
 
 # The list of all files required for the experiments
 dataset_files = {
-    'data': 'data.npy',
-    'labels': 'labels.npy',
-    'indcol': 'indcols.pkl'
+    'data': 'data/iris_data.npy',
+    'labels': 'data/iris_labels.npy',
+    'indcol': 'data/iris_indcols.pkl'
 }
 
 dataset_options = {
@@ -32,14 +46,14 @@ dataset_options = {
 #   SESSION OPTIONS ###
 #######################
 
-result_path = 'dummy_palladio_test_2step'
+result_path = 'palladio_test_golub'
 
 # The number of "regular" experiment
-N_jobs_regular = 100
+N_jobs_regular = 20
 
 # The number of instances for the permutation tests
 # (labels in the training sets are randomly shuffled)
-N_jobs_permutation = 100
+N_jobs_permutation = 20
 
 # The ratio of the dataset held out for model assessment
 # It should be of the form 1/M
@@ -51,7 +65,7 @@ test_set_ratio = float(1) / 4
 
 # learner_class = make_classifier(ElasticNet())
 # learner = 'elastic-net'
-learner = ElasticNet
+learner = ElasticNetClassifier
 # make_classifier = True
 
 learner_options = {
@@ -61,8 +75,8 @@ learner_options = {
 
 # ~~ Elastic-Net Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 param_grid = {
-    'l1_ratio_range': np.logspace(0.5, 0, 10),
-    'alpha_range': np.logspace(-1, 0, 20)
+    'l1_ratio': np.logspace(0.5, 0, 5),
+    'alpha': np.logspace(-1, 0, 5)
 }
 
 # ~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -76,7 +90,7 @@ cv_options = {
     'scoring': 'accuracy',
 }
 
-final_scoring = accuracy_score
+final_scoring = 'accuracy'
 
 # ~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 frequency_threshold = 0.75

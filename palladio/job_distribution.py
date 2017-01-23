@@ -7,7 +7,7 @@ import time
 
 from collections import deque
 
-from palladio.core import run_experiment, generate_job_list
+# from palladio.core import run_experiment, generate_job_list
 from palladio.utils import sec_to_timestring
 from palladio.model_assessment import ModelAssessment
 
@@ -248,11 +248,11 @@ def main(config_path):
 
 
     ### Perform "regular" experiments
-    external_estimator = ModelAssessment(estimator, shuffle_y=False, test_size=0.25, train_size=None)
+    external_estimator = ModelAssessment(internal_gridsearch, scoring = config.final_scoring, shuffle_y=False, test_size=0.25, train_size=None, experiments_folder = experiments_folder_path)
     external_estimator.fit(data, labels)
 
     ### Perform "permutation" experiments
-    external_estimator = ModelAssessment(estimator, shuffle_y=True, test_size=0.25, train_size=None)
+    external_estimator = ModelAssessment(internal_gridsearch, scoring = config.final_scoring, shuffle_y=True, test_size=0.25, train_size=None, experiments_folder = experiments_folder_path)
     external_estimator.fit(data, labels)
 
 

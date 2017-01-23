@@ -4,7 +4,10 @@ import time
 import shutil
 import pandas as pd
 import numpy as np
-import cPickle as pkl
+try:
+    import cPickle as pkl
+except:
+    import pickle as pkl
 import warnings
 
 __all__ = ('DatasetCSV', 'DatasetNPY', 'DatasetXLS')
