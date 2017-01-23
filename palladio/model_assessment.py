@@ -421,20 +421,22 @@ class ModelAssessment(BaseEstimator):
                 ytr = y[train_index]
                 yts = y[test_index]
 
+                # TODO necessary?
                 estimator = clone(self.estimator)
                 if self.shuffle_y:
                     random_state = check_random_state(self.random_state)
                     ytr = _shuffle(ytr, self.groups, random_state)
                 estimator.fit(Xtr, ytr)
 
-                ### Dump partial results
+                # ### Dump partial results
                 if self.experiments_folder is not None:
                     if self.shuffle_y:
                         pkl_name = 'permutation_{}.pkl'.format(i)
                     else:
                         pkl_name = 'regular_{}.pkl'.format(i)
 
-                    with open(os.path.join(self.experiments_folder, pkl_name), 'w') as ff:
+                    with open(os.path.join(
+                            self.experiments_folder, pkl_name), 'wb') as ff:
                         pkl.dump(estimator, ff)
 
                 yts_pred = estimator.predict(Xts)
