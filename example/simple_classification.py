@@ -17,6 +17,10 @@ param_grid = {'alpha': np.logspace(-3, 3, 10)}
 
 mca = ModelAssessment(GridSearchCV(estimator=estimator, param_grid=param_grid))
 mca.fit(X, y)
+mca_perm = ModelAssessment(
+    GridSearchCV(estimator=estimator, param_grid=param_grid), shuffle_y=True)
+mca_perm.fit(X, y)
+
 
 if MPI.COMM_WORLD.Get_rank() == 0:
     print(mca.cv_results_)
