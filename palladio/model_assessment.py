@@ -10,6 +10,7 @@ import logging
 import numpy
 import numbers
 import pandas
+import os
 
 ### Load pickle
 try:
@@ -323,8 +324,6 @@ class ModelAssessment(BaseEstimator):
             pipe_tuple = queue.popleft()
             COMM.send(pipe_tuple, dest=rankk, tag=DO_WORK)
 
-        print("Pipe tuple: {}".format(pipe_tuple))
-
         while queue:
             pipe_tuple = queue.popleft()
             # receive result from slave
@@ -457,7 +456,6 @@ class ModelAssessment(BaseEstimator):
                 #     os.path.join(experiments_folder_path, tmp_name),
                 #     os.path.join(experiments_folder_path, custom_name),
                 # )
-                print("[{}_{}] finished experiment {}".format(NAME, RANK, i))
 
             except Exception as e:
                 raise
