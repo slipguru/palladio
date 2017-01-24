@@ -1,20 +1,23 @@
 # -*- coding: UTF-8 -*-
+"""Plotting functions for PALLADIO."""
 import os
-# import pandas as pd
+import pandas as pd
 import numpy as np
 import matplotlib
+
+from itertools import combinations, product
+from scipy import stats
+
 matplotlib.use('Agg')  # create plots from remote
 matplotlib.rcParams['pdf.fonttype'] = 42  # avoid bitmapped fonts in pdf
 matplotlib.rcParams['ps.fonttype'] = 42
 
+from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
-from matplotlib import cm
-
 import seaborn as sns
 
-from scipy import stats
 
 # Dictionary of nice colors
 colorsHex = {
@@ -448,3 +451,88 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
     ax.legend(legend_handles, legend_labels[:len(legend_handles)], loc='best')
 
     plt.savefig(os.path.join(base_folder, 'kcv_err_%s.pdf' % exp))
+
+
+def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
+                   base_folder=None):
+    """Plot error surfaces.
+
+    Parameters
+    ----------
+    param_grid : dict
+        Dictionary of grid parameters for GridSearch.
+    results : dict
+        Instance of an equivalent of cv_results_, as given by ModelAssessment
+        or GridSearchCV.
+    indep_var : array-like, optional, default None
+        List of independent variables on which plots are based. If more that 2,
+        a plot for each combination is made. If None, the 2 longest parameters
+        in param_grid are selected.
+    pivoting_var : array-like, optional, default None
+        List of pivoting variables. For each of them, a plot is made.
+        If unspecified, get the unspecified independent variable with the best
+        model values.
+    base_folder : str or None, optional, default None
+        Folder where to save the plots.
+    """
+    if indep_var is not None:
+        comb = combinations(
+            zip(indep_var, [param_grid[x] for x in indep_var]), 2)
+    else:
+        comb = [sorted(list(
+            param_grid.iteritems()), key=lambda item:len(item[1]))[-2:]]
+        if len(comb[0]) == 1:
+            import warnings
+            warnings.warn("Only one grid parameter, cannot create 3D plot")
+            return
+        indep_var = [comb[0][0][0], comb[0][1][0]]
+
+    if pivoting_var is None:
+        pivoting_var = list(set(param_grid.keys()).difference(set(indep_var)))
+
+        ordered_df = pd.DataFrame(results).sort_values(
+            'mean_test_score', ascending=False).iloc[0]
+        # use best model, one pivot
+        pivots = [tuple(ordered_df['param_' + x] for x in pivoting_var)]
+    else:
+        pivots = list(product(*[param_grid[x] for x in pivoting_var]))
+
+    pivot_names = list(product(*[[x] for x in pivoting_var])) * len(pivots)
+
+    for id_pivot, (pivot, value) in enumerate(zip(pivot_names, pivots)):
+        for id_param, (param1, param2) in enumerate(comb):
+            param_names = 'param_' + np.array(
+                [param1[0], param2[0]], dtype=object)
+
+            for s in ('train', 'test'):
+                xx = results[param_names[0]].data.astype(float)
+                yy = results[param_names[1]].data.astype(float)
+                zz = results['mean_%s_score' % s]
+
+                print np.unique(xx).size
+                param_grid_xx_size = np.unique(yy).size
+                param_grid_yy_size = np.unique(xx).size
+                X = xx.reshape(param_grid_xx_size, param_grid_yy_size)
+                Y = yy.reshape(param_grid_xx_size, param_grid_yy_size)
+                Z = zz.reshape(param_grid_xx_size, param_grid_yy_size)
+
+                # plt.close('all')
+                fig = plt.figure()
+                ax = fig.gca(projection='3d')
+
+                surf = ax.plot_surface(
+                    X, Y, Z, cmap=cm.coolwarm, rstride=1, cstride=1, lw=0,
+                    antialiased=False)
+
+                # Add a color bar which maps values to colors.
+                fig.colorbar(surf, shrink=0.5, aspect=5)
+                ax.set_title('average KCV error of %s experiments, %s = %s' % (
+                    s, pivot, value))
+                ax.set_ylabel(param_names[1][6:])
+                ax.set_xlabel(param_names[0][6:])
+                ax.set_zlabel("avg kcv err %s" % s)
+
+                if base_folder is not None:
+                    plt.savefig(os.path.join(
+                        base_folder, 'kcv_err_piv%d_comb%d_%s.pdf' % (
+                            id_pivot, id_param, s)))
