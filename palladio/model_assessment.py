@@ -41,6 +41,10 @@ try:
     NAME = MPI.Get_processor_name()
     IS_MPI_JOB = COMM.Get_size() > 1
 
+    comm = MPI.COMM_WORLD
+    comm_size = comm.Get_size()
+    comm_rank = comm.Get_rank()
+
 except ImportError:
     print("mpi4py module not found. PALLADIO cannot run on multiple machines.")
     COMM = None
@@ -58,11 +62,6 @@ MPI_MSG_TERMINATE = 0
 MPI_MSG_CV = 1
 MPI_MSG_TEST = 2
 MPI_TAG_TRAIN_TEST_DATA = 5
-
-comm = MPI.COMM_WORLD
-comm_size = comm.Get_size()
-comm_rank = comm.Get_rank()
-
 
 def _get_best_parameters(fold_results, param_names):
     """Get best setting of parameters from grid search.
