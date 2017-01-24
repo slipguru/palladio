@@ -539,8 +539,6 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             # fig.colorbar()
             ax.legend(legend_handles, legend_labels[:len(legend_handles)],
                       loc='best')
-            # Add a color bar which maps values to colors.
-            # fig.colorbar(surf, shrink=0.5, aspect=5)
             ax.set_title('average KCV score, pivot %s = %s' % (pivot, value))
             ax.set_ylabel(param_names[1][6:])
             ax.set_xlabel(param_names[0][6:])
