@@ -22,13 +22,15 @@ class ElasticNetClassifier(LinearClassifierMixin, ElasticNet):
                 "%s doesn't support multi-label classification" % (
                     self.__class__.__name__))
 
-        Y = column_or_1d(Y, warn=True)
+        # Y = column_or_1d(Y, warn=True)
         super(ElasticNetClassifier, self).fit(X, Y)
         if self.classes_.shape[0] > 2:
             ndim = self.classes_.shape[0]
         else:
             ndim = 1
         self.coef_ = self.coef_.reshape(ndim, -1)
+
+        return self
 
     @property
     def classes_(self):

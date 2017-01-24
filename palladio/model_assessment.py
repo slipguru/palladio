@@ -12,7 +12,7 @@ import numbers
 import pandas
 import os
 
-### Load pickle
+# ## Load pickle
 try:
     import cPickle as pkl
 except:
@@ -371,9 +371,6 @@ class ModelAssessment(BaseEstimator):
         self.cv_results_ = cv_results_
 
     def _fit_slave(self, X, y):
-        # slave = MPIGridSearchCVSlave(
-        #     self.estimator, self.scorer_, self.fit_params)
-        # slave.run()
         """Pipeline evaluation.
 
         Parameters
