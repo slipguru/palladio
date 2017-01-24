@@ -7,8 +7,12 @@ import argparse
 import numpy as np
 import pandas as pd
 import matplotlib; matplotlib.use('Agg')
-import cPickle as pkl
 import warnings
+
+try:
+    import cPickle as pkl
+except:
+    import pickle as pkl
 
 # from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 # from sklearn.metrics import matthews_corrcoef
@@ -62,7 +66,16 @@ def analyze_experiments(base_folder, config):
         config.dataset_options,
         is_analysis=True
     )
+
+    # ### FIN QUI
+
     features = np.array(dataset.load_dataset(base_folder)[2])
+
+    print("Features : {}".format(features))
+
+    return
+
+
 
     out = dict()
     for s in EXPS:
@@ -119,14 +132,33 @@ def analyze_experiments(base_folder, config):
 def main(base_folder):
     """Main for pd_analysis.py."""
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
+
+
+
     positive_label = config.dataset_options.get('positive_label', None)
     multiclass = config.dataset_options.get('multiclass', None)
-    param_names = list(config.param_grid.keys())
-    param_ranges = [config.param_grid[x] for x in param_names]
+
+
+    # print("PL = {}".format(positive_label))
+    # print("multiclass = {}".format(multiclass))
 
     threshold = int(config.N_jobs_regular * config.frequency_threshold)
 
-    out = analyze_experiments(base_folder, config, )
+    # TODO necessary?
+    param_names = list(config.param_grid.keys())
+    param_ranges = [config.param_grid[x] for x in param_names]
+
+    # ### FIN QUI
+
+    out = analyze_experiments(base_folder, config)
+
+    return
+
+
+
+
+
+
 
     # create a new folder for the analysis, called 'analysis'
     base_folder = os.path.join(base_folder, 'analysis')

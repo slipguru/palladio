@@ -1,3 +1,9 @@
+#########################################################################
+#########################################################################
+### DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED ###
+#########################################################################
+#########################################################################
+
 """Module to distribute jobs among machines."""
 
 import os
@@ -11,6 +17,7 @@ from palladio.wrappers import l1l2Classifier  # need to check type
 from palladio.wrappers import GridSearchCVClassifier
 from palladio.utils import set_module_defaults
 
+print("WARNING DEPRECATED MODULE core.py")
 
 def generate_job_list(n_regular, n_permutation):
     """Generate a vector used to distribute jobs among nodes.
