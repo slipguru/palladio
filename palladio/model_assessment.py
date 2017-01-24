@@ -7,15 +7,14 @@ for parallel computing.
 
 from __future__ import print_function
 import logging
-import numpy
+# import numpy
 import numbers
-import pandas
+# import pandas
 import os
 
-# ## Load pickle
 try:
     import cPickle as pkl
-except:
+except ImportError:  # python 3 compatibility
     import pickle as pkl
 
 from collections import Iterable
@@ -41,10 +40,6 @@ try:
     NAME = MPI.Get_processor_name()
     IS_MPI_JOB = COMM.Get_size() > 1
 
-    comm = MPI.COMM_WORLD
-    comm_size = comm.Get_size()
-    comm_rank = comm.Get_rank()
-
 except ImportError:
     print("mpi4py module not found. PALLADIO cannot run on multiple machines.")
     COMM = None
@@ -55,89 +50,6 @@ except ImportError:
 MAX_RESUBMISSIONS = 2
 DO_WORK = 100
 EXIT = 200
-
-MPI_TAG_RESULT = 3
-
-MPI_MSG_TERMINATE = 0
-MPI_MSG_CV = 1
-MPI_MSG_TEST = 2
-MPI_TAG_TRAIN_TEST_DATA = 5
-
-def _get_best_parameters(fold_results, param_names):
-    """Get best setting of parameters from grid search.
-
-    Parameters
-    ----------
-    fold_results : pandas.DataFrame
-        Contains performance measures as well as hyper-parameters
-        as columns. Must contain a column 'fold'.
-
-    param_names : list
-        Names of the hyper-parameters. Each name should be a column
-        in ``fold_results``.
-
-    Returns
-    -------
-    max_performance : pandas.Series
-        Maximum performance and its hyper-parameters
-    """
-    if pandas.isnull(fold_results.loc[:, 'score']).all():
-        raise ValueError("Results are all NaN")
-
-    # average across inner folds
-    grouped = fold_results.drop('fold', axis=1).groupby(param_names)
-    mean_performance = grouped.mean()
-    # highest average across performance measures
-    max_idx = mean_performance.loc[:, 'score'].idxmax()
-
-    # best parameters
-    max_performance = pandas.Series({'score':
-                                     mean_performance.loc[max_idx, 'score']})
-    if len(param_names) == 1:
-        key = param_names[0]
-        max_performance[key] = max_idx
-    else:
-        # index has multiple levels
-        for i, name in enumerate(mean_performance.index.names):
-            max_performance[name] = max_idx[i]
-
-    return max_performance
-
-
-def _fit_and_score_with_parameters(X, y, cv, best_parameters):
-    """Distribute work of non-nested cross-validation across slave nodes."""
-    # tell slaves testing phase is next
-    _task_desc = numpy.empty(2, dtype=int)
-    _task_desc[1] = MPI_MSG_TEST
-
-    comm.Bcast([_task_desc, MPI.INT], root=0)
-    comm.bcast((X, y), root=0)
-
-    # Compability with sklearn > 0.18 TODO
-    _splitted_cv = [(a, b) for a, b in cv.split(X)]
-
-    assert comm_size >= len(_splitted_cv)
-
-    for i, (train_index, test_index) in enumerate(_splitted_cv):
-        fold_id = i + 1
-        LOG.info("Testing fold %d", fold_id)
-
-        parameters = best_parameters.loc[fold_id, :].to_dict()
-        work_item = (fold_id, train_index, test_index, parameters)
-
-        comm.send(work_item, dest=fold_id, tag=MPI_TAG_TRAIN_TEST_DATA)
-
-    scores = {}
-    for i in range(len(_splitted_cv)):
-        fold_id, test_result = comm.recv(source=MPI.ANY_SOURCE,
-                                         tag=MPI_TAG_RESULT)
-        scores[fold_id] = test_result
-
-    # Tell all nodes to terminate
-    for i in range(len(_splitted_cv), comm_size):
-        comm.send((0, None), dest=i, tag=MPI_TAG_TRAIN_TEST_DATA)
-
-    return pandas.Series(scores)
 
 
 def _check_cv(cv=3, y=None, classifier=False, **kwargs):
@@ -301,7 +213,6 @@ class ModelAssessment(BaseEstimator):
         self.cv_results_ = cv_results_
 
     def _fit_master(self, X, y):
-        nprocs = COMM.Get_size()
         cv = _check_cv(
             self.cv, y, classifier=is_classifier(self.estimator),
             n_splits=self.n_splits, test_size=self.test_size,
@@ -314,6 +225,7 @@ class ModelAssessment(BaseEstimator):
             return
 
         count = 0
+        nprocs = COMM.Get_size()
         queue = deque(job_list)
         n_pipes = len(queue)
         cv_results_ = {}
@@ -477,7 +389,7 @@ class ModelAssessment(BaseEstimator):
 
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
-        if comm_rank == 0:
+        if RANK == 0:
             self._fit_master(X, y)
         else:
             self._fit_slave(X, y)
