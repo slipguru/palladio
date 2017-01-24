@@ -234,27 +234,37 @@ def main(config_path):
         pass
         # slave(data, labels, config, experiments_folder_path)
 
+    # HERE ALL STUFF
 
-    ####### HERE ALL STUFF
+    # Prepare estimator for internal loops (GridSearchCV)
 
-    ### Prepare estimator for internal loops (GridSearchCV)
-
-    ### The internal estimator (e.g. Elastic Net Classifier)
+    # The internal estimator (e.g. Elastic Net Classifier)
     internal_estimator = config.learner(**config.learner_options)
 
-    ### Grid search estimator
+    # Grid search estimator
     internal_gridsearch = GridSearchCV(internal_estimator, **config.cv_options)
 
-
-
-    ### Perform "regular" experiments
-    external_estimator = ModelAssessment(internal_gridsearch, scoring = config.final_scoring, shuffle_y=False, test_size=0.25, train_size=None, experiments_folder = experiments_folder_path)
+    # Perform "regular" experiments
+    external_estimator = ModelAssessment(
+        internal_gridsearch,
+        scoring=config.final_scoring,
+        shuffle_y=False,
+        n_splits=config.N_jobs_regular,
+        test_size=0.25,
+        train_size=None,
+        experiments_folder=experiments_folder_path)
     external_estimator.fit(data, labels)
 
-    ### Perform "permutation" experiments
-    external_estimator = ModelAssessment(internal_gridsearch, scoring = config.final_scoring, shuffle_y=True, test_size=0.25, train_size=None, experiments_folder = experiments_folder_path)
+    # Perform "permutation" experiments
+    external_estimator = ModelAssessment(
+        internal_gridsearch,
+        scoring=config.final_scoring,
+        shuffle_y=True,
+        n_splits=config.N_jobs_permutation,
+        test_size=0.25,
+        train_size=None,
+        experiments_folder=experiments_folder_path)
     external_estimator.fit(data, labels)
-
 
     if IS_MPI_JOB:
         # Wait for all jobs to end

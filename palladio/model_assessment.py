@@ -424,6 +424,11 @@ class ModelAssessment(BaseEstimator):
                     ytr = _shuffle(ytr, self.groups, random_state)
                 estimator.fit(Xtr, ytr)
 
+                yts_pred = estimator.predict(Xts)
+                ytr_pred = estimator.predict(Xtr)
+                lr_score = estimator.score(Xtr, ytr)
+                ts_score = estimator.score(Xts, yts)
+
                 # ### Dump partial results
                 if self.experiments_folder is not None:
                     if self.shuffle_y:
@@ -431,14 +436,19 @@ class ModelAssessment(BaseEstimator):
                     else:
                         pkl_name = 'regular_{}.pkl'.format(i)
 
+                    partial_result = dict()
+                    partial_result['estimator'] = estimator
+                    partial_result['ytr_pred'] = ytr_pred
+                    partial_result['yts_pred'] = yts_pred
+                    partial_result['train_index'] = train_index
+                    partial_result['test_index'] = test_index
+
+
                     with open(os.path.join(
                             self.experiments_folder, pkl_name), 'wb') as ff:
-                        pkl.dump(estimator, ff)
+                        pkl.dump(partial_result, ff)
 
-                yts_pred = estimator.predict(Xts)
-                ytr_pred = estimator.predict(Xtr)
-                lr_score = estimator.score(Xtr, ytr)
-                ts_score = estimator.score(Xts, yts)
+
 
                 if hasattr(estimator, 'cv_results_'):
                     # In case in which the estimator is a CV object

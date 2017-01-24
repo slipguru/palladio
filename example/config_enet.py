@@ -49,11 +49,11 @@ dataset_options = {
 result_path = 'palladio_test_golub'
 
 # The number of "regular" experiment
-N_jobs_regular = 20
+N_jobs_regular = 100
 
 # The number of instances for the permutation tests
 # (labels in the training sets are randomly shuffled)
-N_jobs_permutation = 20
+N_jobs_permutation = 100
 
 # The ratio of the dataset held out for model assessment
 # It should be of the form 1/M
@@ -75,7 +75,7 @@ learner_options = {
 
 # ~~ Elastic-Net Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 param_grid = {
-    'l1_ratio': np.logspace(0.5, 0, 5),
+    'l1_ratio': np.logspace(-5, 0, 5),
     'alpha': np.logspace(-1, 0, 5)
 }
 

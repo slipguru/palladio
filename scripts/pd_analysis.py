@@ -48,6 +48,16 @@ def single_analysis(exp_folder, is_multiclass=False):
     analysis['kcv_err_tr'] = result['kcv_err_tr']
     return analysis
 
+def get_selected_list(estimator):
+    """
+
+    Returns
+    -------
+    index : nunmpy.array
+        The indices of the selected features
+    """
+
+    return np.nonzero(estimator.best_estimator_.coef_.flatten())[0]
 
 def analyze_experiments(base_folder, config):
     """Perform a preliminar analysis on all experiments.
@@ -59,6 +69,12 @@ def analyze_experiments(base_folder, config):
     ----------
     base_folder : string
         Folder containing ALL experiments (regular and permutations).
+
+    Returns
+    -------
+    out : dict
+        Collection of results for all experiments: balanced accuracy,
+        feature frequencies etc.
     """
     # Local imports, in order to select backend on startup
     dataset = config.dataset_class(
@@ -67,64 +83,126 @@ def analyze_experiments(base_folder, config):
         is_analysis=True
     )
 
-    # ### FIN QUI
+    data, labels, feature_names = dataset.load_dataset(base_folder)
 
-    features = np.array(dataset.load_dataset(base_folder)[2])
-
-    print("Features : {}".format(features))
-
-    return
-
-
+    # features = np.array(dataset.load_dataset(base_folder)[2])
+    # print("Features : {}".format(features))
 
     out = dict()
     for s in EXPS:
-        out['selected_%s' % s] = dict(zip(features, np.zeros(len(features))))
-        out['kcv_err_%s' % s] = {'tr': list(), 'ts': list()}
+        # Create the dictionary for feature frequencies
+        out['selected_%s' % s] = dict(zip(feature_names, np.zeros(len(feature_names))))
+
+        # out['kcv_err_%s' % s] = {'tr': list(), 'ts': list()}
 
     experiments_folder = os.path.join(base_folder, 'experiments')
-    for exp_folder in os.listdir(experiments_folder):
-        exp_folder = os.path.join(experiments_folder, exp_folder)
-        if os.path.isdir(exp_folder):
-            filename = exp_folder.split('/')[-1]
-            if not filename.startswith(EXPS[0]) and \
-                    not filename.startswith(EXPS[1]):
-                print('error')
-                continue
 
-            analysis_result = single_analysis(exp_folder, dataset.multiclass)
+    for exp_pkl in os.listdir(experiments_folder):
 
-            selected_probesets = features[analysis_result['selected_list']]
-            is_regular = filename.startswith(EXPS[0])
-            type_experiment = EXPS[0] if is_regular else EXPS[1]
-            for p in selected_probesets.flatten():
-                out['selected_%s' % type_experiment][p] += 1
+        # ### Determine whether it's a regular or a permutation experiment
+        type_experiment = None
 
-            out['kcv_err_%s' % type_experiment]['tr'].append(
-                analysis_result['kcv_err_tr'])
-            out['kcv_err_%s' % type_experiment]['ts'].append(
-                analysis_result['kcv_err_ts'])
+        for te in EXPS:
+            if exp_pkl.startswith(te):
+                type_experiment = te
 
-            out.setdefault('F1_%s' % type_experiment, []).append(
-                analysis_result['F1'])
-            out.setdefault('acc_%s' % type_experiment, []).append(
-                analysis_result['accuracy'])
-            out.setdefault('balanced_acc_%s' % type_experiment, []).append(
-                analysis_result['balanced_accuracy'])
-            out.setdefault('MCC_%s' % type_experiment, []).append(
-                analysis_result['MCC'])
-            out.setdefault('precision_%s' % type_experiment, []).append(
-                analysis_result['precision'])
-            out.setdefault('recall_%s' % type_experiment, []).append(
-                analysis_result['recall'])
+        # print(type_experiment)
+
+        if type_experiment is None:
+            print('error')
+            continue
+
+        with open(os.path.join(experiments_folder, exp_pkl), 'rb') as f:
+            exp_result = pkl.load(f)
+
+        # print(type(exp_result))
+
+        # print(type(exp_result.cv_results_.keys()))
+        # print(exp_result['estimator'].cv_results_.keys())
+
+        yts_pred = exp_result['yts_pred']
+        ytr_pred = exp_result['ytr_pred']
+
+        # ### Load actual labels for the test set
+        yts = labels[exp_result['test_index']]
+
+        out.setdefault('balanced_acc_%s' % type_experiment, []).append(
+            balanced_accuracy(yts, yts_pred))
+
+        selected_list = get_selected_list(exp_result['estimator'])
+
+        selected_probesets = feature_names[selected_list]
+        is_regular = (type_experiment == EXPS[0])
+
+        for p in selected_probesets.flatten():
+            out['selected_%s' % type_experiment][p] += 1
+
+        # print(len(exp_result['yts_pred']))
+        # print(len(exp_result['ytr_pred']))
+        # print(len(labels))
+
+        # print(exp_result['estimator'].best_estimator_.coef_.flatten())
+
+        # print(np.argwhere(exp_result['estimator'].best_estimator_.coef_))
+        # print(np.nonzero(exp_result['estimator'].best_estimator_.coef_.flatten())[0])
+
+        # return
+
+    # print(out)
+
+    # return
+
+
+
+
+
+
+    # for exp_folder in os.listdir(experiments_folder):
+    #     exp_folder = os.path.join(experiments_folder, exp_folder)
+    #     if os.path.isdir(exp_folder):
+    #         filename = exp_folder.split('/')[-1]
+    #         if not filename.startswith(EXPS[0]) and \
+    #                 not filename.startswith(EXPS[1]):
+    #             print('error')
+    #             continue
+    #
+    #         analysis_result = single_analysis(exp_folder, dataset.multiclass)
+    #
+    #         selected_probesets = features[analysis_result['selected_list']]
+    #         is_regular = filename.startswith(EXPS[0])
+    #         type_experiment = EXPS[0] if is_regular else EXPS[1]
+    #         for p in selected_probesets.flatten():
+    #             out['selected_%s' % type_experiment][p] += 1
+    #
+    #         out['kcv_err_%s' % type_experiment]['tr'].append(
+    #             analysis_result['kcv_err_tr'])
+    #         out['kcv_err_%s' % type_experiment]['ts'].append(
+    #             analysis_result['kcv_err_ts'])
+    #
+    #         out.setdefault('F1_%s' % type_experiment, []).append(
+    #             analysis_result['F1'])
+    #         out.setdefault('acc_%s' % type_experiment, []).append(
+    #             analysis_result['accuracy'])
+    #         out.setdefault('balanced_acc_%s' % type_experiment, []).append(
+    #             analysis_result['balanced_accuracy'])
+    #         out.setdefault('MCC_%s' % type_experiment, []).append(
+    #             analysis_result['MCC'])
+    #         out.setdefault('precision_%s' % type_experiment, []).append(
+    #             analysis_result['precision'])
+    #         out.setdefault('recall_%s' % type_experiment, []).append(
+    #             analysis_result['recall'])
 
     for s in EXPS:
-        out['F1_%s' % s] = np.array(out['F1_%s' % s])
-        out['acc_%s' % s] = np.array(out['acc_%s' % s])
+        # out['F1_%s' % s] = np.array(out['F1_%s' % s])
+        # out['acc_%s' % s] = np.array(out['acc_%s' % s])
         out['balanced_acc_%s' % s] = np.array(out['balanced_acc_%s' % s])
-        out['MCC_%s' % s] = np.array(out['MCC_%s' % s])
-        out['precision_%s' % s] = np.array(out['precision_%s' % s])
-        out['recall_%s' % s] = np.array(out['recall_%s' % s])
+        # out['MCC_%s' % s] = np.array(out['MCC_%s' % s])
+        # out['precision_%s' % s] = np.array(out['precision_%s' % s])
+        # out['recall_%s' % s] = np.array(out['recall_%s' % s])
+
+    # print(out)
+
+    # ### FIN QUI
 
     return out
 
@@ -148,32 +226,32 @@ def main(base_folder):
     param_names = list(config.param_grid.keys())
     param_ranges = [config.param_grid[x] for x in param_names]
 
-    # ### FIN QUI
 
     out = analyze_experiments(base_folder, config)
-
-    return
-
-
-
-
-
-
 
     # create a new folder for the analysis, called 'analysis'
     base_folder = os.path.join(base_folder, 'analysis')
     if not os.path.exists(base_folder):
         os.makedirs(base_folder)
 
+
     # firstly, if exists, copy there the report.txt
     shutil.copy(
         os.path.abspath(os.path.join(base_folder, os.pardir, 'report.txt')),
         base_folder)
 
+
+
+
+
     # Manually sorting stuff
     for s in EXPS:
         out['sorted_keys_%s' % s] = sorted(
             out['selected_%s' % s], key=out['selected_%s' % s].__getitem__)
+
+
+
+
 
     selected_todf = [out['selected_regular'][k] for k in out['sorted_keys_regular']]
     # Dump the selected features in a pkl as pandas DataFrame
@@ -183,6 +261,8 @@ def main(base_folder):
     df_selected.sort_values(['Selection frequency'], ascending=False,
                             inplace=True)
     df_selected.to_pickle(os.path.join(base_folder, 'signature_regular.pkl'))
+
+    # ### FIN QUI
 
     for s in EXPS:
         with open(os.path.join(base_folder, 'signature_%s.txt' % s), 'w') as f:
@@ -194,23 +274,33 @@ def main(base_folder):
                     f.write("\n")
                 f.write("{} : {}\n".format(k, out['selected_%s' % s][k]))
 
-    # Plotting section
-    plotting.distributions(out['acc_regular'], out['acc_permutation'],
-                           base_folder, 'Accuracy', first_run=True)
+
+
+    # ### Plotting section
+
+    # ### Accuracy
+    # plotting.distributions(out['acc_regular'], out['acc_permutation'],
+                        #    base_folder, 'Accuracy', first_run=True)
+
+    # ### Balanced Accuracy
     plotting.distributions(
         out['balanced_acc_regular'], out['balanced_acc_permutation'],
         base_folder, 'Balanced Accuracy')
-    plotting.distributions(out['MCC_regular'], out['MCC_permutation'],
-                           base_folder, 'MCC')
-    if positive_label is not None and not multiclass:
-        plotting.distributions(out['precision_regular'],
-                               out['precision_permutation'],
-                               base_folder, 'Precision')
-        plotting.distributions(
-            out['recall_regular'], out['recall_permutation'], base_folder,
-            'Recall')
-        plotting.distributions(out['F1_regular'], out['F1_permutation'],
-                               base_folder, 'F1')
+
+    # ### TODO Check
+    # plotting.distributions(out['MCC_regular'], out['MCC_permutation'],
+    #                        base_folder, 'MCC')
+
+    # ### TODO Check
+    # if positive_label is not None and not multiclass:
+    #     plotting.distributions(out['precision_regular'],
+    #                            out['precision_permutation'],
+    #                            base_folder, 'Precision')
+    #     plotting.distributions(
+    #         out['recall_regular'], out['recall_permutation'], base_folder,
+    #         'Recall')
+    #     plotting.distributions(out['F1_regular'], out['F1_permutation'],
+    #                            base_folder, 'F1')
 
     plotting.feature_frequencies(
         out['sorted_keys_regular'], out['selected_regular'], base_folder,
@@ -225,14 +315,18 @@ def main(base_folder):
         out['selected_regular'], out['selected_permutation'],
         config.N_jobs_regular, config.N_jobs_permutation, base_folder,
         threshold=threshold)
-    if len(param_ranges) != 2:
-        warnings.warn("Length of param_ranges is not 2. "
-                      "Cannot produce surfaces")
-    else:
-        for s in EXPS:
-            plotting.kcv_err_surfaces(
-                out['kcv_err_%s' % s], s, base_folder, param_ranges,
-                param_names)
+
+    return
+
+    # ### TODO Check
+    # if len(param_ranges) != 2:
+    #     warnings.warn("Length of param_ranges is not 2. "
+    #                   "Cannot produce surfaces")
+    # else:
+    #     for s in EXPS:
+    #         plotting.kcv_err_surfaces(
+    #             out['kcv_err_%s' % s], s, base_folder, param_ranges,
+    #             param_names)
 
 
 def parse_args():
