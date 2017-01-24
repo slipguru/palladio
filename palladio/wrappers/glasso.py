@@ -1,4 +1,7 @@
-"""Wrapper for Group Lasso."""
+"""Wrapper for Group Lasso.
+
+.. deprecated:: 0.5
+"""
 import numpy as np
 
 from sklearn.metrics import accuracy_score

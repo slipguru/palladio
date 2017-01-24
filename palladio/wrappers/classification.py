@@ -1,4 +1,7 @@
-"""Abstract method for classification wrappers."""
+"""Abstract method for classification wrappers.
+
+.. deprecated:: 0.5
+"""
 from sklearn.metrics import accuracy_score
 
 

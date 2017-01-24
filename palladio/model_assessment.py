@@ -12,7 +12,7 @@ import numbers
 import pandas
 import os
 
-### Load pickle
+# ## Load pickle
 try:
     import cPickle as pkl
 except:
@@ -30,7 +30,7 @@ from sklearn.utils import check_X_y, check_random_state
 from sklearn.utils.multiclass import type_of_target
 from collections import deque
 
-__all__ = ('ModelAssessment')
+__all__ = ('ModelAssessment',)
 
 LOG = logging.getLogger(__package__)
 
@@ -273,7 +273,7 @@ class ModelAssessment(BaseEstimator):
     def __init__(self, estimator, cv=None, scoring=None, fit_params=None,
                  multi_output=False, shuffle_y=False,
                  n_splits=10, test_size=0.1, train_size=None,
-                 random_state=None, groups=None, experiments_folder = None):
+                 random_state=None, groups=None, experiments_folder=None):
         self.estimator = estimator
         self.scoring = scoring
         self.fit_params = fit_params
@@ -295,7 +295,7 @@ class ModelAssessment(BaseEstimator):
             LOG.info("Training fold %d", i + 1)
 
             _, lr_score, ts_score, cv_results = self._worker(
-                i, X, y, train_index, test_index, experiments_folder, is_permutation)
+                i, X, y, train_index, test_index)
 
             _build_cv_results(cv_results_, i, lr_score, ts_score, cv_results)
 
@@ -371,9 +371,6 @@ class ModelAssessment(BaseEstimator):
         self.cv_results_ = cv_results_
 
     def _fit_slave(self, X, y):
-        # slave = MPIGridSearchCVSlave(
-        #     self.estimator, self.scorer_, self.fit_params)
-        # slave.run()
         """Pipeline evaluation.
 
         Parameters

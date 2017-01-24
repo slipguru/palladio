@@ -1,11 +1,8 @@
-#########################################################################
-#########################################################################
-### DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED ###
-#########################################################################
-#########################################################################
-
 # -*- coding: UTF-8 -*-
-"""Feature selection and classification by linear two steps model."""
+"""Feature selection and classification by linear two steps model.
+
+.. deprecated:: 0.5
+"""
 import numpy as np
 
 from sklearn.linear_model import ElasticNet
