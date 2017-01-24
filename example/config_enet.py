@@ -2,7 +2,7 @@
 # version: 2.0
 
 import numpy as np
-from palladio.wrappers.pipeline import ElasticNetClassifier
+from palladio.wrappers import ElasticNetClassifier
 
 # from palladio.datasets import DatasetCSV as dataset_class
 from palladio.datasets import DatasetNPY as dataset_class
