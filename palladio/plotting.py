@@ -435,7 +435,7 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
             XX, YY, ZZ.T,
             rstride=1, cstride=1, linewidth=0, antialiased=False, cmap=c)
 
-        legend_handles.append(Rectangle((0, 0), 1, 1, fc=fc[k]))  # proxy handle
+        legend_handles.append(Rectangle((0, 0), 1, 1, fc=fc[k]))
 
     # plot minimum
     ZZ = avg_err['ts'].reshape(xx.shape[0], yy.shape[0])
@@ -504,12 +504,19 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             param_names = 'param_' + np.array(
                 [param1[0], param2[0]], dtype=object)
 
-            for s in ('train', 'test'):
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            legend_handles = []
+            legend_labels = ['Test Error', 'Train Error']
+
+            for s, h, c in zip(
+                    ('train', 'test'),
+                    (colorsHex['lightBlue'], colorsHex['lightOrange']),
+                    (cm.Oranges, cm.Blues)):
                 xx = results[param_names[0]].data.astype(float)
                 yy = results[param_names[1]].data.astype(float)
                 zz = results['mean_%s_score' % s]
 
-                print np.unique(xx).size
                 param_grid_xx_size = np.unique(yy).size
                 param_grid_yy_size = np.unique(xx).size
                 X = xx.reshape(param_grid_xx_size, param_grid_yy_size)
@@ -517,22 +524,29 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                 Z = zz.reshape(param_grid_xx_size, param_grid_yy_size)
 
                 # plt.close('all')
-                fig = plt.figure()
-                ax = fig.gca(projection='3d')
 
-                surf = ax.plot_surface(
-                    X, Y, Z, cmap=cm.coolwarm, rstride=1, cstride=1, lw=0,
+                ax.plot_surface(
+                    X, Y, Z, cmap=c, rstride=1, cstride=1, lw=0,
                     antialiased=False)
 
-                # Add a color bar which maps values to colors.
-                fig.colorbar(surf, shrink=0.5, aspect=5)
-                ax.set_title('average KCV error of %s experiments, %s = %s' % (
-                    s, pivot, value))
-                ax.set_ylabel(param_names[1][6:])
-                ax.set_xlabel(param_names[0][6:])
-                ax.set_zlabel("avg kcv err %s" % s)
+                legend_handles.append(Rectangle((0, 0), 1, 1, fc=h))
 
-                if base_folder is not None:
-                    plt.savefig(os.path.join(
-                        base_folder, 'kcv_err_piv%d_comb%d_%s.pdf' % (
-                            id_pivot, id_param, s)))
+            # plot max
+            pos_max = np.where(Z == np.max(Z))
+            ax.plot(xx[pos_max[0]], yy[pos_max[1]], Z[pos_max],
+                    'o', c=colorsHex['darkBlue'])
+
+            # fig.colorbar()
+            ax.legend(legend_handles, legend_labels[:len(legend_handles)],
+                      loc='best')
+            # Add a color bar which maps values to colors.
+            # fig.colorbar(surf, shrink=0.5, aspect=5)
+            ax.set_title('average KCV score, pivot %s = %s' % (pivot, value))
+            ax.set_ylabel(param_names[1][6:])
+            ax.set_xlabel(param_names[0][6:])
+            ax.set_zlabel("avg kcv score")
+
+            if base_folder is not None:
+                plt.savefig(os.path.join(
+                    base_folder, 'kcv_score_piv%d_comb%d.pdf' % (
+                        id_pivot, id_param)))
