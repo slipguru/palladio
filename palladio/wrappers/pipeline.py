@@ -23,13 +23,10 @@ def predict(self, *args, **kwargs):
     return np.sign(y_pred)
 
 
-#########################################################################
-#########################################################################
-### DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED ###
-#########################################################################
-#########################################################################
 def make_classifier(estimator, params=None):
     """Make a classifier for a possible regressor.
+
+    .. deprecated:: 0.5
 
     Parameters
     ----------
@@ -52,48 +49,11 @@ def make_classifier(estimator, params=None):
     return type('GenericClassifier', (estimator,), params)()
 
 
-class ElasticNetClassifier(LinearClassifierMixin, ElasticNet):
-    """Class to extend elastic-net in case of classification.
-
-    In case in which n_jobs != 1 for GridSearchCV, the estimator class must be
-    pickable, therefore statically defined.
-    """
-
-    def fit(self, X, y, check_input=True):
-        self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        Y = self._label_binarizer.fit_transform(y)
-        if not self._label_binarizer.y_type_.startswith('multilabel'):
-            y = column_or_1d(y, warn=True)
-        else:
-            # we don't (yet) support multi-label classification in ENet
-            raise ValueError(
-                "%s doesn't support multi-label classification" % (
-                    self.__class__.__name__))
-        super(ElasticNetClassifier, self).fit(X, Y)
-        if self.classes_.shape[0] > 2:
-            ndim = self.classes_.shape[0]
-        else:
-            ndim = 1
-        self.coef_ = self.coef_.reshape(ndim, -1)
-
-    @property
-    def classes_(self):
-        return self._label_binarizer.classes_
-
-    # def predict(self, *args, **kwargs):
-    #     """Predict method for classifiers.
-    #
-    #     It must be defined outside a function to be pickable.
-    #     """
-    #     y_pred = super(type(self), self).predict(*args, **kwargs)
-    #     return np.sign(y_pred)
-
-    # def score(self, X, y, sample_weight=None):
-    #     return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
-
-
 class GridSearchCVClassifier(GridSearchCV, Classification):
-    """General pipeline for sklearn-classifiers."""
+    """General pipeline for sklearn-classifiers.
+
+    .. deprecated:: 0.5
+    """
 
     def __init__(self, learner, learner_options=None,
                  cv_options=None,
