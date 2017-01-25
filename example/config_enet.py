@@ -4,8 +4,8 @@
 import numpy as np
 from palladio.wrappers import ElasticNetClassifier
 
-# from palladio.datasets import DatasetCSV as dataset_class
-from palladio.datasets import DatasetNPY as dataset_class
+from palladio.datasets import DatasetCSV as dataset_class
+# from palladio.datasets import DatasetNPY as dataset_class
 
 #####################
 #   DATASET PATHS ###
@@ -14,33 +14,33 @@ from palladio.datasets import DatasetNPY as dataset_class
 # * All the path are w.r.t. config file path
 
 # The list of all files required for the experiments
-# dataset_files = {
-#     'data': 'data/gedm.csv',
-#     'labels': 'data/labels.csv'
-# }
-#
-# dataset_options = {
-#     'positive_label': None,  # Indicates the positive class in case of 2-class task
-#     'samples_on': 'col',  # or 'row': samples on cols or rows
-#     # 'data_preprocessing' : None,
-#
-#     # other options for pandas.read_csv
-#     'delimiter': ',',
-#     'header': 0,
-#     'index_col': 0
-# }
-
-# The list of all files required for the experiments
 dataset_files = {
-    'data': 'data/iris_data.npy',
-    'labels': 'data/iris_labels.npy',
-    'indcol': 'data/iris_indcols.pkl'
+    'data': 'data/gedm.csv',
+    'labels': 'data/labels.csv'
 }
 
 dataset_options = {
-    'samples_on': 'row',  # or 'row': samples on cols or rows
-    'positive_label': 1,  # positive class in case of 2-class task
+    'positive_label': 'ALL',  # Indicates the positive class in case of 2-class task
+    'samples_on': 'col',  # or 'row': samples on cols or rows
+    # 'data_preprocessing' : None,
+
+    # other options for pandas.read_csv
+    'delimiter': ',',
+    'header': 0,
+    'index_col': 0
 }
+
+# # The list of all files required for the experiments
+# dataset_files = {
+#     'data': 'data/iris_data.npy',
+#     'labels': 'data/iris_labels.npy',
+#     'indcol': 'data/iris_indcols.pkl'
+# }
+#
+# dataset_options = {
+#     'samples_on': 'row',  # or 'row': samples on cols or rows
+#     'positive_label': 1,  # positive class in case of 2-class task
+# }
 
 #######################
 #   SESSION OPTIONS ###
@@ -75,8 +75,10 @@ learner_options = {
 
 # ~~ Elastic-Net Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 param_grid = {
-    'l1_ratio': np.logspace(-5, 0, 5),
-    'alpha': np.logspace(-1, 0, 5)
+    # 'l1_ratio': np.logspace(-, 0, 5),
+    'l1_ratio': np.linspace(0.2, 1, 5),
+    # 'alpha': np.logspace(-1, 4, 5)
+    'alpha': np.logspace(3, 7, 5)
 }
 
 # ~~ Data filtering/normalization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
