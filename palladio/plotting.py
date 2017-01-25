@@ -454,7 +454,7 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
 
 
 def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
-                   base_folder=None):
+                   base_folder=None, logspace=False):
     """Plot error surfaces.
 
     Parameters
@@ -474,6 +474,12 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
     base_folder : str or None, optional, default None
         Folder where to save the plots.
     """
+    def multicond(*args):
+        cond = args[0]
+        for arg in args[1:]:
+            cond = np.logical_and(cond, arg)
+        return cond
+
     if indep_var is not None:
         comb = combinations(
             zip(indep_var, [param_grid[x] for x in indep_var]), 2)
@@ -512,8 +518,19 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             dff = pd.DataFrame(results['cv_results_'])
 
             # get parameter grid from the first row, since they should be equal
-            xx = dff.iloc[0][param_names[0]].data.astype(float)
-            yy = dff.iloc[0][param_names[1]].data.astype(float)
+            # but pivoting
+            if len(pivot) == 0:
+                # no pivoting
+                cond = np.ones(
+                    dff.iloc[0][param_names[0]].data.size, dtype=bool)
+            else:
+                cond = multicond(*[dff.iloc[0]['param_' + p].data == v
+                                   for p, v in zip(pivot, value)])
+            xx = dff.iloc[0][param_names[0]][cond].data.astype(float)
+            yy = dff.iloc[0][param_names[1]][cond].data.astype(float)
+            # if logspace:
+            #     xx = np.log10(xx)
+            #     yy = np.log10(yy)
             param_grid_xx_size = np.unique(yy).size
             param_grid_yy_size = np.unique(xx).size
             X = xx.reshape(param_grid_xx_size, param_grid_yy_size)
@@ -524,8 +541,8 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                     (cm.Oranges, cm.Blues)):
 
                 # The score is the mean of each external split
-                zz = np.mean(np.vstack(dff['mean_%s_score' % s].tolist()),
-                             axis=0)
+                zz = np.mean(np.vstack(
+                    dff['mean_%s_score' % s].tolist()), axis=0)[cond]
                 Z = zz.reshape(param_grid_xx_size, param_grid_yy_size)
 
                 # plt.close('all')
@@ -537,18 +554,21 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
 
             # plot max
             pos_max = np.where(Z == np.max(Z))
-            ax.plot(xx[pos_max[0]], yy[pos_max[1]], Z[pos_max],
-                    'o', c=colorsHex['darkBlue'])
+            ax.plot(X[pos_max], Y[pos_max], Z[pos_max], 'o',
+                    c=colorsHex['darkRed'])
 
             # fig.colorbar()
             ax.legend(legend_handles, legend_labels[:len(legend_handles)],
                       loc='best')
             ax.set_title('average KCV score, pivot %s = %s' % (pivot, value))
-            ax.set_ylabel(param_names[1][6:])
-            ax.set_xlabel(param_names[0][6:])
+            log10 = (r'$log_{10}$ ' if logspace else '')
+            ax.set_xlabel(log10 + param_names[0][6:])
+            ax.set_ylabel(log10 + param_names[1][6:])
             ax.set_zlabel("avg kcv score")
 
             if base_folder is not None:
                 plt.savefig(os.path.join(
                     base_folder, 'kcv_score_piv%d_comb%d.pdf' % (
                         id_pivot, id_param)))
+            else:
+                plt.show()
