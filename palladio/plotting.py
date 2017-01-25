@@ -454,7 +454,7 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
 
 
 def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
-                   base_folder=None, logspace=False):
+                   base_folder=None, logspace=None):
     """Plot error surfaces.
 
     Parameters
@@ -473,6 +473,8 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
         model values.
     base_folder : str or None, optional, default None
         Folder where to save the plots.
+    logspace : array-like or None, optional, default None
+        List to specify which variable to visualise in logspace.
     """
     def multicond(*args):
         cond = args[0]
@@ -528,9 +530,14 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                                    for p, v in zip(pivot, value)])
             xx = dff.iloc[0][param_names[0]][cond].data.astype(float)
             yy = dff.iloc[0][param_names[1]][cond].data.astype(float)
-            # if logspace:
-            #     xx = np.log10(xx)
-            #     yy = np.log10(yy)
+            log10_x, log10_y = '', ''
+            if logspace is not None:
+                if param1[0] in logspace:
+                    xx = np.log10(xx)
+                    log10_x = r'$log_{10}$ '
+                if param2[0] in logspace:
+                    yy = np.log10(yy)
+                    log10_y = r'$log_{10}$ '
             param_grid_xx_size = np.unique(yy).size
             param_grid_yy_size = np.unique(xx).size
             X = xx.reshape(param_grid_xx_size, param_grid_yy_size)
@@ -561,9 +568,8 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             ax.legend(legend_handles, legend_labels[:len(legend_handles)],
                       loc='best')
             ax.set_title('average KCV score, pivot %s = %s' % (pivot, value))
-            log10 = (r'$log_{10}$ ' if logspace else '')
-            ax.set_xlabel(log10 + param_names[0][6:])
-            ax.set_ylabel(log10 + param_names[1][6:])
+            ax.set_xlabel(log10_x + param_names[0][6:])
+            ax.set_ylabel(log10_y + param_names[1][6:])
             ax.set_zlabel("avg kcv score")
 
             if base_folder is not None:
