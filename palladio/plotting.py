@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib
+import warnings
 
 from itertools import combinations, product
 from scipy import stats
@@ -51,7 +52,7 @@ colorsHex = {
 }
 
 
-def distributions(v_regular, v_permutation, base_folder, metric,
+def distributions(v_regular, v_permutation, base_folder='', metric='nd',
                   first_run=False):
     """Create a plot of the distributions of performance metrics.
 
@@ -59,27 +60,26 @@ def distributions(v_regular, v_permutation, base_folder, metric,
 
     Parameters
     ----------
-    v_regular : numpy.array
-        The metric values for all regular experiments
+    v_{regular, permutation}, : numpy.array
+        The metric values for all {regular, permutation} experiments.
 
-    v_permutation : numpy.array
-        The metric values for permutation tests
+    base_folder : str, optional, default ''
+        The folder where the plot and summary will be saved.
 
-    base_folder : string
-        The folder where the plot will be saved
+    metric : str, optional, default 'nd'
+        Metric used to evaluate v_regular and v_permutation.
+        Usually this should be one of ['Accuracy', 'Balanced Accuracy',
+        'MCC', 'Precision', 'Recall', 'F1'].
+        It is going to be used to set the title and the xlabel.
 
-    metric : string
-        The object metric, this should be in ['Accuracy', 'Balanced Accuracy',
-        'MCC', 'Precision', 'Recall', 'F1']. It is going to be used to set the
-        title and the xlabel.
-
-    first_run : boolean, optional, default False
+    first_run : bool, optional, default False
         If not first_run, append the logs to a single file. Otherwise append
         logs to a cleared file.
     """
     if np.any(np.equal(v_regular, None)) or \
             np.any(np.equal(v_permutation, None)):
-        print("Cannot create {} plot due to some nan values".format(metric))
+        warnings.warn(
+            "Cannot create {} plot due to some nan values".format(metric))
         return
     # scaling factor for percentage plot
     if metric.lower() not in ['mcc']:
@@ -93,7 +93,6 @@ def distributions(v_regular, v_permutation, base_folder, metric,
     x_max = 1.0
 
     fig, ax = plt.subplots(figsize=(18, 10))
-
     kwargs = {
         'norm_hist': False,
         'kde': False,
@@ -140,11 +139,8 @@ def distributions(v_regular, v_permutation, base_folder, metric,
         f.write("Wilcoxon Signed-rank test p-value: {0:.3e}\n".format(rstest[1]))
         f.write("\n")
 
-        # f.write("Regular experiments, {}\n".format(metric))
         f.write("Regular batch, {}\n".format(metric))
         f.write("Mean = {0:.2f}, SD = {1:.2f}\n".format(reg_mean, reg_std))
-
-        # f.write("Permutation tests, {}\n".format(metric))
         f.write("Permutation batch, {}\n".format(metric))
         f.write("Mean = {0:.2f}, SD = {1:.2f}\n".format(perm_mean, perm_std))
 

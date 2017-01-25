@@ -47,7 +47,7 @@ except ImportError:
     NAME = 'localhost'
     IS_MPI_JOB = False
 
-MAX_RESUBMISSIONS = 2
+MAX_RESUBMISSIONS = 0
 DO_WORK = 100
 EXIT = 200
 
@@ -108,15 +108,11 @@ def _check_cv(cv=3, y=None, classifier=False, **kwargs):
     return cv  # New style cv objects are passed without any modification
 
 
-def _build_cv_results(dictionary, i, lr_score, ts_score, cv_results):
+def _build_cv_results(dictionary, **results):
     """Function to build final cv_results_ dictionary with partial results."""
-    dictionary.setdefault('split_i', []).append(i)
-    dictionary.setdefault('learn_score', []).append(lr_score)
-    dictionary.setdefault('test_score', []).append(ts_score)
-    if cv_results is not None:
-        # In case in which the estimator is a CV object
-        dictionary.setdefault('cv_results_', []).append(
-            cv_results)
+    for k, v in results.iteritems():
+        if v is not None:
+            dictionary.setdefault(k, []).append(v)
 
 
 class ModelAssessment(BaseEstimator):
@@ -205,10 +201,10 @@ class ModelAssessment(BaseEstimator):
         for i, (train_index, test_index) in job_list:
             LOG.info("Training fold %d", i + 1)
 
-            _, lr_score, ts_score, cv_results = self._worker(
+            slave_result_ = self._worker(
                 i, X, y, train_index, test_index)
 
-            _build_cv_results(cv_results_, i, lr_score, ts_score, cv_results)
+            _build_cv_results(cv_results_, **slave_result_)
 
         self.cv_results_ = cv_results_
 
@@ -228,7 +224,7 @@ class ModelAssessment(BaseEstimator):
         nprocs = COMM.Get_size()
         queue = deque(job_list)
         n_pipes = len(queue)
-        cv_results_ = {}
+        cv_results_ = {}  # updated by _build_cv_results
 
         # seed the slaves by sending work to each processor
         for rankk in range(1, min(nprocs, n_pipes)):
@@ -239,22 +235,22 @@ class ModelAssessment(BaseEstimator):
             pipe_tuple = queue.popleft()
             # receive result from slave
             status = MPI.Status()
-            i, lr_score, ts_score, cv_results = COMM.recv(
+            slave_result_ = COMM.recv(
                 source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
 
             # send to the same slave new work
             COMM.send(pipe_tuple, dest=status.source, tag=DO_WORK)
 
-            _build_cv_results(cv_results_, i, lr_score, ts_score, cv_results)
+            _build_cv_results(cv_results_, **slave_result_)
             count += 1
 
         # No more work to do, so receive all the results from slaves
         for rankk in range(1, min(nprocs, n_pipes)):
             status = MPI.Status()
-            i, lr_score, ts_score, cv_results = COMM.recv(
+            slave_result_ = COMM.recv(
                 source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
 
-            _build_cv_results(cv_results_, i, lr_score, ts_score, cv_results)
+            _build_cv_results(cv_results_, **slave_result_)
             count += 1
 
         # tell all slaves to exit by sending an empty message with the EXIT_TAG
@@ -355,12 +351,9 @@ class ModelAssessment(BaseEstimator):
                     partial_result['train_index'] = train_index
                     partial_result['test_index'] = test_index
 
-
                     with open(os.path.join(
                             self.experiments_folder, pkl_name), 'wb') as ff:
                         pkl.dump(partial_result, ff)
-
-
 
                 if hasattr(estimator, 'cv_results_'):
                     # In case in which the estimator is a CV object
@@ -368,7 +361,14 @@ class ModelAssessment(BaseEstimator):
                 else:
                     cv_results = None
 
-                cv_results_ = (i, lr_score, ts_score, cv_results)
+                cv_results_ = {
+                    'split_i': i,
+                    'learn_score': lr_score,
+                    'test_score': ts_score,
+                    'cv_results': cv_results,
+                    'ytr_pred': ytr_pred,
+                    'yts_pred': yts_pred
+                }
 
                 experiment_completed = True
 
@@ -377,8 +377,7 @@ class ModelAssessment(BaseEstimator):
                 #     os.path.join(experiments_folder_path, custom_name),
                 # )
 
-            except Exception as e:
-                raise
+            except StandardError as e:
                 # If somethings out of the ordinary happens,
                 # resubmit the job
                 experiment_resubmissions += 1
