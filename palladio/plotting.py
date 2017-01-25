@@ -462,8 +462,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
     param_grid : dict
         Dictionary of grid parameters for GridSearch.
     results : dict
-        Instance of an equivalent of cv_results_, as given by ModelAssessment
-        or GridSearchCV.
+        Instance of an equivalent of cv_results_, as given by ModelAssessment.
     indep_var : array-like, optional, default None
         List of independent variables on which plots are based. If more that 2,
         a plot for each combination is made. If None, the 2 longest parameters
@@ -490,8 +489,10 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
     if pivoting_var is None:
         pivoting_var = list(set(param_grid.keys()).difference(set(indep_var)))
 
-        ordered_df = pd.DataFrame(results).sort_values(
-            'mean_test_score', ascending=False).iloc[0]
+        ordered_df = pd.DataFrame(pd.DataFrame(results).sort_values(
+            'test_score', ascending=False).iloc[0]['cv_results_']).sort_values(
+                'mean_test_score', ascending=False).iloc[0]
+
         # use best model, one pivot
         pivots = [tuple(ordered_df['param_' + x] for x in pivoting_var)]
     else:
@@ -507,24 +508,27 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             fig = plt.figure()
             ax = fig.gca(projection='3d')
             legend_handles = []
-            legend_labels = ['Test Error', 'Train Error']
+            legend_labels = ['Validation Score', 'Train Score']
+            dff = pd.DataFrame(results['cv_results_'])
 
+            # get parameter grid from the first row, since they should be equal
+            xx = dff.iloc[0][param_names[0]].data.astype(float)
+            yy = dff.iloc[0][param_names[1]].data.astype(float)
+            param_grid_xx_size = np.unique(yy).size
+            param_grid_yy_size = np.unique(xx).size
+            X = xx.reshape(param_grid_xx_size, param_grid_yy_size)
+            Y = yy.reshape(param_grid_xx_size, param_grid_yy_size)
             for s, h, c in zip(
                     ('train', 'test'),
                     (colorsHex['lightBlue'], colorsHex['lightOrange']),
                     (cm.Oranges, cm.Blues)):
-                xx = results[param_names[0]].data.astype(float)
-                yy = results[param_names[1]].data.astype(float)
-                zz = results['mean_%s_score' % s]
 
-                param_grid_xx_size = np.unique(yy).size
-                param_grid_yy_size = np.unique(xx).size
-                X = xx.reshape(param_grid_xx_size, param_grid_yy_size)
-                Y = yy.reshape(param_grid_xx_size, param_grid_yy_size)
+                # The score is the mean of each external split
+                zz = np.mean(np.vstack(dff['mean_%s_score' % s].tolist()),
+                             axis=0)
                 Z = zz.reshape(param_grid_xx_size, param_grid_yy_size)
 
                 # plt.close('all')
-
                 ax.plot_surface(
                     X, Y, Z, cmap=c, rstride=1, cstride=1, lw=0,
                     antialiased=False)
