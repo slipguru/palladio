@@ -365,7 +365,7 @@ class ModelAssessment(BaseEstimator):
                     'split_i': i,
                     'learn_score': lr_score,
                     'test_score': ts_score,
-                    'cv_results': cv_results,
+                    'cv_results_': cv_results,
                     'ytr_pred': ytr_pred,
                     'yts_pred': yts_pred
                 }
