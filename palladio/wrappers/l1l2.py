@@ -135,21 +135,19 @@ from sklearn.utils import column_or_1d
 #
 #         return (num / (2. * n))
 
-class l1l2Classifier(LinearClassifierMixin):
-
+class L1L2Classifier(LinearClassifierMixin):
     # def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
     #              normalize=False, precompute=False, max_iter=1000,
     #              copy_X=True, tol=1e-4, warm_start=False, positive=False,
     #              random_state=None, selection='cyclic'):
-    def __init__(self, mu=1e-4, tau=1.0, lambda_ = 1e4, fit_intercept=False
-                 ):
-
+    def __init__(self, mu=1e-4, tau=1.0, lamda=1e4, fit_intercept=False):
+        """INIT DOC."""
         self.mu = mu
         self.tau = tau
-        self.lambda_ = lambda_
-
-        self.coef_ = None
+        self.lamda = lamda
         self.fit_intercept = fit_intercept
+
+        # self.coef_ = None
         # self.normalize = normalize
         # self.precompute = precompute
         # self.max_iter = max_iter
@@ -157,43 +155,33 @@ class l1l2Classifier(LinearClassifierMixin):
         # self.tol = tol
         # self.warm_start = warm_start
         # self.positive = positive
-        self.intercept_ = 0.0
+        # self.intercept_ = 0.0
         # self.random_state = random_state
         # self.selection = selection
 
 
     def fit(self, X, y, check_input=True):
-
-
-
         # rs = RangesScaler(Xtr, Ytr,
-        #                                    self._params['data_normalizer'],
-        #                                    self._params['labels_normalizer'])
+        #              self._params['data_normalizer'],
+        #              self._params['labels_normalizer'])
         #
         #         self._tau_range = rs.tau_range(self._params['tau_range'])
         #         self._mu_range = rs.mu_range(np.array([self._params['mu']]))
         #         self._lambda_range = np.sort(self._params['lambda_range'])
 
-
-
-
-
-
-
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
-            y = column_or_1d(y, warn=True)
+            Y = column_or_1d(Y, warn=True)
         else:
             # we don't (yet) support multi-label classification in ENet
             raise ValueError(
                 "%s doesn't support multi-label classification" % (
                     self.__class__.__name__))
 
-
-        self.coef_ = l1l2_regularization(X, y, self.mu, self.tau, beta=None, kmax=100000,
-                                tolerance=1e-5, return_iterations=False,
-                                adaptive=False)
+        self.coef_ = l1l2_regularization(
+            X, y, self.mu, self.tau, beta=None, kmax=100000,
+            tolerance=1e-5, return_iterations=False, adaptive=False)
 
         if self.classes_.shape[0] > 2:
             ndim = self.classes_.shape[0]
@@ -201,36 +189,15 @@ class l1l2Classifier(LinearClassifierMixin):
             ndim = 1
         self.coef_ = self.coef_.reshape(ndim, -1)
 
-        ### TODO check this ravel
+        # TODO check this ravel
         self.coef_ = self.coef_.ravel()
 
-
-
-        return 6
+        return self
 
     @property
     def classes_(self):
         return self._label_binarizer.classes_
 
-#
-# class l1l2Classifier(Classification):
-#     """Select features using l1l2."""
-#
-#     def __init__(self, params):
-#         super(l1l2Classifier, self).__init__(params)
-#         self.param_names = [r'\tau', r'\lambda']
-#
-#     def setup(self, Xtr, Ytr, Xts, Yts):
-#         super(l1l2Classifier, self).setup(Xtr, Ytr, Xts, Yts)
-#
-#         rs = pd_utils.RangesScaler(Xtr, Ytr,
-#                                    self._params['data_normalizer'],
-#                                    self._params['labels_normalizer'])
-#
-#         self._tau_range = rs.tau_range(self._params['tau_range'])
-#         self._mu_range = rs.mu_range(np.array([self._params['mu']]))
-#         self._lambda_range = np.sort(self._params['lambda_range'])
-#
 #         # Determine which version of the algorithm must be used (CPU or GPU)
 #         # based on the process rank and configuration settings
 #         if self.get_param('process_rank') in self.get_param('gpu_processes'):
