@@ -4,19 +4,21 @@ This package provides nested cross-validation similar to scikit-learn's
 GridSearchCV but uses the Message Passing Interface (MPI)
 for parallel computing.
 """
-
 from __future__ import print_function
+
 import logging
 # import numpy
 import numbers
 # import pandas
 import os
+import warnings
 
 try:
     import cPickle as pkl
 except ImportError:  # python 3 compatibility
     import pickle as pkl
 
+from collections import deque
 from collections import Iterable
 from sklearn.base import BaseEstimator, clone
 # from sklearn.model_selection import check_cv as _check_cv
@@ -27,7 +29,6 @@ from sklearn.model_selection._validation import _shuffle
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.utils import check_X_y, check_random_state
 from sklearn.utils.multiclass import type_of_target
-from collections import deque
 
 __all__ = ('ModelAssessment',)
 
@@ -47,7 +48,7 @@ except ImportError:
     NAME = 'localhost'
     IS_MPI_JOB = False
 
-MAX_RESUBMISSIONS = 0
+MAX_RESUBMISSIONS = 0  # resubmissions disabled
 DO_WORK = 100
 EXIT = 200
 
@@ -274,7 +275,6 @@ class ModelAssessment(BaseEstimator):
         # best_parameters['score (Test)'] = scores
 
         # self.best_params_ = best_parameters
-        # self.grid_scores_ = grid_search_results
         self.cv_results_ = cv_results_
 
     def _fit_slave(self, X, y):
@@ -303,7 +303,7 @@ class ModelAssessment(BaseEstimator):
                 COMM.send(cv_results_, dest=0, tag=0)
 
         except StandardError as exc:
-            print("Quitting ... TB:", str(exc))
+            warnings.warn("Quitting ... TB:", str(exc))
 
     def _worker(self, i, X, y, train_index, test_index):
         """Implement the worker resubmission in case of errors."""
@@ -367,7 +367,9 @@ class ModelAssessment(BaseEstimator):
                     'test_score': ts_score,
                     'cv_results_': cv_results,
                     'ytr_pred': ytr_pred,
-                    'yts_pred': yts_pred
+                    'ytr': ytr,
+                    'yts_pred': yts_pred,
+                    'yts': yts,
                 }
 
                 experiment_completed = True
@@ -381,13 +383,16 @@ class ModelAssessment(BaseEstimator):
                 # If somethings out of the ordinary happens,
                 # resubmit the job
                 experiment_resubmissions += 1
-                print("[{}_{}] failed experiment {}, resubmission #{}\n"
-                      "Exception raised: {}".format(
-                          NAME, RANK, i, experiment_resubmissions, e))
+                warnings.warn(
+                    "[{}_{}] failed experiment {}, resubmission #{}\n"
+                    "Exception raised: {}".format(
+                        NAME, RANK, i, experiment_resubmissions, e))
 
         if not experiment_completed:
-            print("[{}_{}] failed to complete experiment {}, "
-                  "max resubmissions limit reached".format(NAME, RANK, i))
+            warnings.warn(
+                "[{}_{}] failed to complete experiment {}, "
+                "max resubmissions limit reached".format(NAME, RANK, i))
+            return {}
         else:
             return cv_results_
 
