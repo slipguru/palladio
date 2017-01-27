@@ -1,20 +1,24 @@
 # -*- coding: UTF-8 -*-
+"""Plotting functions for PALLADIO."""
 import os
-# import pandas as pd
+import pandas as pd
+import numpy as np
 import matplotlib
+import warnings
+
+from itertools import combinations, product
+from scipy import stats
+
 matplotlib.use('Agg')  # create plots from remote
 matplotlib.rcParams['pdf.fonttype'] = 42  # avoid bitmapped fonts in pdf
 matplotlib.rcParams['ps.fonttype'] = 42
 
+from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
-from matplotlib import cm
-
-import numpy as np
 import seaborn as sns
 
-from scipy import stats
 
 # Dictionary of nice colors
 colorsHex = {
@@ -48,7 +52,7 @@ colorsHex = {
 }
 
 
-def distributions(v_regular, v_permutation, base_folder, metric,
+def distributions(v_regular, v_permutation, base_folder='', metric='nd',
                   first_run=False):
     """Create a plot of the distributions of performance metrics.
 
@@ -56,27 +60,26 @@ def distributions(v_regular, v_permutation, base_folder, metric,
 
     Parameters
     ----------
-    v_regular : numpy.array
-        The metric values for all regular experiments
+    v_{regular, permutation}, : numpy.array
+        The metric values for all {regular, permutation} experiments.
 
-    v_permutation : numpy.array
-        The metric values for permutation tests
+    base_folder : str, optional, default ''
+        The folder where the plot and summary will be saved.
 
-    base_folder : string
-        The folder where the plot will be saved
+    metric : str, optional, default 'nd'
+        Metric used to evaluate v_regular and v_permutation.
+        Usually this should be one of ['Accuracy', 'Balanced Accuracy',
+        'MCC', 'Precision', 'Recall', 'F1'].
+        It is going to be used to set the title and the xlabel.
 
-    metric : string
-        The object metric, this should be in ['Accuracy', 'Balanced Accuracy',
-        'MCC', 'Precision', 'Recall', 'F1']. It is going to be used to set the
-        title and the xlabel.
-
-    first_run : boolean, optional, default False
+    first_run : bool, optional, default False
         If not first_run, append the logs to a single file. Otherwise append
         logs to a cleared file.
     """
     if np.any(np.equal(v_regular, None)) or \
             np.any(np.equal(v_permutation, None)):
-        print("Cannot create {} plot due to some nan values".format(metric))
+        warnings.warn(
+            "Cannot create {} plot due to some nan values".format(metric))
         return
     # scaling factor for percentage plot
     if metric.lower() not in ['mcc']:
@@ -90,7 +93,6 @@ def distributions(v_regular, v_permutation, base_folder, metric,
     x_max = 1.0
 
     fig, ax = plt.subplots(figsize=(18, 10))
-
     kwargs = {
         'norm_hist': False,
         'kde': False,
@@ -137,11 +139,8 @@ def distributions(v_regular, v_permutation, base_folder, metric,
         f.write("Wilcoxon Signed-rank test p-value: {0:.3e}\n".format(rstest[1]))
         f.write("\n")
 
-        # f.write("Regular experiments, {}\n".format(metric))
         f.write("Regular batch, {}\n".format(metric))
         f.write("Mean = {0:.2f}, SD = {1:.2f}\n".format(reg_mean, reg_std))
-
-        # f.write("Permutation tests, {}\n".format(metric))
         f.write("Permutation batch, {}\n".format(metric))
         f.write("Mean = {0:.2f}, SD = {1:.2f}\n".format(perm_mean, perm_std))
 
@@ -426,24 +425,162 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
         xx = np.log10(param_ranges[0][:ZZ.shape[0]])  # tau
         yy = np.log10(param_ranges[1])  # lambda
         XX, YY = np.meshgrid(xx, yy)
+        ZZ = ZZ.reshape(xx.shape[0], yy.shape[0])
 
         ax.plot_surface(
             XX, YY, ZZ.T,
             rstride=1, cstride=1, linewidth=0, antialiased=False, cmap=c)
 
-        legend_handles.append(Rectangle((0, 0), 1, 1, fc=fc[k]))  # proxy handle
+        legend_handles.append(Rectangle((0, 0), 1, 1, fc=fc[k]))
 
     # plot minimum
-    ZZ = avg_err['ts']
+    ZZ = avg_err['ts'].reshape(xx.shape[0], yy.shape[0])
     x_min_idxs, y_min_idxs = np.where(ZZ == np.min(ZZ))
     ax.plot(xx[x_min_idxs], yy[y_min_idxs],
             ZZ[x_min_idxs, y_min_idxs], 'o', c=colorsHex['darkBlue'])
 
     # fig.colorbar()
-    ax.set_title('average KCV error of ' + exp + ' experiments')
+    ax.set_title('average KCV error of %s experiments' % exp)
     ax.set_ylabel(r"$log_{10}(" + param_names[1] + ")$")
     ax.set_xlabel(r"$log_{10}(" + param_names[0] + ")$")
     ax.set_zlabel("avg kcv err")
     ax.legend(legend_handles, legend_labels[:len(legend_handles)], loc='best')
 
-    plt.savefig(os.path.join(base_folder, 'kcv_err_' + exp + '.pdf'))
+    plt.savefig(os.path.join(base_folder, 'kcv_err_%s.pdf' % exp))
+
+
+def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
+                   base_folder=None, logspace=None, plot_errors=False):
+    """Plot error surfaces.
+
+    Parameters
+    ----------
+    param_grid : dict
+        Dictionary of grid parameters for GridSearch.
+    results : dict
+        Instance of an equivalent of cv_results_, as given by ModelAssessment.
+    indep_var : array-like, optional, default None
+        List of independent variables on which plots are based. If more that 2,
+        a plot for each combination is made. If None, the 2 longest parameters
+        in param_grid are selected.
+    pivoting_var : array-like, optional, default None
+        List of pivoting variables. For each of them, a plot is made.
+        If unspecified, get the unspecified independent variable with the best
+        model values.
+    base_folder : str or None, optional, default None
+        Folder where to save the plots.
+    logspace : array-like or None, optional, default None
+        List to specify which variable to visualise in logspace.
+    """
+    def multicond(*args):
+        cond = args[0]
+        for arg in args[1:]:
+            cond = np.logical_and(cond, arg)
+        return cond
+
+    if indep_var is not None:
+        comb = combinations(
+            zip(indep_var, [param_grid[x] for x in indep_var]), 2)
+    else:
+        comb = [sorted(list(
+            param_grid.iteritems()), key=lambda item:len(item[1]))[-2:]]
+        if len(comb[0]) == 1:
+            warnings.warn("Only one grid parameter, cannot create 3D plot")
+            return
+        indep_var = [comb[0][0][0], comb[0][1][0]]
+
+    if pivoting_var is None:
+        pivoting_var = list(set(param_grid.keys()).difference(set(indep_var)))
+
+        ordered_df = pd.DataFrame(pd.DataFrame(results).sort_values(
+            'test_score', ascending=False).iloc[0]['cv_results_']).sort_values(
+                'mean_test_score', ascending=False).iloc[0]
+
+        # use best model, one pivot
+        pivots = [tuple(ordered_df['param_' + x] for x in pivoting_var)]
+    else:
+        pivots = list(product(*[param_grid[x] for x in pivoting_var]))
+
+    pivot_names = list(product(*[[x] for x in pivoting_var])) * len(pivots)
+
+    for id_pivot, (pivot, value) in enumerate(zip(pivot_names, pivots)):
+        for id_param, (param1, param2) in enumerate(comb):
+            param_names = 'param_' + np.array(
+                [param1[0], param2[0]], dtype=object)
+
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            legend_handles = []
+            legend_labels = ['Train Score', 'Validation Score']
+            dff = pd.DataFrame(results['cv_results_'])
+
+            # get parameter grid from the first row, since they should be equal
+            # but pivoting
+            if len(pivot) == 0:
+                # no pivoting
+                cond = np.ones(
+                    dff.iloc[0][param_names[0]].data.size, dtype=bool)
+            else:
+                cond = multicond(*[dff.iloc[0]['param_' + p].data == v
+                                   for p, v in zip(pivot, value)])
+            xx = dff.iloc[0][param_names[0]][cond].data.astype(float)
+            yy = dff.iloc[0][param_names[1]][cond].data.astype(float)
+            log10_x, log10_y = '', ''
+            if logspace is not None:
+                if param1[0] in logspace:
+                    xx = np.log10(xx)
+                    log10_x = r'$log_{10}$ '
+                if param2[0] in logspace:
+                    yy = np.log10(yy)
+                    log10_y = r'$log_{10}$ '
+
+            param_grid_xx_size = len(param2[1])
+            param_grid_yy_size = len(param1[1])
+            X = xx.reshape(param_grid_xx_size, param_grid_yy_size)
+            Y = yy.reshape(param_grid_xx_size, param_grid_yy_size)
+            # XX, YY = np.meshgrid(np.array(param2[1]), np.array(param1[1]))
+            if plot_errors:
+                colors = (cm.Oranges_r, cm.Blues_r)
+            else:
+                colors = (cm.Oranges, cm.Blues)
+            for s, h, c in zip(
+                    ('train', 'test'),
+                    (colorsHex['lightOrange'], colorsHex['lightBlue']),
+                    colors):
+
+                # The score is the mean of each external split
+                zz = np.mean(np.vstack(
+                    dff['mean_%s_score' % s].tolist()), axis=0)[cond]
+                Z = zz.reshape(param_grid_xx_size, param_grid_yy_size)
+                if plot_errors:
+                    Z = 1 - Z
+
+                # plt.close('all')
+                ax.plot_surface(
+                    X, Y, Z, cmap=c, rstride=1, cstride=1, lw=0,
+                    antialiased=False)
+
+                legend_handles.append(Rectangle((0, 0), 1, 1, fc=h))
+
+            # plot max
+            func_max = np.min if plot_errors else np.max
+            pos_max = np.where(Z == func_max(Z))
+            ax.plot(X[pos_max], Y[pos_max], Z[pos_max], 'o',
+                    c=colorsHex['darkRed'])
+
+            # fig.colorbar()
+            ax.legend(legend_handles, legend_labels[:len(legend_handles)],
+                      loc='best')
+            scoring = 'error' if plot_errors else 'score'
+            ax.set_title('average KCV %s, pivot %s = %s' % (
+                scoring, pivot, value))
+            ax.set_xlabel(log10_x + param_names[0][6:])
+            ax.set_ylabel(log10_y + param_names[1][6:])
+            ax.set_zlabel("avg kcv %s" % scoring)
+
+            if base_folder is not None:
+                plt.savefig(os.path.join(
+                    base_folder, 'kcv_%s_piv%d_comb%d.pdf' % (
+                        scoring, id_pivot, id_param)))
+            else:
+                plt.show()

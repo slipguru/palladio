@@ -6,138 +6,13 @@
 # PALLADIO Refactoring: Samuele Fiorini
 
 import numpy as np
-import l1l2py
+# import l1l2py
 
 
 class PDException(Exception):
     """Exception raised by ``PALLADIO`` classes and functions."""
 
     pass
-
-
-class RangesScaler(object):
-    """Given data and labels helps to scale L1L2 parameters ranges properly.
-
-    This class works on tau and mu ranges passed to the l1l2 selection
-    framework (see also :func:`l1l2py.model_selection` and related
-    function for details).
-
-    Scaling ranges permits to use relative (and not absolute) ranges of
-    parameters.
-
-    Attributes
-    ----------
-    norm_data : :class:`numpy.ndarray`
-        Normalized data matrix.
-    norm_labels : :class:`numpy.ndarray`
-        Normalized labels vector.
-    """
-
-    def __init__(self, data, labels, data_normalizer=None,
-                 labels_normalizer=None):
-
-        self.norm_data = data
-        self.norm_labels = labels
-        self._tsf = self._msf = None
-
-        # Data must be normalized
-        if data_normalizer:
-            self.norm_data = data_normalizer(self.norm_data)
-        if labels_normalizer:
-            self.norm_labels = labels_normalizer(self.norm_labels)
-
-    def tau_range(self, trange):
-        """Return a scaled tau range.
-
-        Tau scaling factor is the maximum tau value to avoid and empty solution
-        (where all variables are discarded).
-        The value is estimated on the maximum correlation between data and
-        labels.
-
-        Parameters
-        ----------
-        trange : :class:`numpy.ndarray`
-            Tau range containing relative values (expected maximum is lesser
-            than 1.0 and minimum greater than 0.0).
-
-        Returns
-        -------
-        tau_range : :class:`numpy.ndarray`
-            Scaled tau range.
-
-        Raises
-        ------
-        PDException
-            If trange values are not in the [0, 1) interval
-            (right extreme excluded).
-        """
-        trange = np.sort(trange)
-
-        if max(trange) >= 1.0 or min(trange) < 0.0:
-            raise PDException('relative tau values have to '
-                              'be in [0, 1)')
-
-        return trange * self.tau_scaling_factor
-
-    def mu_range(self, mrange):
-        """Return a scaled mu range.
-
-        Mu scaling factor is estimated on the maximum eigenvalue of the
-        correlation matrix and is used to simplify the parameters choice.
-
-        Parameters
-        ----------
-        mrange : :class:`numpy.ndarray`
-            Mu range containing relative values (expected maximum is lesser
-            than 1.0 and minimum greater than 0.0).
-
-        Returns
-        -------
-        mu_range : :class:`numpy.ndarray`
-            Scaled mu range.
-
-        Raises
-        ------
-        PDException
-            If mrange values are not all greater than 0.
-        """
-        mrange = np.sort(mrange)
-
-        if min(mrange) < 0.0:
-            raise PDException('relative mu values have to be '
-                              'greater than 0')
-
-        return np.sort(mrange) * self.mu_scaling_factor
-
-    @property
-    def tau_scaling_factor(self):
-        """Tau scaling factor calculated on given data and labels."""
-        if self._tsf is None:
-            self._tsf = self._tau_scaling_factor()
-        return self._tsf
-
-    @property
-    def mu_scaling_factor(self):
-        """Mu scaling factor calculated on given data matrix."""
-        if self._msf is None:
-            self._msf = self._mu_scaling_factor()
-        return self._msf
-
-    def _tau_scaling_factor(self):
-        return l1l2py.algorithms.l1_bound(self.norm_data, self.norm_labels)
-
-    def _mu_scaling_factor(self):
-        n, d = self.norm_data.shape
-
-        if d > n:
-            tmp = np.dot(self.norm_data, self.norm_data.T)
-            num = np.linalg.eigvalsh(tmp).max()
-        else:
-            tmp = np.dot(self.norm_data.T, self.norm_data)
-            evals = np.linalg.eigvalsh(tmp)
-            num = evals.max() + evals.min()
-
-        return (num / (2. * n))
 
 
 def signatures(splits_results, frequency_threshold=0.0):
@@ -386,6 +261,18 @@ def _check_unique_labels(labels):
     class2 = (labels == unique_labels[1])
 
     return unique_labels, class1, class2
+
+
+def set_module_defaults(module, dictionary):
+    """Set default variables of a module, given a dictionary.
+
+    Used after the loading of the configuration file to set some defaults.
+    """
+    for k, v in dictionary.iteritems():
+        try:
+            getattr(module, k)
+        except AttributeError:
+            setattr(module, k, v)
 
 
 def sec_to_timestring(seconds):
