@@ -7,57 +7,81 @@ import argparse
 import numpy as np
 import pandas as pd
 import matplotlib; matplotlib.use('Agg')
-import warnings
+import matplotlib.pyplot as plt
+import seaborn as sns
+import cPickle as pkl
 
-try:
-    import cPickle as pkl
-except:
-    import pickle as pkl
+from scipy import stats
 
-# from sklearn.metrics import accuracy_score, precision_recall_fscore_support
-# from sklearn.metrics import matthews_corrcoef
 from palladio import plotting
-from palladio.metrics import (accuracy_score, precision_recall_fscore_support,
-                              matthews_corrcoef, balanced_accuracy)
-
-EXPS = ('regular', 'permutation')
 
 
-def single_analysis(exp_folder, is_multiclass=False):
-    """Perform the analysis on a single folder."""
+def analyze_experiment(exp_folder, config, poslab):
+    """TODO."""
     with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
         result = pkl.load(f)
 
-    y_true = result['labels_ts']  # the actual labels
-    y_pred = result['prediction_ts_list']
+    with open(os.path.join(exp_folder, 'in_split.pkl'), 'r') as f:
+        in_split = pkl.load(f)
 
-    analysis = {
-        'accuracy': accuracy_score(y_true, y_pred),
-        'balanced_accuracy': balanced_accuracy(y_true, y_pred),
-        'MCC': matthews_corrcoef(y_true, y_pred) if not is_multiclass
-        else None
-    }
-    analysis['precision'], analysis['recall'], analysis['F1'], _ = \
-        precision_recall_fscore_support(y_true, y_pred, average='weighted')
+    Y_ts = result['labels_ts']  # the actual labels
+
+    analysis_results = dict()
+    # analysis_results['summary']
+    # analysis_results['accuracy']
+    # analysis_results['balanced_accuracy']
+
+    aux_y = result['prediction_ts_list']
+
+    # ## XXX TODO fix cases in which Y_lr = 0
+    Y_lr = np.sign(aux_y.ravel())
+    # Y_lr = np.sign(Y_lr-0.1)
+
+    # evaluate performance metrics
+    print(result)
+    TP = np.sum((Y_lr == 1) * (Y_ts == Y_lr))
+    FP = np.sum((Y_lr == 1) * (Y_ts != Y_lr))
+    TN = np.sum((Y_lr == -1) * (Y_ts == Y_lr))
+    FN = np.sum((Y_lr == -1) * (Y_ts != Y_lr))
+
+    if float(TP + FP + FN + TN) == 0:
+        raise ValueError("Sum of TP, FP FN and TN is zero. Why?")
+    accuracy = (TP + TN) / float(TP + FP + FN + TN)
+    balanced_accuracy = 0.5 * ((TP / float(TP + FN)) + (TN / float(TN + FP)))
+
+    den = ((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN))
+    MCC = (((TP * TN) - (FP * FN)) / (1.0 if den == 0 else np.sqrt(den)))
+
+    if poslab is not None:
+        precision = TP / float(TP + FP) if TP + FP != 0 else None
+        recall = TP / float(TP + FN) if TP + FN != 0 else None
+        if precision is None or recall is None or precision + recall == 0:
+            F1 = None
+        else:
+            F1 = 2.0 * ((precision * recall) / (precision + recall))
+    else:
+        precision = recall = F1 = None
+
+    # save performance metrics
+    analysis_results['accuracy'] = accuracy
+    analysis_results['balanced_accuracy'] = balanced_accuracy
+    analysis_results['MCC'] = MCC
+    analysis_results['precision'] = precision
+    analysis_results['recall'] = recall
+    analysis_results['F1'] = F1
 
     # save selected_list
-    analysis['selected_list'] = result['selected_list']
+    analysis_results['selected_list'] = result['selected_list']
 
     # save kcv errors
-    analysis['kcv_err_ts'] = result['kcv_err_ts']
-    analysis['kcv_err_tr'] = result['kcv_err_tr']
-    return analysis
+    analysis_results['kcv_err_ts'] = result['kcv_err_ts']
+    analysis_results['kcv_err_tr'] = result['kcv_err_tr']
 
-def get_selected_list(estimator):
-    """
+    # save params ranges
+    analysis_results['param_ranges'] = in_split['param_ranges']
 
-    Returns
-    -------
-    index : nunmpy.array
-        The indices of the selected features
-    """
+    return analysis_results
 
-    return np.nonzero(estimator.best_estimator_.coef_.flatten())[0]
 
 def analyze_experiments(base_folder, config):
     """Perform a preliminar analysis on all experiments.
@@ -69,140 +93,107 @@ def analyze_experiments(base_folder, config):
     ----------
     base_folder : string
         Folder containing ALL experiments (regular and permutations).
-
-    Returns
-    -------
-    out : dict
-        Collection of results for all experiments: balanced accuracy,
-        feature frequencies etc.
     """
     # Local imports, in order to select backend on startup
+    from matplotlib import pyplot as plt
     dataset = config.dataset_class(
         config.dataset_files,
         config.dataset_options,
         is_analysis=True
     )
-
     data, labels, feature_names = dataset.load_dataset(base_folder)
+    feature_names = np.array(feature_names)
 
-    # features = np.array(dataset.load_dataset(base_folder)[2])
-    # print("Features : {}".format(features))
+    # performance metrics containers
+    acc_regular = list()
+    acc_permutation = list()
+    balanced_acc_regular = list()
+    balanced_acc_permutation = list()
+    MCC_regular = list()
+    MCC_permutation = list()
+    # I am not checking config.positive_label on purpose.
+    # This comes in handy afterwards
+    precision_regular = list()
+    precision_permutation = list()
+    recall_regular = list()
+    recall_permutation = list()
+    F1_regular = list()
+    F1_permutation = list()
 
-    out = dict()
-    for s in EXPS:
-        # Create the dictionary for feature frequencies
-        out['selected_%s' % s] = dict(zip(feature_names, np.zeros(len(feature_names))))
+    # selection containers
+    selected_regular = dict(zip(feature_names, np.zeros((len(feature_names),))))
+    selected_permutation = dict(zip(feature_names, np.zeros((len(feature_names),))))
 
-        # out['kcv_err_%s' % s] = {'tr': list(), 'ts': list()}
+    # kcv error containers
+    kcv_err_regular = {'tr': list(), 'ts': list()}
+    kcv_err_permutation = {'tr': list(), 'ts': list()}
 
     experiments_folder = os.path.join(base_folder, 'experiments')
+    for exp_folder in os.listdir(experiments_folder):
+        exp_folder = os.path.join(experiments_folder, exp_folder)
+        if os.path.isdir(exp_folder):
+            analysis_result = analyze_experiment(
+                exp_folder, config, dataset.get_positive_label())
 
-    for exp_pkl in os.listdir(experiments_folder):
+            selected_probesets = feature_names[analysis_result['selected_list']]
 
-        # ### Determine whether it's a regular or a permutation experiment
-        type_experiment = None
+            if exp_folder.split('/')[-1].startswith('regular'):
+                # update performance metrics
+                acc_regular.append(analysis_result['accuracy'])
+                balanced_acc_regular.append(analysis_result['balanced_accuracy'])
+                MCC_regular.append(analysis_result['MCC'])
+                # postiive labels stuff
+                precision_regular.append(analysis_result['precision'])
+                recall_regular.append(analysis_result['recall'])
+                F1_regular.append(analysis_result['F1'])
 
-        for te in EXPS:
-            if exp_pkl.startswith(te):
-                type_experiment = te
+                # update selection
+                for p in selected_probesets:
+                    selected_regular[p] += 1
+                # update kcv errors
+                kcv_err_regular['tr'].append(analysis_result['kcv_err_tr'])
+                kcv_err_regular['ts'].append(analysis_result['kcv_err_ts'])
 
-        # print(type_experiment)
+            elif exp_folder.split('/')[-1].startswith('permutation'):
+                # update performance metrics
+                acc_permutation.append(analysis_result['accuracy'])
+                balanced_acc_permutation.append(analysis_result['balanced_accuracy'])
+                MCC_permutation.append(analysis_result['MCC'])
+                # postiive labels stuff
+                precision_permutation.append(analysis_result['precision'])
+                recall_permutation.append(analysis_result['recall'])
+                F1_permutation.append(analysis_result['F1'])
 
-        if type_experiment is None:
-            print('error')
-            continue
+                # update selection
+                for p in selected_probesets:
+                    selected_permutation[p] += 1
+                # update kcv errors
+                kcv_err_permutation['tr'].append(analysis_result['kcv_err_tr'])
+                kcv_err_permutation['ts'].append(analysis_result['kcv_err_ts'])
 
-        with open(os.path.join(experiments_folder, exp_pkl), 'rb') as f:
-            exp_result = pkl.load(f)
+            else:
+                print "error"
 
-        # print(type(exp_result))
-
-        # print(type(exp_result.cv_results_.keys()))
-        # print(exp_result['estimator'].cv_results_.keys())
-
-        yts_pred = exp_result['yts_pred']
-        ytr_pred = exp_result['ytr_pred']
-
-        # ### Load actual labels for the test set
-        yts = labels[exp_result['test_index']]
-
-        out.setdefault('balanced_acc_%s' % type_experiment, []).append(
-            balanced_accuracy(yts, yts_pred))
-
-        selected_list = get_selected_list(exp_result['estimator'])
-
-        selected_probesets = feature_names[selected_list]
-        is_regular = (type_experiment == EXPS[0])
-
-        for p in selected_probesets.flatten():
-            out['selected_%s' % type_experiment][p] += 1
-
-        # print(len(exp_result['yts_pred']))
-        # print(len(exp_result['ytr_pred']))
-        # print(len(labels))
-
-        # print(exp_result['estimator'].best_estimator_.coef_.flatten())
-
-        # print(np.argwhere(exp_result['estimator'].best_estimator_.coef_))
-        # print(np.nonzero(exp_result['estimator'].best_estimator_.coef_.flatten())[0])
-
-        # return
-
-    # print(out)
-
-    # return
-
-
-
-
-
-
-    # for exp_folder in os.listdir(experiments_folder):
-    #     exp_folder = os.path.join(experiments_folder, exp_folder)
-    #     if os.path.isdir(exp_folder):
-    #         filename = exp_folder.split('/')[-1]
-    #         if not filename.startswith(EXPS[0]) and \
-    #                 not filename.startswith(EXPS[1]):
-    #             print('error')
-    #             continue
-    #
-    #         analysis_result = single_analysis(exp_folder, dataset.multiclass)
-    #
-    #         selected_probesets = features[analysis_result['selected_list']]
-    #         is_regular = filename.startswith(EXPS[0])
-    #         type_experiment = EXPS[0] if is_regular else EXPS[1]
-    #         for p in selected_probesets.flatten():
-    #             out['selected_%s' % type_experiment][p] += 1
-    #
-    #         out['kcv_err_%s' % type_experiment]['tr'].append(
-    #             analysis_result['kcv_err_tr'])
-    #         out['kcv_err_%s' % type_experiment]['ts'].append(
-    #             analysis_result['kcv_err_ts'])
-    #
-    #         out.setdefault('F1_%s' % type_experiment, []).append(
-    #             analysis_result['F1'])
-    #         out.setdefault('acc_%s' % type_experiment, []).append(
-    #             analysis_result['accuracy'])
-    #         out.setdefault('balanced_acc_%s' % type_experiment, []).append(
-    #             analysis_result['balanced_accuracy'])
-    #         out.setdefault('MCC_%s' % type_experiment, []).append(
-    #             analysis_result['MCC'])
-    #         out.setdefault('precision_%s' % type_experiment, []).append(
-    #             analysis_result['precision'])
-    #         out.setdefault('recall_%s' % type_experiment, []).append(
-    #             analysis_result['recall'])
-
-    for s in EXPS:
-        # out['F1_%s' % s] = np.array(out['F1_%s' % s])
-        # out['acc_%s' % s] = np.array(out['acc_%s' % s])
-        out['balanced_acc_%s' % s] = np.array(out['balanced_acc_%s' % s])
-        # out['MCC_%s' % s] = np.array(out['MCC_%s' % s])
-        # out['precision_%s' % s] = np.array(out['precision_%s' % s])
-        # out['recall_%s' % s] = np.array(out['recall_%s' % s])
-
-    # print(out)
-
-    # ### FIN QUI
+    # store the actual parameters ranges
+    param_ranges = analysis_result['param_ranges']
+    out = {'v_regular': np.array(balanced_acc_regular),
+           'v_permutation': np.array(balanced_acc_permutation),
+           'acc_regular': np.array(acc_regular),
+           'acc_permutation': np.array(acc_permutation),
+           'MCC_regular': np.array(MCC_regular),
+           'MCC_permutation': np.array(MCC_permutation),
+           'precision_regular': np.array(precision_regular),
+           'precision_permutation': np.array(precision_permutation),
+           'recall_regular': np.array(recall_regular),
+           'recall_permutation': np.array(recall_permutation),
+           'F1_regular': np.array(F1_regular),
+           'F1_permutation': np.array(F1_permutation),
+           'selected_regular': selected_regular,
+           'selected_permutation': selected_permutation,
+           'kcv_err_regular': kcv_err_regular,
+           'kcv_err_permutation': kcv_err_permutation,
+           'param_ranges': param_ranges
+           }
 
     return out
 
@@ -210,135 +201,122 @@ def analyze_experiments(base_folder, config):
 def main(base_folder):
     """Main for pd_analysis.py."""
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
-
-
-
-    positive_label = config.dataset_options.get('positive_label', None)
-    multiclass = config.dataset_options.get('multiclass', None)
-
-
-    # print("PL = {}".format(positive_label))
-    # print("multiclass = {}".format(multiclass))
+    _positive_label = config.dataset_options['positive_label']
+    _N_jobs_regular = config.N_jobs_regular
+    _N_jobs_permutation = config.N_jobs_permutation
+    _learner = config.learner_class(None)
+    param_names = _learner.param_names
 
     threshold = int(config.N_jobs_regular * config.frequency_threshold)
 
-    # TODO necessary?
-    param_names = list(config.param_grid.keys())
-    param_ranges = [config.param_grid[x] for x in param_names]
-
-
     out = analyze_experiments(base_folder, config)
+
+    # balanced acc
+    v_regular, v_permutation = out['v_regular'], out['v_permutation']
+    acc_regular, acc_permutation = out['acc_regular'], out['acc_permutation']
+    MCC_regular, MCC_permutation = out['MCC_regular'], out['MCC_permutation']
+
+    if _positive_label is not None:
+        precision_regular = out['precision_regular']
+        precision_permutation = out['precision_permutation']
+
+        recall_regular = out['recall_regular']
+        recall_permutation = out['recall_permutation']
+
+        F1_regular = out['F1_regular']
+        F1_permutation = out['F1_permutation']
+
+    selected_regular = out['selected_regular']
+    selected_permutation = out['selected_permutation']
+
+    kcv_err_regular = out['kcv_err_regular']
+    kcv_err_permutation = out['kcv_err_permutation']
+
+    param_ranges = out['param_ranges']
+
+    # Manually sorting stuff
+    sorted_keys_regular = sorted(selected_regular,
+                                 key=selected_regular.__getitem__)
+    sorted_keys_permutation = sorted(selected_permutation,
+                                     key=selected_permutation.__getitem__)
 
     # create a new folder for the analysis, called 'analysis'
     base_folder = os.path.join(base_folder, 'analysis')
     if not os.path.exists(base_folder):
         os.makedirs(base_folder)
 
-
     # firstly, if exists, copy there the report.txt
     shutil.copy(
         os.path.abspath(os.path.join(base_folder, os.pardir, 'report.txt')),
         base_folder)
 
-
-
-
-
-    # Manually sorting stuff
-    for s in EXPS:
-        out['sorted_keys_%s' % s] = sorted(
-            out['selected_%s' % s], key=out['selected_%s' % s].__getitem__)
-
-
-
-
-
-    selected_todf = [out['selected_regular'][k] for k in out['sorted_keys_regular']]
     # Dump the selected features in a pkl as pandas DataFrame
-    df_selected = pd.DataFrame(
-        data=selected_todf, index=out['sorted_keys_regular'],
-        columns=['Selection frequency'])
+    selected_todf = list()
+    for k in sorted_keys_regular:
+        selected_todf.append(selected_regular[k])
+    df_selected = pd.DataFrame(data=selected_todf, index=sorted_keys_regular,
+                               columns=['Selection frequency'])
     df_selected.sort_values(['Selection frequency'], ascending=False,
                             inplace=True)
     df_selected.to_pickle(os.path.join(base_folder, 'signature_regular.pkl'))
+    # print os.path.join(base_folder, 'signature_regular.pkl')
 
-    # ### FIN QUI
+    with open(os.path.join(base_folder, 'signature_regular.txt'), 'w') as f:
+        line_drawn = False
+        for k in reversed(sorted_keys_regular):
+            if not line_drawn and selected_regular[k] < threshold:
+                line_drawn = True
+                f.write("=" * 40)
+                f.write("\n")
+            f.write("{} : {}\n".format(k, selected_regular[k]))
 
-    for s in EXPS:
-        with open(os.path.join(base_folder, 'signature_%s.txt' % s), 'w') as f:
-            line_drawn = False
-            for k in reversed(out['sorted_keys_%s' % s]):
-                if not line_drawn and out['selected_%s' % s][k] < threshold:
-                    line_drawn = True
-                    f.write("=" * 40)
-                    f.write("\n")
-                f.write("{} : {}\n".format(k, out['selected_%s' % s][k]))
+    with open(os.path.join(base_folder, 'signature_permutation.txt'), 'w') as f:
+        line_drawn = False
+        for k in reversed(sorted_keys_permutation):
+            if not line_drawn and selected_permutation[k] < threshold:
+                line_drawn = True
+                f.write("=" * 40)
+                f.write("\n")
+            f.write("{} : {}\n".format(k, selected_permutation[k]))
 
+    # Plotting section
+    plotting.distributions(acc_regular, acc_permutation, base_folder,
+                           'Accuracy', first_run=True)
+    plotting.distributions(v_regular, v_permutation, base_folder,
+                           'Balanced Accuracy')
+    plotting.distributions(MCC_regular, MCC_permutation, base_folder, 'MCC')
+    if _positive_label is not None:
+        plotting.distributions(precision_regular, precision_permutation,
+                               base_folder, 'Precision')
+        plotting.distributions(recall_regular, recall_permutation, base_folder,
+                               'Recall')
+        plotting.distributions(F1_regular, F1_permutation, base_folder, 'F1')
 
+    plotting.feature_frequencies(sorted_keys_regular, selected_regular,
+                                 base_folder, threshold=threshold)
 
-    # ### Plotting section
+    plotting.features_manhattan(sorted_keys_regular, selected_regular,
+                                selected_permutation, base_folder,
+                                _N_jobs_regular, _N_jobs_permutation,
+                                threshold=threshold)
 
-    # ### Accuracy
-    # plotting.distributions(out['acc_regular'], out['acc_permutation'],
-                        #    base_folder, 'Accuracy', first_run=True)
+    plotting.selected_over_threshold(selected_regular, selected_permutation,
+                                     config.N_jobs_regular,
+                                     config.N_jobs_permutation,
+                                     base_folder, threshold=threshold)
 
-    # ### Balanced Accuracy
-    plotting.distributions(
-        out['balanced_acc_regular'], out['balanced_acc_permutation'],
-        base_folder, 'Balanced Accuracy')
-
-    # ### TODO Check
-    # plotting.distributions(out['MCC_regular'], out['MCC_permutation'],
-    #                        base_folder, 'MCC')
-
-    # ### TODO Check
-    # if positive_label is not None and not multiclass:
-    #     plotting.distributions(out['precision_regular'],
-    #                            out['precision_permutation'],
-    #                            base_folder, 'Precision')
-    #     plotting.distributions(
-    #         out['recall_regular'], out['recall_permutation'], base_folder,
-    #         'Recall')
-    #     plotting.distributions(out['F1_regular'], out['F1_permutation'],
-    #                            base_folder, 'F1')
-
-    plotting.feature_frequencies(
-        out['sorted_keys_regular'], out['selected_regular'], base_folder,
-        threshold=threshold)
-
-    plotting.features_manhattan(
-        out['sorted_keys_regular'], out['selected_regular'],
-        out['selected_permutation'], base_folder, config.N_jobs_regular,
-        config.N_jobs_permutation, threshold=threshold)
-
-    plotting.selected_over_threshold(
-        out['selected_regular'], out['selected_permutation'],
-        config.N_jobs_regular, config.N_jobs_permutation, base_folder,
-        threshold=threshold)
-
-    return
-
-    # ### TODO Check
-    # if len(param_ranges) != 2:
-    #     warnings.warn("Length of param_ranges is not 2. "
-    #                   "Cannot produce surfaces")
-    # else:
-    #     for s in EXPS:
-    #         plotting.kcv_err_surfaces(
-    #             out['kcv_err_%s' % s], s, base_folder, param_ranges,
-    #             param_names)
-
-
-def parse_args():
-    """Parse arguments."""
-    from palladio import __version__
-    parser = argparse.ArgumentParser(
-        description='palladio script for analysing results.')
-    parser.add_argument('--version', action='version',
-                        version='%(prog)s v' + __version__)
-    parser.add_argument("result_folder", help="specify results directory")
-    return parser.parse_args()
+    for kcv_err, exp in zip([kcv_err_regular, kcv_err_permutation],
+                            ['regular', 'permutation']):
+        plotting.kcv_err_surfaces(
+            kcv_err, exp, base_folder, param_ranges, param_names)
 
 
 if __name__ == '__main__':
-    main(parse_args().result_folder)
+    from palladio import __version__
+    parser = argparse.ArgumentParser(description='palladio script for '
+                                                 'analysing results.')
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s v' + __version__)
+    parser.add_argument("result_folder", help="specify results directory")
+    args = parser.parse_args()
+    main(args.result_folder)
