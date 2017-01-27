@@ -450,7 +450,7 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
 
 
 def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
-                   base_folder=None, logspace=None):
+                   base_folder=None, logspace=None, plot_errors=False):
     """Plot error surfaces.
 
     Parameters
@@ -485,7 +485,6 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
         comb = [sorted(list(
             param_grid.iteritems()), key=lambda item:len(item[1]))[-2:]]
         if len(comb[0]) == 1:
-            import warnings
             warnings.warn("Only one grid parameter, cannot create 3D plot")
             return
         indep_var = [comb[0][0][0], comb[0][1][0]]
@@ -512,7 +511,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             fig = plt.figure()
             ax = fig.gca(projection='3d')
             legend_handles = []
-            legend_labels = ['Validation Score', 'Train Score']
+            legend_labels = ['Train Score', 'Validation Score']
             dff = pd.DataFrame(results['cv_results_'])
 
             # get parameter grid from the first row, since they should be equal
@@ -534,19 +533,27 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                 if param2[0] in logspace:
                     yy = np.log10(yy)
                     log10_y = r'$log_{10}$ '
-            param_grid_xx_size = np.unique(yy).size
-            param_grid_yy_size = np.unique(xx).size
+
+            param_grid_xx_size = len(param2[1])
+            param_grid_yy_size = len(param1[1])
             X = xx.reshape(param_grid_xx_size, param_grid_yy_size)
             Y = yy.reshape(param_grid_xx_size, param_grid_yy_size)
+            # XX, YY = np.meshgrid(np.array(param2[1]), np.array(param1[1]))
+            if plot_errors:
+                colors = (cm.Oranges_r, cm.Blues_r)
+            else:
+                colors = (cm.Oranges, cm.Blues)
             for s, h, c in zip(
                     ('train', 'test'),
-                    (colorsHex['lightBlue'], colorsHex['lightOrange']),
-                    (cm.Oranges, cm.Blues)):
+                    (colorsHex['lightOrange'], colorsHex['lightBlue']),
+                    colors):
 
                 # The score is the mean of each external split
                 zz = np.mean(np.vstack(
                     dff['mean_%s_score' % s].tolist()), axis=0)[cond]
                 Z = zz.reshape(param_grid_xx_size, param_grid_yy_size)
+                if plot_errors:
+                    Z = 1 - Z
 
                 # plt.close('all')
                 ax.plot_surface(
@@ -556,21 +563,24 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                 legend_handles.append(Rectangle((0, 0), 1, 1, fc=h))
 
             # plot max
-            pos_max = np.where(Z == np.max(Z))
+            func_max = np.min if plot_errors else np.max
+            pos_max = np.where(Z == func_max(Z))
             ax.plot(X[pos_max], Y[pos_max], Z[pos_max], 'o',
                     c=colorsHex['darkRed'])
 
             # fig.colorbar()
             ax.legend(legend_handles, legend_labels[:len(legend_handles)],
                       loc='best')
-            ax.set_title('average KCV score, pivot %s = %s' % (pivot, value))
+            scoring = 'error' if plot_errors else 'score'
+            ax.set_title('average KCV %s, pivot %s = %s' % (
+                scoring, pivot, value))
             ax.set_xlabel(log10_x + param_names[0][6:])
             ax.set_ylabel(log10_y + param_names[1][6:])
-            ax.set_zlabel("avg kcv score")
+            ax.set_zlabel("avg kcv %s" % scoring)
 
             if base_folder is not None:
                 plt.savefig(os.path.join(
-                    base_folder, 'kcv_score_piv%d_comb%d.pdf' % (
-                        id_pivot, id_param)))
+                    base_folder, 'kcv_%s_piv%d_comb%d.pdf' % (
+                        scoring, id_pivot, id_param)))
             else:
                 plt.show()
