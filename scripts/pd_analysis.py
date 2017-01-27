@@ -134,7 +134,7 @@ def analyze_experiments(base_folder, config):
         selected_probesets = feature_names[selected_list]
         is_regular = (type_experiment == EXPS[0])
 
-        for p in selected_probesets.flatten():
+        for p in selected_probesets:
             out['selected_%s' % type_experiment][p] += 1
 
         # print(len(exp_result['yts_pred']))
