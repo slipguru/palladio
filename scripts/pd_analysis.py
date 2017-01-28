@@ -59,6 +59,7 @@ def get_selected_list(estimator):
 
     return np.nonzero(estimator.best_estimator_.coef_.flatten())[0]
 
+
 def analyze_experiments(base_folder, config):
     """Perform a preliminar analysis on all experiments.
 
@@ -133,7 +134,7 @@ def analyze_experiments(base_folder, config):
             selected_list = get_selected_list(exp_result['estimator'])
 
             selected_probesets = feature_names[selected_list]
-            is_regular = (type_experiment == EXPS[0])
+            # is_regular = (type_experiment == EXPS[0])
 
             for p in selected_probesets:
                 out['selected_%s' % type_experiment][p] += 1
@@ -147,16 +148,11 @@ def analyze_experiments(base_folder, config):
         # print(np.argwhere(exp_result['estimator'].best_estimator_.coef_))
         # print(np.nonzero(exp_result['estimator'].best_estimator_.coef_.flatten())[0])
 
-        # return
+            # return
 
     # print(out)
 
     # return
-
-
-
-
-
 
     # for exp_folder in os.listdir(experiments_folder):
     #     exp_folder = os.path.join(experiments_folder, exp_folder)
