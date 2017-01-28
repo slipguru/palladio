@@ -239,7 +239,8 @@ def main(config_path):
     # Prepare estimator for internal loops (GridSearchCV)
 
     # The internal estimator (e.g. Elastic Net Classifier)
-    internal_estimator = config.learner(**config.learner_options)
+    # internal_estimator = config.learner(**config.learner_options)
+    internal_estimator = config.estimator
 
     # Grid search estimator
     internal_gridsearch = GridSearchCV(internal_estimator, **config.cv_options)
