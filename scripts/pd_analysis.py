@@ -23,30 +23,30 @@ from palladio.metrics import (accuracy_score, precision_recall_fscore_support,
 EXPS = ('regular', 'permutation')
 
 
-def single_analysis(exp_folder, is_multiclass=False):
-    """Perform the analysis on a single folder."""
-    with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
-        result = pkl.load(f)
+# def single_analysis(exp_folder, is_multiclass=False):
+    # """Perform the analysis on a single folder."""
+    # with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
+            # result = pkl.load(f)
 
-    y_true = result['labels_ts']  # the actual labels
-    y_pred = result['prediction_ts_list']
+        # y_true = result['labels_ts']  # the actual labels
+    # y_pred = result['prediction_ts_list']
 
-    analysis = {
-        'accuracy': accuracy_score(y_true, y_pred),
-        'balanced_accuracy': balanced_accuracy(y_true, y_pred),
-        'MCC': matthews_corrcoef(y_true, y_pred) if not is_multiclass
-        else None
-    }
-    analysis['precision'], analysis['recall'], analysis['F1'], _ = \
-        precision_recall_fscore_support(y_true, y_pred, average='weighted')
+    # analysis = {
+        # 'accuracy': accuracy_score(y_true, y_pred),
+        # 'balanced_accuracy': balanced_accuracy(y_true, y_pred),
+        # 'MCC': matthews_corrcoef(y_true, y_pred) if not is_multiclass
+        # else None
+    # }
+    # analysis['precision'], analysis['recall'], analysis['F1'], _ = \
+        # precision_recall_fscore_support(y_true, y_pred, average='weighted')
 
-    # save selected_list
-    analysis['selected_list'] = result['selected_list']
+    # # save selected_list
+    # analysis['selected_list'] = result['selected_list']
 
-    # save kcv errors
-    analysis['kcv_err_ts'] = result['kcv_err_ts']
-    analysis['kcv_err_tr'] = result['kcv_err_tr']
-    return analysis
+    # # save kcv errors
+    # analysis['kcv_err_ts'] = result['kcv_err_ts']
+    # analysis['kcv_err_tr'] = result['kcv_err_tr']
+    # return analysis
 
 def get_selected_list(estimator):
     """
@@ -129,13 +129,14 @@ def analyze_experiments(base_folder, config):
         out.setdefault('balanced_acc_%s' % type_experiment, []).append(
             balanced_accuracy(yts, yts_pred))
 
-        selected_list = get_selected_list(exp_result['estimator'])
+        if config.perform_vs_analysis:
+            selected_list = get_selected_list(exp_result['estimator'])
 
-        selected_probesets = feature_names[selected_list]
-        is_regular = (type_experiment == EXPS[0])
+            selected_probesets = feature_names[selected_list]
+            is_regular = (type_experiment == EXPS[0])
 
-        for p in selected_probesets:
-            out['selected_%s' % type_experiment][p] += 1
+            for p in selected_probesets:
+                out['selected_%s' % type_experiment][p] += 1
 
         # print(len(exp_result['yts_pred']))
         # print(len(exp_result['ytr_pred']))
@@ -212,7 +213,6 @@ def main(base_folder):
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
 
 
-
     positive_label = config.dataset_options.get('positive_label', None)
     multiclass = config.dataset_options.get('multiclass', None)
 
@@ -225,7 +225,6 @@ def main(base_folder):
     # TODO necessary?
     param_names = list(config.param_grid.keys())
     param_ranges = [config.param_grid[x] for x in param_names]
-
 
     out = analyze_experiments(base_folder, config)
 
@@ -241,46 +240,54 @@ def main(base_folder):
         base_folder)
 
 
+    if config.perform_vs_analysis:
+        # Manually sorting stuff
+        for s in EXPS:
+            out['sorted_keys_%s' % s] = sorted(
+                out['selected_%s' % s], key=out['selected_%s' % s].__getitem__)
 
 
+        selected_todf = [out['selected_regular'][k] for k in out['sorted_keys_regular']]
 
-    # Manually sorting stuff
-    for s in EXPS:
-        out['sorted_keys_%s' % s] = sorted(
-            out['selected_%s' % s], key=out['selected_%s' % s].__getitem__)
+        # Dump the selected features in a pkl as pandas DataFrame
+        df_selected = pd.DataFrame(
+            data=selected_todf, index=out['sorted_keys_regular'],
+            columns=['Selection frequency'])
+        df_selected.sort_values(['Selection frequency'], ascending=False,
+                                inplace=True)
+        df_selected.to_pickle(os.path.join(base_folder, 'signature_regular.pkl'))
 
+        for s in EXPS:
+            with open(os.path.join(base_folder, 'signature_%s.txt' % s), 'w') as f:
+                line_drawn = False
+                for k in reversed(out['sorted_keys_%s' % s]):
+                    if not line_drawn and out['selected_%s' % s][k] < threshold:
+                        line_drawn = True
+                        f.write("=" * 40)
+                        f.write("\n")
+                    f.write("{} : {}\n".format(k, out['selected_%s' % s][k]))
 
+        # ### Variable Selection Plots
 
+        plotting.feature_frequencies(
+            out['sorted_keys_regular'], out['selected_regular'], base_folder,
+            threshold=threshold)
 
+        plotting.features_manhattan(
+            out['sorted_keys_regular'], out['selected_regular'],
+            out['selected_permutation'], base_folder, config.N_jobs_regular,
+            config.N_jobs_permutation, threshold=threshold)
 
-    selected_todf = [out['selected_regular'][k] for k in out['sorted_keys_regular']]
-    # Dump the selected features in a pkl as pandas DataFrame
-    df_selected = pd.DataFrame(
-        data=selected_todf, index=out['sorted_keys_regular'],
-        columns=['Selection frequency'])
-    df_selected.sort_values(['Selection frequency'], ascending=False,
-                            inplace=True)
-    df_selected.to_pickle(os.path.join(base_folder, 'signature_regular.pkl'))
+        plotting.selected_over_threshold(
+            out['selected_regular'], out['selected_permutation'],
+            config.N_jobs_regular, config.N_jobs_permutation, base_folder,
+            threshold=threshold)
 
-    # ### FIN QUI
-
-    for s in EXPS:
-        with open(os.path.join(base_folder, 'signature_%s.txt' % s), 'w') as f:
-            line_drawn = False
-            for k in reversed(out['sorted_keys_%s' % s]):
-                if not line_drawn and out['selected_%s' % s][k] < threshold:
-                    line_drawn = True
-                    f.write("=" * 40)
-                    f.write("\n")
-                f.write("{} : {}\n".format(k, out['selected_%s' % s][k]))
-
-
-
-    # ### Plotting section
+    # ### Prediction accuracy Plots
 
     # ### Accuracy
     # plotting.distributions(out['acc_regular'], out['acc_permutation'],
-                        #    base_folder, 'Accuracy', first_run=True)
+        #                        base_folder, 'Accuracy', first_run=True)
 
     # ### Balanced Accuracy
     plotting.distributions(
@@ -302,20 +309,6 @@ def main(base_folder):
     #     plotting.distributions(out['F1_regular'], out['F1_permutation'],
     #                            base_folder, 'F1')
 
-    plotting.feature_frequencies(
-        out['sorted_keys_regular'], out['selected_regular'], base_folder,
-        threshold=threshold)
-
-    plotting.features_manhattan(
-        out['sorted_keys_regular'], out['selected_regular'],
-        out['selected_permutation'], base_folder, config.N_jobs_regular,
-        config.N_jobs_permutation, threshold=threshold)
-
-    plotting.selected_over_threshold(
-        out['selected_regular'], out['selected_permutation'],
-        config.N_jobs_regular, config.N_jobs_permutation, base_folder,
-        threshold=threshold)
-
     return
 
     # ### TODO Check
@@ -326,7 +319,7 @@ def main(base_folder):
     #     for s in EXPS:
     #         plotting.kcv_err_surfaces(
     #             out['kcv_err_%s' % s], s, base_folder, param_ranges,
-    #             param_names)
+        #             param_names)
 
 
 def parse_args():
