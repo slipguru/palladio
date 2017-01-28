@@ -3,7 +3,9 @@
 
 import numpy as np
 
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import RidgeClassifier
+from sklearn.feature_selection import SelectKBest
+from sklearn.pipeline import Pipeline
 
 from palladio.datasets import DatasetCSV as dataset_class
 # from palladio.datasets import DatasetNPY as dataset_class
@@ -47,7 +49,7 @@ dataset_options = {
 #   SESSION OPTIONS ###
 #######################
 
-result_path = 'palladio_test_golub_rf'
+result_path = 'palladio_test_golub_pipeline'
 
 # The number of "regular" experiment
 N_jobs_regular = 10
@@ -64,18 +66,27 @@ test_set_ratio = float(1) / 4
 #  LEARNER OPTIONS  ###
 #######################
 
-learner = RandomForestClassifier
+# ### PIPELINE ###
 
-learner_options = {
-    'criterion': 'gini'
-}
+# ### STEP 1: VARIABLE SELECTION
+vs = SelectKBest()
 
-estimator = learner(**learner_options)
+# ### STEP 2: CLASSIFICATION VIA RIDGE REGRESSION
+clf = RidgeClassifier()
 
+# ### COMPOSE THE PIPELINE
+pipe = Pipeline([
+        ('kbest_vs', vs),
+        ('ridge_clf', clf),
+        ])
 
-# ~~-Random Forest Classifier parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ### Set the estimator to be the pipeline
+estimator = pipe
+
+# ### Parameter grid for both steps
 param_grid = {
-    'n_estimators': [5, 10, 20],
+    'kbest_vs__k': [1, 3, 5, 10],
+        'ridge_clf__alpha': np.logspace(-4, 2, 5),
 }
 
 # ~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

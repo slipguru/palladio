@@ -72,12 +72,11 @@ learner_options = {
     'fit_intercept': True
 }
 
+estimator = learner(**learner_options)
 
 # ~~ Elastic-Net Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 param_grid = {
-    # 'l1_ratio': np.logspace(-, 0, 5),
     'l1_ratio': np.linspace(0.2, 1, 5),
-    # 'alpha': np.logspace(-1, 4, 5)
     'alpha': np.logspace(3, 7, 5)
 }
 
@@ -93,6 +92,9 @@ cv_options = {
 }
 
 final_scoring = 'accuracy'
+
+# Set to True to perform variable selection analysis
+perform_vs_analysis = True
 
 # ~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 frequency_threshold = 0.75
