@@ -50,11 +50,11 @@ dataset_options = {
 result_path = 'palladio_test_golub_rf'
 
 # The number of "regular" experiment
-N_jobs_regular = 10
+N_jobs_regular = 20
 
 # The number of instances for the permutation tests
 # (labels in the training sets are randomly shuffled)
-N_jobs_permutation = 10
+N_jobs_permutation = 20
 
 # The ratio of the dataset held out for model assessment
 # It should be of the form 1/M
@@ -87,8 +87,11 @@ cv_options = {
 
 final_scoring = 'accuracy'
 
-# Set to True to perform variable selection analysis
-perform_vs_analysis = False
+# For the Pipeline object, indicate the name of the step from which to
+# retrieve the list of selected features
+# For a single estimator which has a `coef_` attributes (e.g., elastic net or
+# lasso) set to True
+vs_analysis = None
 
 # ~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 frequency_threshold = 0.75

@@ -48,8 +48,32 @@ EXPS = ('regular', 'permutation')
     # analysis['kcv_err_tr'] = result['kcv_err_tr']
     # return analysis
 
-def get_selected_list(estimator):
+def smart_retrieve_features(best_estimator):
+    """Retrieves the selected features from any estimator
+
+    In case it has the 'get_support' method, use it.
+    Else, if it has a 'coef_' attribute, assume it's a linear model and the
+    features correspond to the indices of the coefficients != 0
+
     """
+
+    if hasattr(best_estimator, 'coef_'):
+
+        return np.nonzero(best_estimator.coef_.flatten())[0]
+    elif hasattr(best_estimator, 'get_support'):
+        return np.nonzero(best_estimator.get_support())[0]
+    else:
+        # Raise an error
+        raise Exception("The best_estimator object does not have neither the"
+                        " `coef_` attribute nor the `get_support` method")
+
+
+def get_selected_list(grid_search, vs_analysis=True):
+
+    """Retrieves the list of selected features
+
+    Retrieves the list of selected features automatically identifying the
+    type of object
 
     Returns
     -------
@@ -57,7 +81,14 @@ def get_selected_list(estimator):
         The indices of the selected features
     """
 
-    return np.nonzero(estimator.best_estimator_.coef_.flatten())[0]
+    # First, check whether it's a string, which means the list of features
+    # must be taken from a step of a Pipeline object
+    if type(vs_analysis) == str:
+        selected_features = smart_retrieve_features(grid_search.best_estimator_.named_steps[vs_analysis])
+    else:
+        selected_features = smart_retrieve_features(grid_search.best_estimator_)
+
+    return selected_features
 
 
 def analyze_experiments(base_folder, config):
@@ -130,8 +161,8 @@ def analyze_experiments(base_folder, config):
         out.setdefault('balanced_acc_%s' % type_experiment, []).append(
             balanced_accuracy(yts, yts_pred))
 
-        if config.perform_vs_analysis:
-            selected_list = get_selected_list(exp_result['estimator'])
+        if config.vs_analysis is not None:
+            selected_list = get_selected_list(exp_result['estimator'], config.vs_analysis)
 
             selected_probesets = feature_names[selected_list]
             # is_regular = (type_experiment == EXPS[0])
@@ -236,7 +267,7 @@ def main(base_folder):
         base_folder)
 
 
-    if config.perform_vs_analysis:
+    if config.vs_analysis is not None:
         # Manually sorting stuff
         for s in EXPS:
             out['sorted_keys_%s' % s] = sorted(
