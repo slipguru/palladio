@@ -1,16 +1,15 @@
-# -*- coding: UTF-8 -*-
-"""Extension module for palladio (pd_test.py)."""
+"""Extension module for palladio (pd_test.py).
 
+.. deprecated:: 0.5
+"""
 from __future__ import division
+
 import multiprocessing as mp
 import numpy as np
-from l1l2py.algorithms import ridge_regression
 
-# Legacy import
-try:
-    from sklearn.model_selection import KFold
-except:
-    from sklearn.cross_validation import KFold
+from sklearn.model_selection import KFold
+
+from l1l2py.algorithms import ridge_regression
 
 
 def _mu_scaling_factor(data):
@@ -128,20 +127,3 @@ def RLSCV(data, labels, cv_split=5, log_mu_range=(-9, 0, 20)):
     beta = ridge_regression(data, labels, opt_mu)
 
     return beta
-
-
-def sec_to_timestring(seconds):
-    """Transform seconds into a formatted time string.
-
-    Parameters
-    -----------
-    seconds : int
-        Seconds to be transformed.
-    Returns
-    -----------
-    time : string
-        A well formatted time string.
-    """
-    m, s = divmod(seconds, 60)
-    h, m = divmod(m, 60)
-    return "%02d:%02d:%02d" % (h, m, s)

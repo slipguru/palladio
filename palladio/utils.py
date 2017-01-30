@@ -6,13 +6,6 @@
 # PALLADIO Refactoring: Samuele Fiorini
 
 import numpy as np
-# import l1l2py
-
-
-class PDException(Exception):
-    """Exception raised by ``PALLADIO`` classes and functions."""
-
-    pass
 
 
 def signatures(splits_results, frequency_threshold=0.0):

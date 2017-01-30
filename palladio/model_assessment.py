@@ -351,6 +351,7 @@ class ModelAssessment(BaseEstimator):
                     partial_result['train_index'] = train_index
                     partial_result['test_index'] = test_index
 
+                    # TODO use gzip?
                     with open(os.path.join(
                             self.experiments_folder, pkl_name), 'wb') as ff:
                         pkl.dump(partial_result, ff)
@@ -367,9 +368,9 @@ class ModelAssessment(BaseEstimator):
                     'test_score': ts_score,
                     'cv_results_': cv_results,
                     'ytr_pred': ytr_pred,
-                    'ytr': ytr,
                     'yts_pred': yts_pred,
-                    'yts': yts,
+                    'test_index': test_index,
+                    'train_index': train_index,
                 }
 
                 experiment_completed = True
