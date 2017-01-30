@@ -3,15 +3,11 @@
 from sklearn.linear_model import ElasticNet
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils import column_or_1d
+# from sklearn.utils import column_or_1d
 
 
 class ElasticNetClassifier(LinearClassifierMixin, ElasticNet):
-    """Class to extend elastic-net in case of classification.
-
-    In case in which n_jobs != 1 for GridSearchCV, the estimator class must be
-    pickable, therefore statically defined.
-    """
+    """Class to extend elastic-net in case of classification."""
 
     def fit(self, X, y, check_input=True):
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
