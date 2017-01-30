@@ -57,11 +57,10 @@ def smart_retrieve_features(best_estimator):
 
     """
 
-    if hasattr(best_estimator, 'coef_'):
-
-        return np.nonzero(best_estimator.coef_.flatten())[0]
-    elif hasattr(best_estimator, 'get_support'):
+    if hasattr(best_estimator, 'get_support'):
         return np.nonzero(best_estimator.get_support())[0]
+    elif hasattr(best_estimator, 'coef_'):
+        return np.nonzero(best_estimator.coef_.flatten())[0]
     else:
         # Raise an error
         raise Exception("The best_estimator object does not have neither the"
