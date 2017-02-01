@@ -64,10 +64,13 @@ test_set_ratio = .25
 #  LEARNER OPTIONS  ###
 #######################
 
-# learner_class = make_classifier(ElasticNet())
-# learner = 'elastic-net'
+# The optimization objective for Group Lasso is:
+#     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 learner = FistaClassifier(penalty='l1/l2')
-# make_classifier = True
+
+# from l1l2py.algorithms import l1_bound
+# TAU_MAX = l1_bound(X, y)
+# {'alpha': blabla * TAU_MAX})
 
 learner_options = {
     'fit_intercept': True
