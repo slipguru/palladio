@@ -6,8 +6,8 @@ import argparse
 
 import palladio as pd
 
-DATA_EXT = ('csv', 'npy')  # list of allowed data extensions
-MODELS = ('l1l2', 'elasticnet', 'logit')  # implemented methods
+# DATA_EXT = ('csv', 'npy')  # list of allowed data extensions
+# MODELS = ('l1l2', 'elasticnet', 'logit')  # implemented methods
 
 
 def init_main():
@@ -19,32 +19,33 @@ def init_main():
                         version='%(prog)s v' + __version__)
     parser.add_argument("-c", "--create", dest="create", action="store_true",
                         help="create config file", default=False)
-    parser.add_argument("-f", "--format", dest="format", action="store",
-                        help="select data input format (csv or npy)",
-                        default='csv')
-    parser.add_argument("-m", "--model", dest="model", action="store",
-                        help="select model for the standard config file in "
-                             "(l1l2, elasticnet, logit)",
-                        default='l1l2')
+    # parser.add_argument("-f", "--format", dest="format", action="store",
+    #                     help="select data input format (csv or npy)",
+    #                     default='csv')
+    # parser.add_argument("-m", "--model", dest="model", action="store",
+    #                     help="select model for the standard config file in "
+    #                          "(l1l2, elasticnet, logit)",
+    #                     default='l1l2')
     parser.add_argument("configuration_file", help="specify config file",
                         default='pd_config.py')
     args = parser.parse_args()
 
     if args.create:
         # Argument check
-        if args.format.lower() not in DATA_EXT:
-            raise ValueError("Format '{}' not understood. Please specify one"
-                             "of {}.\n".format(args.format.lower(),
-                                               DATA_EXT))
+        # if args.format.lower() not in DATA_EXT:
+        #     raise ValueError("Format '{}' not understood. Please specify one"
+        #                      "of {}.\n".format(args.format.lower(),
+        #                                        DATA_EXT))
+        #
+        # if args.model.lower() not in MODELS:
+        #     raise ValueError("Model '{}' not understood. Please specify one"
+        #                      "of {}.\n".format(args.model.lower(),
+        #                                        MODELS))
 
-        if args.model.lower() not in MODELS:
-            raise ValueError("Model '{}' not understood. Please specify one"
-                             "of {}.\n".format(args.model.lower(),
-                                               MODELS))
-
-        # Define which config_file needs to be loaded
-        config_file = 'config_' + args.model.lower() + \
-                      '_' + args.format.upper() + '.py'
+        # # Define which config_file needs to be loaded
+        # config_file = 'config_' + args.model.lower() + \
+        #               '_' + args.format.upper() + '.py'
+        config_file = 'default_config.py'
 
         std_config_path = os.path.join(pd.__path__[0], 'config_templates',
                                        config_file)

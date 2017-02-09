@@ -1,14 +1,15 @@
 """Dataset loading utilities."""
-import os
-import time
-import shutil
-import pandas as pd
-import numpy as np
 try:
     import cPickle as pkl
 except:
     import pickle as pkl
+import numpy as np
+import os
+import pandas as pd
+import shutil
+import time
 import warnings
+from sklearn.utils.deprecation import deprecated
 
 __all__ = ('DatasetCSV', 'DatasetNPY', 'DatasetXLS')
 
@@ -91,7 +92,7 @@ class Dataset(object):
                 os.path.join(session_folder, link_name)             # DST
             )
 
-
+@deprecated()
 class DatasetCSV(Dataset):
     """Dataset composed by data matrix and labels vector.
 
