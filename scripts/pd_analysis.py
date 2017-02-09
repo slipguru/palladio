@@ -234,10 +234,11 @@ def analyze_experiments(base_folder, config):
     return out
 
 
-def main(base_folder):
+def main():
     """Main for pd_analysis.py."""
+    parser = parse_args()
+    base_folder = parser.result_folder
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
-
 
     positive_label = config.dataset_options.get('positive_label', None)
     multiclass = config.dataset_options.get('multiclass', None)
@@ -255,7 +256,7 @@ def main(base_folder):
     out = analyze_experiments(base_folder, config)
 
     # create a new folder for the analysis, called 'analysis'
-    base_folder = os.path.join(base_folder, 'analysis')
+    base_folder = os.path.join(base_folder, parser.output_folder)
     if not os.path.exists(base_folder):
         os.makedirs(base_folder)
 
@@ -355,9 +356,12 @@ def parse_args():
         description='palladio script for analysing results.')
     parser.add_argument('--version', action='version',
                         version='%(prog)s v' + __version__)
+    parser.add_argument("-o", "--output", dest="output_folder", action="store",
+                        help="specify a name for the analysis folder",
+                        default='analysis')
     parser.add_argument("result_folder", help="specify results directory")
     return parser.parse_args()
 
 
 if __name__ == '__main__':
-    main(parse_args().result_folder)
+    main()
