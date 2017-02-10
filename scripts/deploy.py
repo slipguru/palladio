@@ -26,11 +26,6 @@ if __name__ == '__main__':
     shutil.copytree(os.path.join(scripts_folder, "..", 'palladio'),
                     os.path.join(deployment_folder, 'palladio'))
 
-    # COPY L1L2PY LIBRARY FOLDER
-    shutil.copytree(os.path.join(scripts_folder, "..",
-                                 'ext_libraries', 'l1l2py'),
-                    os.path.join(deployment_folder, 'l1l2py'))
-
     # COPY SCRIPTS
     shutil.copy(os.path.join(scripts_folder, "pd_run.py"),
                 os.path.join(deployment_folder, "pd_run.py"))
