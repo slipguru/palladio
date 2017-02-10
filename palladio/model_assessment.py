@@ -337,24 +337,6 @@ class ModelAssessment(BaseEstimator):
                 lr_score = estimator.score(Xtr, ytr)
                 ts_score = estimator.score(Xts, yts)
 
-                # ### Dump partial results
-                if self.experiments_folder is not None:
-                    if self.shuffle_y:
-                        pkl_name = 'permutation_{}.pkl'.format(i)
-                    else:
-                        pkl_name = 'regular_{}.pkl'.format(i)
-
-                    partial_result = dict()
-                    partial_result['estimator'] = estimator
-                    partial_result['ytr_pred'] = ytr_pred
-                    partial_result['yts_pred'] = yts_pred
-                    partial_result['train_index'] = train_index
-                    partial_result['test_index'] = test_index
-
-                    # TODO use gzip?
-                    with open(os.path.join(
-                            self.experiments_folder, pkl_name), 'wb') as ff:
-                        pkl.dump(partial_result, ff)
 
                 if hasattr(estimator, 'cv_results_'):
                     # In case in which the estimator is a CV object
@@ -371,9 +353,30 @@ class ModelAssessment(BaseEstimator):
                     'yts_pred': yts_pred,
                     'test_index': test_index,
                     'train_index': train_index,
+                    'estimator': estimator
                 }
 
                 experiment_completed = True
+
+                # ### Dump partial results
+                if self.experiments_folder is not None:
+                    if self.shuffle_y:
+                        pkl_name = 'permutation_{}.pkl'.format(i)
+                    else:
+                        pkl_name = 'regular_{}.pkl'.format(i)
+
+                        # partial_result = dict()
+                        # partial_result['estimator'] = estimator
+                        # partial_result['ytr_pred'] = ytr_pred
+                        # partial_result['yts_pred'] = yts_pred
+                        # partial_result['train_index'] = train_index
+                        # partial_result['test_index'] = test_index
+
+                        # TODO use gzip?
+                        with open(os.path.join(
+                          self.experiments_folder, pkl_name), 'wb') as ff:
+                            # pkl.dump(partial_result, ff)
+                            pkl.dump(cv_results_, ff)
 
                 # shutil.move(
                 #     os.path.join(experiments_folder_path, tmp_name),
