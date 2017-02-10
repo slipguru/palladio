@@ -11,7 +11,6 @@ import time
 import warnings
 from sklearn.datasets.base import Bunch
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.multiclass import type_of_target
 
 __all__ = ('DatasetCSV', 'DatasetNPY', 'DatasetXLS', 'load_csv')
 
@@ -70,40 +69,12 @@ def load_csv(data_path, target_path, return_X_y=False,
             feature_names_u[it] += '_{}'.format(it)
             np.savetxt("id_correspondence.csv",
                        np.stack((np.array(feature_names),
-                                 feature_names_u), axis=-1), delimiter=",", fmt='%s')
+                                 feature_names_u), axis=-1),
+                       delimiter=",", fmt='%s')
 
     # Select target names
     target_names = np.sort(np.unique(target))
 
-    # # Check the task
-    # if task is None: task = type_of_target(target)
-    #
-    # if task.lower() in ['continuous', 'continuous-multioutput', 'regression']:
-    #     target_names = None  # Regression
-    # elif task is 'binary':  # Binary classification
-    #     if positive_label is None:
-    #         target_names = np.sort(np.unique(target))
-    #
-    #         # TODO: check if this is necessary at this point
-    #         if len(target_names) != 2:
-    #             raise Exception("More than two unique values in the labels "
-    #                             "array.")
-    #         positive_label = target_names[0]
-    #
-    #     # TODO: check if this is necessary at this point
-    #     target = np.where(target == positive_label, 1, -1)
-    #
-    # elif task is 'multiclass':  # Multi-category classification
-    #     target_names = np.sort(np.unique(target))
-    #
-    #     for i, name in enumerate(target_names):
-    #         target = np.where(target == name, i)
-    # else:
-    #     raise NotImplementedError("Unkown task %s" % task)
-    #
-    # if data.shape[0] != target.shape[0]:
-    #     raise ValueError("The number of samples in data do not correspond "
-    #                      "to the number of samples in labels.")
     if return_X_y:
         return data, target
 
@@ -149,7 +120,6 @@ def copy_files(data_path, target_path, base_path, session_folder):
         )
 
 
-@deprecated('Use load_csv()')
 class Dataset(object):
     """Main class for containing data and labels."""
 
@@ -228,7 +198,7 @@ class Dataset(object):
                 os.path.join(session_folder, link_name)             # DST
             )
 
-
+@deprecated('Use load_csv()')
 class DatasetCSV(Dataset):
     """Dataset composed by data matrix and labels vector.
 
