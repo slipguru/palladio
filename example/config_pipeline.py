@@ -5,7 +5,7 @@ import numpy as np
 
 from sklearn.linear_model import RidgeClassifier
 from sklearn.feature_selection import SelectKBest
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import make_pipeline
 
 from palladio.datasets import DatasetCSV as dataset_class
 # from palladio.datasets import DatasetNPY as dataset_class
@@ -66,27 +66,13 @@ test_set_ratio = float(1) / 4
 #  LEARNER OPTIONS  ###
 #######################
 
-# ### PIPELINE ###
+estimator = make_pipeline(SelectKBest(), RidgeClassifier())
 
-# ### STEP 1: VARIABLE SELECTION
-vs = SelectKBest()
-
-# ### STEP 2: CLASSIFICATION VIA RIDGE REGRESSION
-clf = RidgeClassifier()
-
-# ### COMPOSE THE PIPELINE
-pipe = Pipeline([
-        ('kbest_vs', vs),
-        ('ridge_clf', clf),
-        ])
-
-# ### Set the estimator to be the pipeline
-estimator = pipe
-
-# ### Parameter grid for both steps
+# Parameter grid for both steps
+# make_pipeline as default puts the lowercase name of the classes as names
 param_grid = {
-    'kbest_vs__k': [1, 3, 5, 10],
-    'ridge_clf__alpha': np.logspace(-4, 2, 5),
+    'selectkbest__k': [1, 3, 5, 10],
+    'ridgeclassifier__alpha': np.logspace(-4, 2, 5),
 }
 
 # ~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,7 +88,7 @@ final_scoring = 'accuracy'
 # retrieve the list of selected features
 # For a single estimator which has a `coef_` attributes (e.g., elastic net or
 # lasso) set to True
-vs_analysis = 'kbest_vs'
+vs_analysis = 'selectkbest'
 
 # ~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 frequency_threshold = 0.75
