@@ -35,7 +35,7 @@ def signatures(splits_results, frequency_threshold=0.0):
 
     Examples
     --------
-    >>> from l1l2signature.utils import signatures
+    >>> from palladio.utils import signatures
     >>> splits_results = [{'selected_list':[[True, False], [True, True]]},
     ...                   {'selected_list':[[True, False], [False, True]]}]
     >>> sign_totals, sign_freqs, sign_idxs = signatures(splits_results)
