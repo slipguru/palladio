@@ -1,6 +1,7 @@
 # Configuration file example for PALLADIO
 # version: 2.0
 
+from palladio.datasets import DatasetCSV as dataset_class
 from palldio.wrappers import ElasticNetClassifier
 
 #####################
@@ -25,6 +26,12 @@ dataset_options = {
     'header': 0,
     'index_col': 0
 }
+
+dataset = dataset_class(
+    dataset_files,
+    dataset_options
+)
+data, labels, _ = dataset.load_dataset('.')
 
 #######################
 #   SESSION OPTIONS ###
