@@ -127,15 +127,16 @@ def main(config_path):
     external_estimator.fit(data, labels)
 
     # Perform "permutation" experiments
-    external_estimator = ModelAssessment(
-        internal_gridsearch,
-        scoring=config.final_scoring,
-        shuffle_y=True,
-        n_splits=config.N_jobs_permutation,
-        test_size=0.25,
-        train_size=None,
-        experiments_folder=experiments_folder_path)
-    external_estimator.fit(data, labels)
+    if config.N_jobs_permutation > 0:
+        external_estimator = ModelAssessment(
+            internal_gridsearch,
+            scoring=config.final_scoring,
+            shuffle_y=True,
+            n_splits=config.N_jobs_permutation,
+            test_size=0.25,
+            train_size=None,
+            experiments_folder=experiments_folder_path)
+        external_estimator.fit(data, labels)
 
     if IS_MPI_JOB:
         # Wait for all jobs to end
