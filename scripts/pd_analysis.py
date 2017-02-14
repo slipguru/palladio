@@ -15,7 +15,7 @@ except:
     import pickle as pkl
 
 # from sklearn.metrics import accuracy_score, precision_recall_fscore_support
-# from sklearn.metrics import matthews_corrcoef
+from sklearn.utils.deprecation import deprecated
 from palladio import plotting
 from palladio.metrics import (accuracy_score, precision_recall_fscore_support,
                               matthews_corrcoef, balanced_accuracy)
@@ -23,40 +23,40 @@ from palladio.metrics import (accuracy_score, precision_recall_fscore_support,
 EXPS = ('regular', 'permutation')
 
 
-# def single_analysis(exp_folder, is_multiclass=False):
-    # """Perform the analysis on a single folder."""
-    # with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
-            # result = pkl.load(f)
+@deprecated()
+def single_analysis(exp_folder, is_multiclass=False):
+    """Perform the analysis on a single folder."""
+    with open(os.path.join(exp_folder, 'result.pkl'), 'r') as f:
+        result = pkl.load(f)
 
-        # y_true = result['labels_ts']  # the actual labels
-    # y_pred = result['prediction_ts_list']
+    y_true = result['labels_ts']  # the actual labels
+    y_pred = result['prediction_ts_list']
 
-    # analysis = {
-        # 'accuracy': accuracy_score(y_true, y_pred),
-        # 'balanced_accuracy': balanced_accuracy(y_true, y_pred),
-        # 'MCC': matthews_corrcoef(y_true, y_pred) if not is_multiclass
-        # else None
-    # }
-    # analysis['precision'], analysis['recall'], analysis['F1'], _ = \
-        # precision_recall_fscore_support(y_true, y_pred, average='weighted')
+    analysis = {
+        'accuracy': accuracy_score(y_true, y_pred),
+        'balanced_accuracy': balanced_accuracy(y_true, y_pred),
+        'MCC': matthews_corrcoef(y_true, y_pred) if not is_multiclass
+        else None
+    }
+    analysis['precision'], analysis['recall'], analysis['F1'], _ = \
+        precision_recall_fscore_support(y_true, y_pred, average='weighted')
 
-    # # save selected_list
-    # analysis['selected_list'] = result['selected_list']
+    # save selected_list
+    analysis['selected_list'] = result['selected_list']
 
-    # # save kcv errors
-    # analysis['kcv_err_ts'] = result['kcv_err_ts']
-    # analysis['kcv_err_tr'] = result['kcv_err_tr']
-    # return analysis
+    # save kcv errors
+    analysis['kcv_err_ts'] = result['kcv_err_ts']
+    analysis['kcv_err_tr'] = result['kcv_err_tr']
+    return analysis
+
 
 def smart_retrieve_features(best_estimator):
-    """Retrieves the selected features from any estimator
+    """Retrieve selected features from any estimator.
 
     In case it has the 'get_support' method, use it.
     Else, if it has a 'coef_' attribute, assume it's a linear model and the
     features correspond to the indices of the coefficients != 0
-
     """
-
     if hasattr(best_estimator, 'get_support'):
         return np.nonzero(best_estimator.get_support())[0]
     elif hasattr(best_estimator, 'coef_'):
@@ -68,8 +68,7 @@ def smart_retrieve_features(best_estimator):
 
 
 def get_selected_list(grid_search, vs_analysis=True):
-
-    """Retrieves the list of selected features
+    """Retrieve the list of selected features.
 
     Retrieves the list of selected features automatically identifying the
     type of object
@@ -79,7 +78,6 @@ def get_selected_list(grid_search, vs_analysis=True):
     index : nunmpy.array
         The indices of the selected features
     """
-
     # First, check whether it's a string, which means the list of features
     # must be taken from a step of a Pipeline object
     if type(vs_analysis) == str:
@@ -161,7 +159,8 @@ def analyze_experiments(base_folder, config):
             balanced_accuracy(yts, yts_pred))
 
         if config.vs_analysis is not None:
-            selected_list = get_selected_list(exp_result['estimator'], config.vs_analysis)
+            selected_list = get_selected_list(
+                exp_result['estimator'], config.vs_analysis)
 
             selected_probesets = feature_names[selected_list]
             # is_regular = (type_experiment == EXPS[0])
@@ -234,10 +233,11 @@ def analyze_experiments(base_folder, config):
     return out
 
 
-def main(base_folder):
+def main():
     """Main for pd_analysis.py."""
+    parser = parse_args()
+    base_folder = parser.result_folder
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
-
 
     positive_label = config.dataset_options.get('positive_label', None)
     multiclass = config.dataset_options.get('multiclass', None)
@@ -255,7 +255,7 @@ def main(base_folder):
     out = analyze_experiments(base_folder, config)
 
     # create a new folder for the analysis, called 'analysis'
-    base_folder = os.path.join(base_folder, 'analysis')
+    base_folder = os.path.join(base_folder, parser.output_folder)
     if not os.path.exists(base_folder):
         os.makedirs(base_folder)
 
@@ -355,9 +355,12 @@ def parse_args():
         description='palladio script for analysing results.')
     parser.add_argument('--version', action='version',
                         version='%(prog)s v' + __version__)
+    parser.add_argument("-o", "--output", dest="output_folder", action="store",
+                        help="specify a name for the analysis folder",
+                        default='analysis')
     parser.add_argument("result_folder", help="specify results directory")
     return parser.parse_args()
 
 
 if __name__ == '__main__':
-    main(parse_args().result_folder)
+    main()

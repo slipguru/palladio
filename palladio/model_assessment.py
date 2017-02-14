@@ -334,8 +334,10 @@ class ModelAssessment(BaseEstimator):
 
                 yts_pred = estimator.predict(Xts)
                 ytr_pred = estimator.predict(Xtr)
-                lr_score = estimator.score(Xtr, ytr)
-                ts_score = estimator.score(Xts, yts)
+                lr_score = self.scorer_(estimator, Xtr, ytr)
+                ts_score = self.scorer_(estimator, Xts, yts)
+                # lr_score = estimator.score(Xtr, ytr)
+                # ts_score = estimator.score(Xts, yts)
 
                 # ### Dump partial results
                 if self.experiments_folder is not None:
