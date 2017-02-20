@@ -42,7 +42,8 @@ try:
     IS_MPI_JOB = COMM.Get_size() > 1
 
 except ImportError:
-    print("mpi4py module not found. PALLADIO cannot run on multiple machines.")
+    warnings.warn("mpi4py module not found. "
+                  "PALLADIO cannot run on multiple machines.")
     COMM = None
     RANK = 0
     NAME = 'localhost'
@@ -339,7 +340,6 @@ class ModelAssessment(BaseEstimator):
                 # lr_score = estimator.score(Xtr, ytr)
                 # ts_score = estimator.score(Xts, yts)
 
-
                 if hasattr(estimator, 'cv_results_'):
                     # In case in which the estimator is a CV object
                     cv_results = estimator.cv_results_
@@ -362,28 +362,15 @@ class ModelAssessment(BaseEstimator):
 
                 # ### Dump partial results
                 if self.experiments_folder is not None:
-                    if self.shuffle_y:
-                        pkl_name = 'permutation_{}.pkl'.format(i)
-                    else:
-                        pkl_name = 'regular_{}.pkl'.format(i)
+                    pkl_name = (
+                        'permutation' if self.shuffle_y else 'regular') + \
+                        '_%d.pkl' % i
 
-                        # partial_result = dict()
-                        # partial_result['estimator'] = estimator
-                        # partial_result['ytr_pred'] = ytr_pred
-                        # partial_result['yts_pred'] = yts_pred
-                        # partial_result['train_index'] = train_index
-                        # partial_result['test_index'] = test_index
-
-                        # TODO use gzip?
-                        with open(os.path.join(
-                          self.experiments_folder, pkl_name), 'wb') as ff:
-                            # pkl.dump(partial_result, ff)
-                            pkl.dump(cv_results_, ff)
-
-                # shutil.move(
-                #     os.path.join(experiments_folder_path, tmp_name),
-                #     os.path.join(experiments_folder_path, custom_name),
-                # )
+                    # TODO use gzip?
+                    with open(os.path.join(
+                            self.experiments_folder, pkl_name), 'wb') as ff:
+                        # pkl.dump(partial_result, ff)
+                        pkl.dump(cv_results_, ff)
 
             except StandardError as e:
                 # If somethings out of the ordinary happens,
