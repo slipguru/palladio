@@ -30,6 +30,8 @@ from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.utils import check_X_y, check_random_state
 from sklearn.utils.multiclass import type_of_target
 
+from palladio.utils import build_cv_results as _build_cv_results
+
 __all__ = ('ModelAssessment',)
 
 LOG = logging.getLogger(__package__)
@@ -108,13 +110,6 @@ def _check_cv(cv=3, y=None, classifier=False, **kwargs):
         return _CVIterableWrapper(cv)
 
     return cv  # New style cv objects are passed without any modification
-
-
-def _build_cv_results(dictionary, **results):
-    """Function to build final cv_results_ dictionary with partial results."""
-    for k, v in results.iteritems():
-        if v is not None:
-            dictionary.setdefault(k, []).append(v)
 
 
 class ModelAssessment(BaseEstimator):

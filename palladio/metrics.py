@@ -3,6 +3,11 @@ import numpy as np
 
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from sklearn.metrics import matthews_corrcoef
+from sklearn.metrics.regression import *
+from sklearn.metrics.regression import __ALL__ as rmetrics
+
+# List of callables for regression metrics
+__REGRESSION_METRICS__ = [locals()[m] for m in rmetrics]
 
 __all__ = (
     'accuracy_score', 'precision_recall_fscore_support',

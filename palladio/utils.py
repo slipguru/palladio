@@ -8,6 +8,13 @@
 import numpy as np
 
 
+def build_cv_results(dictionary, **results):
+    """Function to build final cv_results_ dictionary with partial results."""
+    for k, v in results.iteritems():
+        if v is not None:
+            dictionary.setdefault(k, []).append(v)
+
+
 def signatures(splits_results, frequency_threshold=0.0):
     """Return (almost) nested signatures for each correlation value.
 
