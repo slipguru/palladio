@@ -125,7 +125,7 @@ def confusion_matrix(labels, predictions):
     pred_unique_labels, pred_C1, pred_C2 = _check_unique_labels(predictions)
 
     if not np.all(real_unique_labels == pred_unique_labels):
-        raise PDException('real and predicted labels differ.')
+        raise ValueError('real and predicted labels differ.')
 
     cm['T'][real_unique_labels[0]] = (real_C1 & pred_C1).sum()  # True C1
     cm['T'][real_unique_labels[1]] = (real_C2 & pred_C2).sum()  # True C2
@@ -198,7 +198,7 @@ def classification_measures(confusion_matrix, positive_label=None):
     if positive_label is not None:
         P = positive_label
         if P not in labels:
-            raise PDException('label %s not found.' % positive_label)
+            raise ValueError('label %s not found.' % positive_label)
 
         N = set(labels).difference([positive_label]).pop()
     else:
@@ -246,8 +246,8 @@ def _check_unique_labels(labels):
     labels = np.array([str(s).strip() for s in labels])
     unique_labels = np.unique(labels)
 
-    if not len(unique_labels) == 2:
-        raise PDException('more than 2 classes in labels.')
+    if len(unique_labels) != 2:
+        raise ValueError('more than 2 classes in labels.')
 
     unique_labels.sort(kind='mergesort')
     class1 = (labels == unique_labels[0])
