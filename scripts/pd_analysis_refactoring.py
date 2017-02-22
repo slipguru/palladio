@@ -5,27 +5,44 @@
 import argparse
 import imp
 import os
-import pandas as pd
+# import pandas as pd
 
 from six.moves import cPickle as pkl
+from six.moves import filter
 from sklearn.base import is_regressor
 from sklearn.utils.multiclass import type_of_target
 
+from palladio import plotting
 from palladio.metrics import __REGRESSION_METRICS__
 from palladio.utils import build_cv_results
 
 
 def regression_analysis(cv_results, config):
-    """."""
+    """Evaluate the regression metrics on the external splits results.
+
+    Parameters
+    ----------
+    cv_results : dictionary
+        As in `palladio.ModelAssessment.cv_results_`
+    config : module
+        Palladio config of the current experiment
+
+    Returns
+    -------
+    performance_metrics : dictionary
+        Regression metrics evaluated on the external splits results
+    """
     test_index = cv_results['test_index']
     yts_pred = cv_results['yts_pred']
     yts_true = [config.labels[i] for i in test_index]
 
     # Evaluate all the metrics on the results
+    performance_metrics = {}
+    for metric in __REGRESSION_METRICS__:
+        performance_metrics[metric.__name__] = [
+            metric(*yy) for yy in zip(yts_true, yts_pred)]
 
-
-
-    return 0
+    return performance_metrics
 
 
 def classification_analysis(cv_results):
@@ -42,19 +59,32 @@ def load_results(base_folder):
 
     Returns
     -------
-    cv_results : dictionary
+    regular_cv_results : dictionary
+        As in `palladio.ModelAssessment.cv_results_`
+    permutation_cv_results : dictionary
         As in `palladio.ModelAssessment.cv_results_`
     """
     experiments_folder = os.path.join(base_folder, 'experiments')
     pkls = [f for f in os.listdir(experiments_folder) if f.endswith('.pkl')]
     assert(len(pkls) > 0), "no pkl files found in %s" % base_folder
 
-    cv_results = {}  # dictionary of results as in ModelAssessment
-    for pkl_file in pkls:
-        row = pkl.load(open(os.path.join(experiments_folder, pkl_file), 'rb'))
-        build_cv_results(cv_results, **row)
+    # Separate regular VS permutation batches
+    regular_batch = filter(lambda x: 'regular' in x, pkls)
+    permutation_batch = filter(lambda x: 'permutation' in x, pkls)
 
-    return cv_results
+    # Regular batch
+    regular_cv_results = {}  # dictionary of results as in ModelAssessment
+    for pkl_file in regular_batch:
+        row = pkl.load(open(os.path.join(experiments_folder, pkl_file), 'rb'))
+        build_cv_results(regular_cv_results, **row)
+
+    # Regular batch
+    permutation_cv_results = {}  # dictionary of results as in ModelAssessment
+    for pkl_file in permutation_batch:
+        row = pkl.load(open(os.path.join(experiments_folder, pkl_file), 'rb'))
+        build_cv_results(permutation_cv_results, **row)
+
+    return regular_cv_results, permutation_cv_results
 
 
 def main():
@@ -64,7 +94,7 @@ def main():
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
 
     # Load results from pkl
-    cv_results = load_results(base_folder)
+    regular_cv_results, permutation_cv_results = load_results(base_folder)
 
     # learning_task follows the convention of
     # sklearn.utils.multiclass.type_of_target
@@ -79,10 +109,20 @@ def main():
     # Run the appropriate analysis according to the learning_task
     if learning_task.lower() in ['continuous', 'regression']:
         # Perform regression analysis
-        out = regression_analysis(cv_results, config)
+        performance_regular = regression_analysis(regular_cv_results, config)
+        performance_permutation = {}  # for consistency only
     else:
         # Perform classification analysis
-        pass
+        performance_regular = classification_analysis(
+            regular_cv_results, config)
+        performance_permutation = classification_analysis(
+            permutation_cv_results, config)
+
+    # Generate distribution plots
+    for metric in performance_regular:
+        plotting.distribution(performance_regular[metric],
+                              performance_permutation.get(metric, None),
+                              base_folder, metric)
 
 
 def parse_args():
