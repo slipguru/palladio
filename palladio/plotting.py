@@ -450,7 +450,8 @@ def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
 
 
 def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
-                   base_folder=None, logspace=None, plot_errors=False):
+                   base_folder=None, logspace=None, plot_errors=False,
+                   is_regression=False):
     """Plot error surfaces.
 
     Parameters
@@ -471,6 +472,11 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
         Folder where to save the plots.
     logspace : array-like or None, optional, default None
         List to specify which variable to visualise in logspace.
+    plot_errors : bool, optional, default False
+        If True, plot errors instead of scores.
+    is_regression : bool, optional, default False
+        If True and plot_errors is True, do errors = -scores instead of
+        1 - scores.
     """
     def multicond(*args):
         cond = args[0]
@@ -553,7 +559,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                     dff['mean_%s_score' % s].tolist()), axis=0)[cond]
                 Z = zz.reshape(param_grid_xx_size, param_grid_yy_size)
                 if plot_errors:
-                    Z = 1 - Z
+                    Z = -Z if is_regression else 1 - Z
 
                 # plt.close('all')
                 ax.plot_surface(
