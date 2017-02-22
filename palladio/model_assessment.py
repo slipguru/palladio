@@ -172,6 +172,21 @@ class ModelAssessment(BaseEstimator):
     scorer_ : function
         Scorer function used on the held out data to choose the best
         parameters for the model.
+
+    cv_results_ : dictionary
+        Result of the fit. The dictionary is pandas.DataFrame-able. Each row is
+        the results of an external split.
+        Columns are:
+        'split_i', 'learn_score', 'test_score', 'cv_results_', 'ytr_pred',
+        'yts_pred', 'test_index', 'train_index', 'estimator'
+
+        Example:
+        >>> pd.DataFrame(cv_results_)
+        split_i | learn_score | test_score | cv_results_         | ...
+              0 |       0.987 |      0.876 | {<internal splits>} | ...
+              1 |       0.846 |      0.739 | {<internal splits>} | ...
+              2 |       0.956 |      0.630 | {<internal splits>} | ...
+              3 |       0.964 |      0.835 | {<internal splits>} | ...
     """
 
     def __init__(self, estimator, cv=None, scoring=None, fit_params=None,
