@@ -14,6 +14,7 @@ from sklearn.utils.multiclass import type_of_target
 
 from palladio import plotting
 from palladio.metrics import __REGRESSION_METRICS__
+from palladio.metrics import __CLASSIFICATION_METRICS__
 from palladio.utils import build_cv_results
 
 
@@ -45,8 +46,32 @@ def regression_analysis(cv_results, config):
     return performance_metrics
 
 
-def classification_analysis(cv_results):
-    return 0
+def classification_analysis(cv_results, config):
+    """Evaluate the classification metrics on the external splits results.
+
+    Parameters
+    ----------
+    cv_results : dictionary
+        As in `palladio.ModelAssessment.cv_results_`
+    config : module
+        Palladio config of the current experiment
+
+    Returns
+    -------
+    performance_metrics : dictionary
+        Regression metrics evaluated on the external splits results
+    """
+    test_index = cv_results['test_index']
+    yts_pred = cv_results['yts_pred']
+    yts_true = [config.labels[i] for i in test_index]
+
+    # Evaluate all the metrics on the results
+    performance_metrics = {}
+    for metric in __CLASSIFICATION_METRICS__:
+        performance_metrics[metric.__name__] = [
+            metric(*yy) for yy in zip(yts_true, yts_pred)]
+
+    return performance_metrics
 
 
 def load_results(base_folder):
@@ -120,9 +145,9 @@ def main():
 
     # Generate distribution plots
     for metric in performance_regular:
-        plotting.distribution(performance_regular[metric],
-                              performance_permutation.get(metric, None),
-                              base_folder, metric)
+        plotting.distributions(performance_regular[metric],
+                               performance_permutation.get(metric, None),
+                               base_folder, metric)
 
 
 def parse_args():

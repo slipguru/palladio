@@ -88,8 +88,9 @@ def main(config_path):
         shutil.copy(config_path, os.path.join(result_path, 'config.py'))
 
         # CREATE HARD LINK IN SESSION FOLDER
-        copy_files(config.data_path, config.target_path,
-                   config_dir, result_path)
+        if hasattr(config, 'data_path') and hasattr(config, 'target_path'):
+            copy_files(config.data_path, config.target_path,
+                       config_dir, result_path)
 
     if IS_MPI_JOB:
         # Wait for the folder to be created and files to be copied
