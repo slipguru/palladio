@@ -143,13 +143,15 @@ def main():
         performance_permutation = classification_analysis(
             permutation_cv_results, config)
 
-    # # Generate distribution plots
-    # for metric in performance_regular:
-    #     plotting.distributions(performance_regular[metric],
-    #                            performance_permutation.get(metric, None),
-    #                            base_folder, metric)
-
-    print(learning_task.lower())
+    # Generate distribution plots
+    first_run = True
+    for metric in performance_regular:
+        plotting.distributions(v_regular=performance_regular[metric],
+                               v_permutation=performance_permutation.get(metric, []),
+                               base_folder=base_folder, metric=metric,
+                               first_run=first_run,
+                               is_regression=learning_task.lower() in ['continuous', 'regression'])
+        first_run = False
 
     # Generate surfaces
     plotting.score_surfaces(param_grid=config.param_grid,

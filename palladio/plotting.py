@@ -53,7 +53,7 @@ colorsHex = {
 
 
 def distributions(v_regular, v_permutation, base_folder='', metric='nd',
-                  first_run=False):
+                  first_run=False, is_regression=False):
     """Create a plot of the distributions of performance metrics.
 
     Plots are created for both "regular" experiments and permutation tests.
@@ -75,6 +75,10 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
     first_run : bool, optional, default False
         If not first_run, append the logs to a single file. Otherwise append
         logs to a cleared file.
+
+    is_regression : bool, optional, default False
+        If True and plot_errors is True, do errors = -scores instead of
+        1 - scores.
     """
     if np.any(np.equal(v_regular, None)) or \
             np.any(np.equal(v_permutation, None)):
@@ -82,23 +86,35 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
             "Cannot create {} plot due to some nan values".format(metric))
         return
     # scaling factor for percentage plot
-    if metric.lower() not in ['mcc']:
-        scale = 100
-        _bins = np.arange(0, 105, 5)
-        x_min = 0.0
-    else:
+
+    if is_regression:
         scale = 1
-        _bins = np.arange(-1, 1, 0.05)
-        x_min = -1.0
-    x_max = 1.0
+        x_min = np.min(v_regular)
+        x_max = np.max(v_regular)
+        _bins = 20
+        kde = True
+    else:
+        kde = False
+        if metric.lower() not in ['mcc']: # TODO fix this old notation here
+            scale = 100
+            _bins = np.arange(0, 105, 5)
+            x_min = 0.0
+        else:
+            scale = 1
+            _bins = np.arange(-1, 1, 0.05)
+            x_min = -1.0
+        x_max = 1.0
 
     fig, ax = plt.subplots(figsize=(18, 10))
     kwargs = {
         'norm_hist': False,
-        'kde': False,
+        'kde': kde,
         'bins': _bins,
         # hist_kws : {'alpha' : 0.8}
     }
+
+    v_regular = np.array(v_regular)
+    v_permutation = np.array(v_permutation)
 
     reg_mean = np.nanmean(v_regular)
     reg_std = np.nanstd(v_regular)
@@ -106,13 +122,15 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
     perm_mean = np.nanmean(v_permutation)
     perm_std = np.nanstd(v_permutation)
 
-    sns.distplot(v_permutation[~np.isnan(v_permutation)] * scale,
-                 # label="Permutation batch \nMean = {0:.2f}, STD = {1:.2f}"
-                 # .format(perm_mean, perm_std),
-                 label="Permutation batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
-                       .format(perm_mean * 100, perm_std * 100),
-                 color=colorsHex['lightRed'], ax=ax,
-                 hist_kws={'alpha': 0.8}, **kwargs)
+    if len(v_permutation) > 0:
+        sns.distplot(v_permutation[~np.isnan(v_permutation)] * scale,
+                     # label="Permutation batch \nMean = {0:.2f}, STD = {1:.2f}"
+                     # .format(perm_mean, perm_std),
+                     label="Permutation batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
+                           .format(perm_mean * 100, perm_std * 100),
+                     color=colorsHex['lightRed'], ax=ax,
+                     hist_kws={'alpha': 0.8}, **kwargs)
+
     sns.distplot(v_regular[~np.isnan(v_regular)] * scale,
                  # label="Regular batch \nMean = {0:.2f}, STD = {1:.2f}"
                  #        .format(reg_mean, reg_std),
@@ -127,7 +145,10 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
 
     # Wilcoxon rank sum test
     # rstest = stats.ranksums(v_regular, v_permutation)
-    rstest = stats.wilcoxon(v_regular, v_permutation)
+    if len(v_permutation) > 0:
+        rstest = stats.wilcoxon(v_regular, v_permutation)
+    else:
+        rstest = (0,0) # TODO fix here
 
     filemode = 'w' if first_run else 'a'
     with open(os.path.join(base_folder, 'stats.txt'), filemode) as f:
