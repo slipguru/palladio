@@ -143,11 +143,27 @@ def main():
         performance_permutation = classification_analysis(
             permutation_cv_results, config)
 
-    # Generate distribution plots
-    for metric in performance_regular:
-        plotting.distributions(performance_regular[metric],
-                               performance_permutation.get(metric, None),
-                               base_folder, metric)
+    # # Generate distribution plots
+    # for metric in performance_regular:
+    #     plotting.distributions(performance_regular[metric],
+    #                            performance_permutation.get(metric, None),
+    #                            base_folder, metric)
+
+    print(learning_task.lower())
+
+    # Generate surfaces
+    plotting.score_surfaces(param_grid=config.param_grid,
+                            results=regular_cv_results,
+                            indep_var=config.indep_vars if hasattr(
+                                config, 'indep_vars') else None,
+                            pivoting_var=config.pivot_var if hasattr(
+                                config, 'pivot_var') else None,
+                            base_folder=base_folder,
+                            logspace=config.logspace if hasattr(
+                                config, 'logspace') else None,
+                            plot_errors=config.plot_errors if hasattr(
+                                config, 'plot_errors') else False,
+                            is_regression=learning_task.lower() in ['continuous', 'regression'])
 
 
 def parse_args():
