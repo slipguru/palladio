@@ -8,6 +8,45 @@
 import numpy as np
 
 
+def retrieve_features(best_estimator):
+    """Retrieve selected features from any estimator.
+
+    In case it has the 'get_support' method, use it.
+    Else, if it has a 'coef_' attribute, assume it's a linear model and the
+    features correspond to the indices of the coefficients != 0
+    """
+    if hasattr(best_estimator, 'get_support'):
+        return np.nonzero(best_estimator.get_support())[0]
+    elif hasattr(best_estimator, 'coef_'):
+        return np.nonzero(best_estimator.coef_.flatten())[0]
+    else:
+        # Raise an error
+        raise AttributeError('The best_estimator object does not have '
+                             'neither the `coef_` attribute nor the '
+                             '`get_support` method')
+
+
+def get_selected_list(grid_search, vs_analysis=True):
+    """Retrieve the list of selected features.
+
+    Retrieves the list of selected features automatically identifying the
+    type of object
+
+    Returns
+    -------
+    index : nunmpy.array
+        The indices of the selected features
+    """
+    # First, check whether it's a string, which means the list of features
+    # must be taken from a step of a Pipeline object
+    if type(vs_analysis) == str:
+        selected_features = retrieve_features(
+            grid_search.best_estimator_.named_steps[vs_analysis])
+    else:
+        selected_features = retrieve_features(grid_search.best_estimator_)
+    return selected_features
+
+
 def build_cv_results(dictionary, **results):
     """Function to build final cv_results_ dictionary with partial results."""
     for k, v in results.iteritems():

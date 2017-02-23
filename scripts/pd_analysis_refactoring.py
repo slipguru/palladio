@@ -4,8 +4,8 @@
 
 import argparse
 import imp
+import numpy as np
 import os
-# import pandas as pd
 
 from six.moves import cPickle as pkl
 from six.moves import filter
@@ -16,6 +16,7 @@ from palladio import plotting
 from palladio.metrics import __REGRESSION_METRICS__
 from palladio.metrics import __CLASSIFICATION_METRICS__
 from palladio.utils import build_cv_results
+from palladio.utils import get_selected_list
 
 
 def regression_analysis(cv_results, config):
@@ -121,6 +122,13 @@ def main():
     # Load results from pkl
     regular_cv_results, permutation_cv_results = load_results(base_folder)
 
+    # Get feature names
+    if hasattr(config, 'feature_names'):
+        feature_names = config.feature_names
+    else:  # the following code creates [feat_0, feat_1, ..., feat_d]
+        feature_names = 'feat_' + np.arange(
+            config.data.shape[1]).astype(str).astype(object)
+
     # learning_task follows the convention of
     # sklearn.utils.multiclass.type_of_target
     learning_task = config.learning_task if hasattr(config, 'learning_task') \
@@ -143,6 +151,28 @@ def main():
         performance_permutation = classification_analysis(
             permutation_cv_results, config)
 
+    # Handle variable selection step
+    if config.vs_analysis is not None:
+        selected = {}
+        # Init variable selection containers
+        selected['regular'] = dict(zip(feature_names,
+                                       np.zeros(len(feature_names))))
+        selected['permutation'] = selected['regular'].copy()
+
+        names_ = ('regular', 'permutation')
+        cv_results_ = (regular_cv_results, permutation_cv_results)
+        for batch_name, cv_result in zip(names_, cv_results_):
+            ## TODO cv_result['estimator'] is a list containing the grid-search
+            selected_list = get_selected_list(
+                cv_result['estimator'], config.vs_analysis)
+            selected_variables = feature_names[selected_list]
+
+            for var in selected_variables:
+                selected[batch_name][var] += 1
+
+        print(selected['regular'])
+
+
     # Generate distribution plots
     first_run = True
     for metric in performance_regular:
@@ -151,7 +181,8 @@ def main():
                                base_folder=base_folder, metric=metric,
                                first_run=first_run,
                                is_regression=learning_task.lower() in ['continuous', 'regression'])
-        first_run = False
+        if first_run:
+            first_run = False
 
     # Generate surfaces
     plotting.score_surfaces(param_grid=config.param_grid,

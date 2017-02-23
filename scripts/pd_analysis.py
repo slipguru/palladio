@@ -19,6 +19,7 @@ from sklearn.utils.deprecation import deprecated
 from palladio import plotting
 from palladio.metrics import (accuracy_score, precision_recall_fscore_support,
                               matthews_corrcoef, balanced_accuracy)
+from palladio.utils import get_selected_list
 
 EXPS = ('regular', 'permutation')
 
@@ -48,44 +49,6 @@ def single_analysis(exp_folder, is_multiclass=False):
     analysis['kcv_err_ts'] = result['kcv_err_ts']
     analysis['kcv_err_tr'] = result['kcv_err_tr']
     return analysis
-
-
-def smart_retrieve_features(best_estimator):
-    """Retrieve selected features from any estimator.
-
-    In case it has the 'get_support' method, use it.
-    Else, if it has a 'coef_' attribute, assume it's a linear model and the
-    features correspond to the indices of the coefficients != 0
-    """
-    if hasattr(best_estimator, 'get_support'):
-        return np.nonzero(best_estimator.get_support())[0]
-    elif hasattr(best_estimator, 'coef_'):
-        return np.nonzero(best_estimator.coef_.flatten())[0]
-    else:
-        # Raise an error
-        raise Exception("The best_estimator object does not have neither the"
-                        " `coef_` attribute nor the `get_support` method")
-
-
-def get_selected_list(grid_search, vs_analysis=True):
-    """Retrieve the list of selected features.
-
-    Retrieves the list of selected features automatically identifying the
-    type of object
-
-    Returns
-    -------
-    index : nunmpy.array
-        The indices of the selected features
-    """
-    # First, check whether it's a string, which means the list of features
-    # must be taken from a step of a Pipeline object
-    if type(vs_analysis) == str:
-        selected_features = smart_retrieve_features(grid_search.best_estimator_.named_steps[vs_analysis])
-    else:
-        selected_features = smart_retrieve_features(grid_search.best_estimator_)
-
-    return selected_features
 
 
 def analyze_experiments(base_folder, config):
