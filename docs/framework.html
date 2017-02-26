@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The framework &#8212; PALLADIO 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/slipGuru.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quick start tutorial" href="tutorial.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" />
+<meta name="keywords"
+      content="SlipGuru, 'University of Genoa', statistical learning,
+      computational biology, Python, distributed, computing, parallel" />
+<map id="logosmap" name="logosmap">
+    <area shape="rect" alt="SlipGURU" title="SlipGURU" coords="0,0,89,112"
+          href="http://slipguru.disi.unige.it/" />
+    <area shape="rect" alt="Dipartimento di Informatica e Scienze dell'Informazione"
+          title="Dipartimento di Informatica e Scienze dell'Informazione"
+          coords="95,4,200,34" href="http://www.disi.unige.it/" />
+    <area shape="rect" alt="Università Degli Studi di Genova"
+          title="Università Degli Studi di Genova" coords="124,48,171,107"
+          href="http://www.unige.it/" />
+</map>
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Quick start tutorial"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 2.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-framework">
+<span id="framework"></span><h1>The framework<a class="headerlink" href="#the-framework" title="Permalink to this headline">¶</a></h1>
+<p>A dataset consists of two things:</p>
+<ul class="simple">
+<li>An input matrix <span class="math">\(X \in \mathbb{R}^{n \times p}\)</span> representing <span class="math">\(n\)</span> samples each one described by <span class="math">\(p\)</span> features; in the case of gene expression microarrays for instance each feature represents</li>
+<li>An output vector <span class="math">\({\bf y}\)</span> of length <span class="math">\(n\)</span> whose elements are either a continuous value or a discrete label, describing some property of the samples. These may represent for example the levels of a given substance in the blood of an individual (continuous variable) or the <em>class</em> to which he or she belongs (for instance, someone affected by a given disease or a healthy control).</li>
+</ul>
+<p>For the time being, we will only consider a specific instance of the latter case, where the number of classes is two: this is commonly referred to as <em>binary classification</em> scenario.</p>
+<p>As previously explained, the core idea behind <strong>PALLADIO</strong> is to return, together with a list of significant features, not just a single value as an estimate for the prediction accuracy which can be achieved, but a distribution, so that it can be compared with the distribution obtained from experiments when the function is learned from data where the labels have been randomly shuffled (see <a class="reference internal" href="introduction.html#introduction"><span class="std std-ref">Introduction</span></a>).</p>
+<div class="section" id="pipeline">
+<span id="id1"></span><h2>Pipeline<a class="headerlink" href="#pipeline" title="Permalink to this headline">¶</a></h2>
+<p>Once the main script has been launched, the configuration file is read in order to retrieve all required information to run all the experiments of a <strong>PALLADIO</strong> <em>session</em>. These include:</p>
+<ul class="simple">
+<li>The location of <strong>data</strong> and <strong>labels</strong> files.</li>
+<li>Experiment design parameters, such as the total number of experiments and the ratio of samples to be used for testing in each experiment.</li>
+<li>Parameters specific to the chosen machine learning algorithm: for instance, for the <span class="math">\(\ell_1 \ell_2\)</span> regularized algorithm, the values for the <span class="math">\(\tau\)</span> and <span class="math">\(\lambda\)</span> parameters.</li>
+</ul>
+<p>A <em>session folder</em> is created within the folder containing the configuration file, in order to keep everything as contained as possible; data and labels file, together with the configuration file itself, are copied inside this folder. Then, experiments are distributed among the machines of the cluster; each machine will be assigned roughly the same number of jobs in order to balance the load.</p>
+<div class="section" id="experiments">
+<h3>Experiments<a class="headerlink" href="#experiments" title="Permalink to this headline">¶</a></h3>
+<p>Each experiment is divided in several stages, as shown in <a class="reference internal" href="#experiment-stages"><span class="std std-numref">Fig. 1</span></a>:</p>
+<div class="figure align-center" id="experiment-stages">
+<a class="reference internal image-reference" href="_images/experiment_stages.pdf"><img alt="broken link" src="_images/experiment_stages.pdf" /></a>
+<p class="caption"><span class="caption-number">Fig. 1 </span><span class="caption-text">The stages each experiment goes through.</span></p>
+</div>
+<div class="section" id="dataset-split-and-preprocessing">
+<h4>Dataset split and preprocessing<a class="headerlink" href="#dataset-split-and-preprocessing" title="Permalink to this headline">¶</a></h4>
+<p>In the very first stage, the dataset is split in <strong>training</strong> and <strong>test</strong> set, in a ratio determined by the corresponding parameter in the experiment configuration file; also, during this stage, any kind of data preprocessing (such as centering or normalization) is performed.</p>
+</div>
+<div class="section" id="model-selection">
+<h4>Model selection<a class="headerlink" href="#model-selection" title="Permalink to this headline">¶</a></h4>
+<p>Assuming that the chosen classifier requires some parameter to be specified (for instance the <span class="math">\(\ell_1\)</span> and squared <span class="math">\(\ell_2\)</span> penalities weights when using the <span class="math">\(\ell_1 \ell_2\)</span> regularized least square algorithm), the <strong>training</strong> set is split in <span class="math">\(K\)</span> chunks (the number <span class="math">\(K\)</span> is also specified in the experiment configuration file) and K-fold cross validation is performed in order to choose the best parameters, that is those which lead to the model with the lowest cross validation error.</p>
+</div>
+<div class="section" id="model-assessment">
+<h4>Model assessment<a class="headerlink" href="#model-assessment" title="Permalink to this headline">¶</a></h4>
+<p>Finally, the algorithm is trained using the parameters chosen in the previous step on the whole <strong>training set</strong>; the function obtained is then used to predict the labels of samples belonging to the <strong>test set</strong>, which have not been used so far in any way, so that the results of whole procedure are unbiased.</p>
+<p>At the end of each experiment, results are stored in a <code class="docutils literal"><span class="pre">.pkl</span></code> file inside a subfolder whose name will be of the form <code class="docutils literal"><span class="pre">regular_p_P_i_I</span></code> for regular experiments and <code class="docutils literal"><span class="pre">permutation_p_P_i_I</span></code> for experiments where the training labels have been randomly shuffled, where <code class="docutils literal"><span class="pre">P</span></code> and <code class="docutils literal"><span class="pre">I</span></code> the process number and within that process a counter which is incremented by one after each experiment.</p>
+</div>
+</div>
+</div>
+<div class="section" id="analysis">
+<span id="id2"></span><h2>Analysis<a class="headerlink" href="#analysis" title="Permalink to this headline">¶</a></h2>
+<p>The analysis script simply reads the partial results in all experiment folders, consisting of</p>
+<ul class="simple">
+<li>A list of features</li>
+<li>The predicted labels for the test set</li>
+</ul>
+<p>With these it computes the accuracy achieved and then uses these elaborated results to produce a number of plots:</p>
+<p><a class="reference internal" href="#manhattan-plot"><span class="std std-numref">Fig. 2</span></a> shows the absolute feature selection frequency in both <em>regular</em> experiments and permutation tests; each tick on the horizontal axis represents a different feature, whose position on the vertical axis is the number of times it was selected in an experiment. Features are sorted based on the selection frequency relative to <em>regular</em> experiments; green dots are frequencies for <em>regular</em> experiments, red ones for permutation tests.</p>
+<div class="figure align-center" id="manhattan-plot">
+<a class="reference internal image-reference" href="_images/manhattan_plot.pdf"><img alt="broken link" src="_images/manhattan_plot.pdf" /></a>
+<p class="caption"><span class="caption-number">Fig. 2 </span><span class="caption-text">A manhattan plot showing the distribution of frequencies for both <em>regular</em> experiments and permutation tests.</span></p>
+</div>
+<p><a class="reference internal" href="#signature-frequencies"><span class="std std-numref">Fig. 3</span></a> shows a detail of the frequeny of the top <span class="math">\(2 \times p_{\rm rel}\)</span> selected features, where <span class="math">\(p_{\rm rel}\)</span> is the number of features identified as <em>relevant</em> by the framework, i.e. those which have been selected enough times according to the selection threshold defined in the configuration file. Seeing the selection frequency of <em>relevant</em> features with respect to the selection frequency of those which have been rejected may help better interpret the obtained results.</p>
+<div class="figure align-center" id="signature-frequencies">
+<a class="reference internal image-reference" href="_images/signature_frequencies.pdf"><img alt="broken link" src="_images/signature_frequencies.pdf" /></a>
+<p class="caption"><span class="caption-number">Fig. 3 </span><span class="caption-text">A detail of the manhattan plot.</span></p>
+</div>
+<p>Finally, <a class="reference internal" href="#permutation-acc-distribution"><span class="std std-numref">Fig. 4</span></a> shows the distribution of prediction accuracies (corrected for class imbalance) for <em>regular</em> experiments and permutation tests; this plot answer the questions:</p>
+<ul class="simple">
+<li>Is there any signal in the data being analyzed?</li>
+<li>If yes, how much the model can describe it?</li>
+</ul>
+<p>In the example figure, the two distributions are clearly different, and the green one (showing the accuracies of <em>regular</em> experiments) has a mean which is significantly higher than chance (50 %). A p-value obtained with the Wilcoxon rank sum test is also present in this plot, indicating whether there is a significant difference between the two distributions.</p>
+<div class="figure align-center" id="permutation-acc-distribution">
+<a class="reference internal image-reference" href="_images/permutation_acc_distribution.pdf"><img alt="broken link" src="_images/permutation_acc_distribution.pdf" /></a>
+<p class="caption"><span class="caption-number">Fig. 4 </span><span class="caption-text">The distributions of accuracies for both <em>regular</em> experiments and permutation tests.</span></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/palladio_logo_npbg.png" alt="Logo"/>
+            </a></p>
+   
+      
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">The framework</a><ul>
+<li><a class="reference internal" href="#pipeline">Pipeline</a><ul>
+<li><a class="reference internal" href="#experiments">Experiments</a><ul>
+<li><a class="reference internal" href="#dataset-split-and-preprocessing">Dataset split and preprocessing</a></li>
+<li><a class="reference internal" href="#model-selection">Model selection</a></li>
+<li><a class="reference internal" href="#model-assessment">Model assessment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#analysis">Analysis</a></li>
+</ul>
+</li>
+</ul>
+
+   
+
+   
+      
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="introduction.html"
+                        title="previous chapter">Introduction</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tutorial.html"
+                        title="next chapter">Quick start tutorial</a></p>
+   
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/framework.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+    
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+    <p class="logo">
+       <img class="logo" src="_static/logos.png" alt="Logos" usemap="#logosmap" />
+    </p>
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Quick start tutorial"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 2.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    </div>
+  </body>
+</html>

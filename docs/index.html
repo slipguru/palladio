@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>PALLADIO (ParALleL frAmework for moDel selectIOn) &#8212; PALLADIO 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/slipGuru.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Introduction" href="introduction.html" />
+<meta name="keywords"
+      content="SlipGuru, 'University of Genoa', statistical learning,
+      computational biology, Python, distributed, computing, parallel" />
+<map id="logosmap" name="logosmap">
+    <area shape="rect" alt="SlipGURU" title="SlipGURU" coords="0,0,89,112"
+          href="http://slipguru.disi.unige.it/" />
+    <area shape="rect" alt="Dipartimento di Informatica e Scienze dell'Informazione"
+          title="Dipartimento di Informatica e Scienze dell'Informazione"
+          coords="95,4,200,34" href="http://www.disi.unige.it/" />
+    <area shape="rect" alt="Università Degli Studi di Genova"
+          title="Università Degli Studi di Genova" coords="124,48,171,107"
+          href="http://www.unige.it/" />
+</map>
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">PALLADIO 2.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="palladio-parallel-framework-for-model-selection">
+<h1>PALLADIO (ParALleL frAmework for moDel selectIOn)<a class="headerlink" href="#palladio-parallel-framework-for-model-selection" title="Permalink to this headline">¶</a></h1>
+<p><strong>PALLADIO</strong> is a machine learning framework whose purpose is to provide robust and reproducible results when dealing with data where the signal to noise ratio is low; it also provides tools to determine whether the dataset being analyzed contains any signal at all.
+<strong>PALLADIO</strong> works by repeating the same experiment many times, each time resampling the training and the test set so that the outcome is reliable as it is not determined by a single partition of the dataset. Besides, using permutation tests, it is possible to provide, to some extent, a measure of how reliable the results produced by an experiments are.
+Since all experiments performed are independent, PALLADIO is designed so that it can exploit a cluster where it is available, in order to greatly reduce the amount of time required for the experiment.</p>
+<p>The final output of <strong>PALLADIO</strong> consists of:</p>
+<ul class="simple">
+<li>A plot showing the absolute frequencies of features for both <em>regular</em> experiments and permutation tests. Another plot shows in more detail the selection frequency for the most frequently selected features (i.e., those above the <em>selection threshold</em> defined in the configuration file).</li>
+<li>A plot showing the distribution of accuracies achieved by <em>regular</em> experiments and permutation tests.</li>
+<li>Two text files listing the features together with their absolute selection frequency, one for regular experiments and the other for permutation tests.</li>
+</ul>
+<p>See <a class="reference internal" href="tutorial.html#tutorial"><span class="std std-ref">Quick start tutorial</span></a> for instructions on how to setup a cluster using the deployment script included in the <strong>PALLADIO</strong> distribution.</p>
+<div class="section" id="user-documentation">
+<h2>User documentation<a class="headerlink" href="#user-documentation" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="framework.html">The framework</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="framework.html#pipeline">Pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="framework.html#experiments">Experiments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="framework.html#dataset-split-and-preprocessing">Dataset split and preprocessing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="framework.html#model-selection">Model selection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="framework.html#model-assessment">Model assessment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="framework.html#analysis">Analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Quick start tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#installation-from-sources">Installation from sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#cluster-setup">Cluster setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorial.html#quick-deployment">Quick deployment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#input-data-format">Input data format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#configuration-file">Configuration File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#running-the-experiments">Running the experiments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#results-analysis">Results analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#pipeline-utilities">Pipeline utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-palladio.utils">Extra tools</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="#">
+              <img class="logo" src="_static/palladio_logo_npbg.png" alt="Logo"/>
+            </a></p>
+   
+      <h3>Download</h3>
+      <p>Current version: <b>2.0</b></p>
+      <p>Get PALLADIO from the
+         <a href="http://pypi.python.org/pypi/PALLADIO">Python Package Index</a>,
+         or install it with:
+      </p>
+      <pre>pip install --upgrade PALLADIO</pre>
+      <p> or clone it from our <a href="https://github.com/slipguru/PALLADIO">GitHub</a> repository: </p>
+      <pre>git clone https://github.com/slipguru/PALLADIO</pre>
+      <!--or:-->
+      <!--<pre>easy_install -U PALLADIO</pre>-->
+<!--      <p>Latest
+         <a href="https://bitbucket.org/slipguru/palladio/downloads/PALLADIO.pdf">
+            documentation in pdf
+         </a>
+         is also available. -->
+      </p>
+   
+
+   
+   
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+    
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+    <p class="logo">
+       <img class="logo" src="_static/logos.png" alt="Logos" usemap="#logosmap" />
+    </p>
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">PALLADIO 2.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    </div>
+  </body>
+</html>
