@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # palladio setup script
 
-from distutils.core import setup
+# from distutils.core import setup
+from setuptools import setup
 
 # Package Version
 from palladio import __version__ as version
