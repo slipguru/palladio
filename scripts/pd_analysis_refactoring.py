@@ -17,6 +17,7 @@ from palladio.metrics import __REGRESSION_METRICS__
 from palladio.metrics import __CLASSIFICATION_METRICS__
 from palladio.utils import build_cv_results
 from palladio.utils import get_selected_list
+from palladio.utils import save_signature
 
 
 def regression_analysis(cv_results, config):
@@ -153,24 +154,53 @@ def main():
 
     # Handle variable selection step
     if config.vs_analysis is not None:
+        threshold = config.frequency_threshold if hasattr(
+             config, 'frequency_threshold') else .75
+        if threshold is None:
+            threshold = .75
         selected = {}
         # Init variable selection containers
         selected['regular'] = dict(zip(feature_names,
                                        np.zeros(len(feature_names))))
         selected['permutation'] = selected['regular'].copy()
 
+        n_jobs = {'regular': config.N_jobs_regular,
+                  'permutation': config.N_jobs_permutation}
         names_ = ('regular', 'permutation')
         cv_results_ = (regular_cv_results, permutation_cv_results)
         for batch_name, cv_result in zip(names_, cv_results_):
-            ## TODO cv_result['estimator'] is a list containing the grid-search
-            selected_list = get_selected_list(
-                cv_result['estimator'], config.vs_analysis)
-            selected_variables = feature_names[selected_list]
+            # cv_result['estimator'] is a list containing
+            # the grid-search estimators
+            for estimator in cv_result['estimator']:
+                selected_list = get_selected_list(
+                    estimator, config.vs_analysis)
+                selected_variables = feature_names[selected_list]
 
-            for var in selected_variables:
-                selected[batch_name][var] += 1
+                for var in selected_variables:
+                    selected[batch_name][var] += 1. / n_jobs[batch_name]
 
-        print(selected['regular'])
+            # Save selected variables textual summary
+            filename = os.path.join(
+                base_folder, 'signature_%s.txt' % batch_name)
+            save_signature(filename, selected[batch_name], threshold)
+
+        sorted_keys_regular = sorted(
+            selected['regular'], key=selected['regular'].__getitem__)
+
+        # # Save graphical summary
+        plotting.feature_frequencies(
+            sorted_keys_regular, selected['regular'], base_folder,
+            threshold=threshold)
+
+        plotting.features_manhattan(
+            sorted_keys_regular, selected['regular'],
+            selected['permutation'], base_folder,
+            threshold=threshold)
+
+        plotting.selected_over_threshold(
+            selected['regular'], selected['permutation'],
+            base_folder, threshold=threshold)
+
 
 
     # Generate distribution plots

@@ -199,8 +199,7 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
 
 
 def features_manhattan(sorted_keys, frequencies_true, frequencies_perm,
-                       base_folder, N_jobs_regular, N_jobs_permutation,
-                       threshold=75):
+                       base_folder, threshold=.75):
     """
     Parameters
     ----------
@@ -230,7 +229,7 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm,
     threshold_line = plt.axhline(y=threshold, ls='--', lw=0.5, color='k')
 
     plt.xlim([-5, len(sorted_keys) + 5])
-    plt.ylim([-5, N_jobs_regular + 5])
+    plt.ylim([0, 1.05])
 
     plt.tick_params(
         axis='x',          # changes apply to the x-axis
@@ -251,13 +250,12 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm,
     )
 
     plt.xlabel('Features')
-    plt.ylabel('Absolute frequencies ({} regular, {} permutation)'
-               .format(N_jobs_regular, N_jobs_permutation))
+    plt.ylabel('Relative frequencies')
     plt.title("Feature frequencies")
     plt.savefig(os.path.join(base_folder, 'manhattan_plot.pdf'))
 
 
-def feature_frequencies(sorted_keys, frequencies, base_folder, threshold=75):
+def feature_frequencies(sorted_keys, frequencies, base_folder, threshold=.75):
     """Plot a bar chart of the first 2 x M features in a signature.
 
     M is the number of features whose frequencies is over a given threshold.
@@ -326,13 +324,14 @@ def feature_frequencies(sorted_keys, frequencies, base_folder, threshold=75):
 
     plt.xlabel("Feature names", fontsize="large")
     plt.ylabel("Absolute Frequency", fontsize="large")
+    plt.ylim([0, 1.05])
 
     plt.tight_layout()
     plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
 
 
-def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular,
-                            N_jobs_permutation, base_folder, threshold=75):
+def selected_over_threshold(frequencies_true, frequencies_perm, base_folder,
+                            threshold=.75):
     """Plot the selection trend against the selection frequency threshold.
 
     Parameters
@@ -365,8 +364,8 @@ def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular,
     for i, thr in enumerate(thresh_axis):
         # sel_true[i] = np.count_nonzero(y_true > thr)
         # sel_perm[i] = np.count_nonzero(y_perm > thr)
-        sel_true[i] = np.count_nonzero(y_true >= thr * N_jobs_regular)
-        sel_perm[i] = np.count_nonzero(y_perm >= thr * N_jobs_permutation)
+        sel_true[i] = np.count_nonzero(y_true >= thr)
+        sel_perm[i] = np.count_nonzero(y_perm >= thr)
 
     # make plot
     plt.figure()
@@ -378,7 +377,7 @@ def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular,
              color=colorsHex['lightGreen'], label='Regular batch')
     plt.plot(100 * thresh_axis, sel_perm, marker='h', alpha=0.8,
              color=colorsHex['lightRed'], label='Permutation batch')
-    plt.axvline(x=threshold, ymin=0, ymax=n_feat, ls='--', lw=0.5,
+    plt.axvline(x=threshold*100, ymin=0, ymax=n_feat, ls='--', lw=0.5,
                 color='k', label='Threshold')
     plt.legend()
     plt.xlabel("Selection frequency %", fontsize="large")

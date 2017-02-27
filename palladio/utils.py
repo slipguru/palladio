@@ -8,6 +8,20 @@
 import numpy as np
 
 
+def save_signature(filename, selected, threshold=0.75):
+    """Save signature summary."""
+    with open(filename, 'w') as f:
+        line_drawn = False
+        for k in reversed(sorted(
+                selected, key=selected.__getitem__)):
+            if not line_drawn and float(selected[k]) < threshold:
+                line_drawn = True
+                f.write("=" * 40)
+                f.write("\n")
+            f.write("{} : {}\n".format(k, selected[k] * 100.))
+            # f.write("{}\n".format(k))
+
+
 def retrieve_features(best_estimator):
     """Retrieve selected features from any estimator.
 
