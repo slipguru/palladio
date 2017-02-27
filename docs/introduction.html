@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Introduction &#8212; PALLADIO 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/slipGuru.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The framework" href="framework.html" />
+    <link rel="prev" title="PALLADIO (ParALleL frAmework for moDel selectIOn)" href="index.html" />
+<meta name="keywords"
+      content="SlipGuru, 'University of Genoa', statistical learning,
+      computational biology, Python, distributed, computing, parallel" />
+<map id="logosmap" name="logosmap">
+    <area shape="rect" alt="SlipGURU" title="SlipGURU" coords="0,0,89,112"
+          href="http://slipguru.disi.unige.it/" />
+    <area shape="rect" alt="Dipartimento di Informatica e Scienze dell'Informazione"
+          title="Dipartimento di Informatica e Scienze dell'Informazione"
+          coords="95,4,200,34" href="http://www.disi.unige.it/" />
+    <area shape="rect" alt="Università Degli Studi di Genova"
+          title="Università Degli Studi di Genova" coords="124,48,171,107"
+          href="http://www.unige.it/" />
+</map>
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="framework.html" title="The framework"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="PALLADIO (ParALleL frAmework for moDel selectIOn)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 2.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction">
+<span id="id1"></span><h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>The issue of reproducibility of experiments is of paramount importance in scientific studies, as it influences the reliability of published findings. However when dealing with biological data, especially genomic data such as gene expression or SNP microarrays, it is not uncommon to have a very limited number of samples available, and these are usually represented by a huge number of measurements.</p>
+<p>A common scenario is the so called <em>case-control study</em>: some quantities (e.g., gene expression levels, presence of alterations in key <em>loci</em> in the genome) are measured in a number of individuals who may be divided in two groups, or classes, depending whether they are affected by some kind of disease or not; the goal of the study is to find <strong>which ones</strong>, if any, among the possibly many measurements, or <em>features</em>, taken from the individuals (<em>samples</em>), can be used to define a <em>function</em> (sometimes the term <em>model</em> is used as well) able to <em>predict</em>, to some extent, to which <em>class</em> (in this case, a diseased individual or a healthy one) an individual belongs.</p>
+<p>Machine Learning (ML) techniques work by <em>learning</em> such function using only <em>part</em> of the available samples (the <em>training set</em>), so that the remaining ones (the <em>test set</em>) can be used to determine how well the function is able to predict the class of <strong>new</strong> samples; this is done, roughly speaking, to ensure that the function is able to capture some real characteristics of the data and not simply fitting the training data, which is trivial.
+This is referred to in ML literature as <em>binary classification scenario</em>.</p>
+<p>In the aforementioned scenario, having only few samples available means that the learned function may be highly dependent on how the dataset was split; a common solution to this issue is to perform <em>K-fold cross validation</em> (KCV) which means splitting the dataset in <span class="math">\(K\)</span> chunks and performing the experiment <span class="math">\(K\)</span> times, each time leaving out a different chunk to be used as test set; this reduces the risk that the results are dependent on a particular split. The <span class="math">\(K\)</span> parameter usually is chosen between 3 and 10, depending on the dataset.</p>
+<p>This is the idea behind <a class="reference external" href="http://slipguru.disi.unige.it/Software/L1L2Signature/">L1L2Signature</a> , a framework specifically designed with this issue in mind.
+<code class="docutils literal"><span class="pre">L1L2Signature</span></code> performs <em>feature selection</em> while learning the function, that is it tries to identify which ones among the available features are actually <em>relevant</em> for the problem, that is <em>which are actually used</em> in the learned function.
+The output of <code class="docutils literal"><span class="pre">L1L2Signature</span></code> consists of a <em>signature</em>, that is a list of relevant features, as well as a measure of <em>prediction accuracy</em>, that is the ratio of correctly classified samples in the test set, averaged over all splits.</p>
+<p>There are however cases where it is hard to tell whether this procedure actually yielded a meaningful result: for instance, the fact that the accuracy measure is only <em>slightly</em> higher than chance can indicate two very different things:</p>
+<ul class="simple">
+<li>The available features can only describe the phenomenon to a limited extent.</li>
+<li>There is actually no relationship between features and output class, and getting a result better than chance was just a matter of luck in the subdivision of the dataset.</li>
+</ul>
+<p>In order to tackle this issue, <strong>PALLADIO</strong> repeats the experiment many times (<span class="math">\(\sim 100\)</span>), each time using a different training and test set by randomly sampling from the whole original dataset (without replacement).
+The experiment is also repeated the same number of times in a similar setting with a difference: in training sets, the labels are randomly shuffled, therefore destroying any connection between features and output class.</p>
+<p>The output of this procedure is not a single value, possibly averaged, for the accuracy, but instead <em>two distributions of values</em> (one for each of the two settings described above) which, in case of datasets where the relationship between features and output class is at most faint, allows users to distinguish between the two scenarios mentioned above: in facts, if the available features are somehow connected with the outcome class, even weakly, then the two distributions will be  different enough to be distinguished; if on the other hand features and class are not related in any way, the two distributions will be indistinguishable, and it will be safe to draw that conclusion.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/palladio_logo_npbg.png" alt="Logo"/>
+            </a></p>
+   
+      
+   
+
+   
+      
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">PALLADIO (ParALleL frAmework for moDel selectIOn)</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="framework.html"
+                        title="next chapter">The framework</a></p>
+   
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/introduction.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+    
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+    <p class="logo">
+       <img class="logo" src="_static/logos.png" alt="Logos" usemap="#logosmap" />
+    </p>
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="framework.html" title="The framework"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="PALLADIO (ParALleL frAmework for moDel selectIOn)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 2.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    </div>
+  </body>
+</html>

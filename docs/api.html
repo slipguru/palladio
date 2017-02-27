@@ -1,0 +1,364 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>API &#8212; PALLADIO 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/slipGuru.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Quick start tutorial" href="tutorial.html" />
+<meta name="keywords"
+      content="SlipGuru, 'University of Genoa', statistical learning,
+      computational biology, Python, distributed, computing, parallel" />
+<map id="logosmap" name="logosmap">
+    <area shape="rect" alt="SlipGURU" title="SlipGURU" coords="0,0,89,112"
+          href="http://slipguru.disi.unige.it/" />
+    <area shape="rect" alt="Dipartimento di Informatica e Scienze dell'Informazione"
+          title="Dipartimento di Informatica e Scienze dell'Informazione"
+          coords="95,4,200,34" href="http://www.disi.unige.it/" />
+    <area shape="rect" alt="Università Degli Studi di Genova"
+          title="Università Degli Studi di Genova" coords="124,48,171,107"
+          href="http://www.unige.it/" />
+</map>
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Quick start tutorial"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 2.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="api">
+<span id="id1"></span><h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="pipeline-utilities">
+<h2>Pipeline utilities<a class="headerlink" href="#pipeline-utilities" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-palladio.utils">
+<span id="extra-tools"></span><h2>Extra tools<a class="headerlink" href="#module-palladio.utils" title="Permalink to this headline">¶</a></h2>
+<p>Utilities functions and classes.</p>
+<dl class="function">
+<dt id="palladio.utils.signatures">
+<code class="descclassname">palladio.utils.</code><code class="descname">signatures</code><span class="sig-paren">(</span><em>splits_results</em>, <em>frequency_threshold=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#signatures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.signatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return (almost) nested signatures for each correlation value.</p>
+<p>The function returns 3 lists where each item refers to a signature
+(for increasing value of linear correlation).
+Each signature is orderer from the most to the least selected variable
+across KCV splits results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>splits_results</strong> : iterable</p>
+<blockquote>
+<div><p>List of results from L1L2Py module, one for each external split.</p>
+</div></blockquote>
+<p><strong>frequency_threshold</strong> : float</p>
+<blockquote>
+<div><p>Only the variables selected more (or equal) than this threshold are
+included into the signature.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>sign_totals</strong> : list of <code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code>.</p>
+<blockquote>
+<div><p>Counts the number of times each variable in the signature is selected.</p>
+</div></blockquote>
+<p><strong>sign_freqs</strong> : list of <code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code>.</p>
+<blockquote>
+<div><p>Frequencies calculated from <code class="docutils literal"><span class="pre">sign_totals</span></code>.</p>
+</div></blockquote>
+<p><strong>sign_idxs</strong> : list of <code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code>.</p>
+<blockquote class="last">
+<div><p>Indexes of the signatures variables .</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">palladio.utils</span> <span class="k">import</span> <span class="n">signatures</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">splits_results</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;selected_list&#39;</span><span class="p">:[[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">]]},</span>
+<span class="gp">... </span>                  <span class="p">{</span><span class="s1">&#39;selected_list&#39;</span><span class="p">:[[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]]}]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sign_totals</span><span class="p">,</span> <span class="n">sign_freqs</span><span class="p">,</span> <span class="n">sign_idxs</span> <span class="o">=</span> <span class="n">signatures</span><span class="p">(</span><span class="n">splits_results</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">sign_totals</span>
+<span class="go">[array([ 2.,  0.]), array([ 2.,  1.])]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">sign_freqs</span>
+<span class="go">[array([ 1.,  0.]), array([ 1. ,  0.5])]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">sign_idxs</span>
+<span class="go">[array([0, 1]), array([1, 0])]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="palladio.utils.selection_summary">
+<code class="descclassname">palladio.utils.</code><code class="descname">selection_summary</code><span class="sig-paren">(</span><em>splits_results</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#selection_summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.selection_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Count how many times each variables was selected.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>splits_results</strong> : iterable</p>
+<blockquote>
+<div><p>List of results from L1L2Py module, one for each external split.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>summary</strong> : <code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code></p>
+<blockquote class="last">
+<div><p>Selection summary. <code class="docutils literal"><span class="pre">#</span> <span class="pre">mu_values</span> <span class="pre">X</span> <span class="pre">#</span> <span class="pre">variables</span></code> matrix.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="palladio.utils.confusion_matrix">
+<code class="descclassname">palladio.utils.</code><code class="descname">confusion_matrix</code><span class="sig-paren">(</span><em>labels</em>, <em>predictions</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#confusion_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.confusion_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a confusion matrix.</p>
+<p>From given real and predicted labels, the function calculated
+a confusion matrix as a double nested dictionary.
+The external one contains two keys, <code class="docutils literal"><span class="pre">'T'</span></code> and <code class="docutils literal"><span class="pre">'F'</span></code>.
+Both internal dictionaries
+contain a key for each class label. Then the <code class="docutils literal"><span class="pre">['T']['C1']</span></code> entry counts
+the number of correctly predicted <code class="docutils literal"><span class="pre">'C1'</span></code> labels,
+while <code class="docutils literal"><span class="pre">['F']['C2']</span></code> the incorrectly predicted <code class="docutils literal"><span class="pre">'C2'</span></code> labels.</p>
+<p>Note that each external dictionary correspond to a confusion
+matrix diagonal and the function works only on two-class labels.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>labels</strong> : iterable</p>
+<blockquote>
+<div><p>Real labels.</p>
+</div></blockquote>
+<p><strong>predictions</strong> : iterable</p>
+<blockquote>
+<div><p>Predicted labels.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>cm</strong> : dict</p>
+<blockquote class="last">
+<div><p>Dictionary containing the confusion matrix values.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="palladio.utils.classification_measures">
+<code class="descclassname">palladio.utils.</code><code class="descname">classification_measures</code><span class="sig-paren">(</span><em>confusion_matrix</em>, <em>positive_label=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#classification_measures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.classification_measures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate some classification measures.</p>
+<p>Measures are calculated from a given confusion matrix
+(see <a class="reference internal" href="#palladio.utils.confusion_matrix" title="palladio.utils.confusion_matrix"><code class="xref py py-func docutils literal"><span class="pre">confusion_matrix()</span></code></a> for a detailed description of the
+required structure).</p>
+<p>The <code class="docutils literal"><span class="pre">positive_label</span></code> arguments allows to specify what label has to be
+considered the positive class. This is needed to calculate some
+measures like F-measure and set some aliases (e.g. precision and recall
+are respectively the &#8216;predictive value&#8217; and the &#8216;true rate&#8217; for the
+positive class).</p>
+<p>If <code class="docutils literal"><span class="pre">positive_label</span></code> is None, the resulting dictionary will not
+contain all the measures. Assuming to have to classes &#8216;C1&#8217; and &#8216;C2&#8217;,
+and to indicate &#8216;C1&#8217; as the positive (P) class, the function returns a
+dictionary with the following structure:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;C1&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;predictive_value&#39;</span><span class="p">:</span> <span class="o">--</span><span class="p">,</span>  <span class="c1"># TP / (TP + FP)</span>
+           <span class="s1">&#39;true_rate&#39;</span><span class="p">:</span>        <span class="o">--</span><span class="p">},</span> <span class="c1"># TP / (TP + FN)</span>
+    <span class="s1">&#39;C2&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;predictive_value&#39;</span><span class="p">:</span> <span class="o">--</span><span class="p">,</span>  <span class="c1"># TN / (TN + FN)</span>
+           <span class="s1">&#39;true_rate&#39;</span><span class="p">:</span>        <span class="o">--</span><span class="p">},</span> <span class="c1"># TN / (TN + FP)</span>
+    <span class="s1">&#39;accuracy&#39;</span><span class="p">:</span>          <span class="o">--</span><span class="p">,</span>        <span class="c1"># (TP + TN) / (TP + FP + FN + TN)</span>
+    <span class="s1">&#39;balanced_accuracy&#39;</span><span class="p">:</span> <span class="o">--</span><span class="p">,</span>        <span class="c1"># 0.5 * ( (TP / (TP + FN)) +</span>
+                                    <span class="c1">#         (TN / (TN + FP)) )</span>
+    <span class="s1">&#39;MCC&#39;</span><span class="p">:</span>               <span class="o">--</span><span class="p">,</span>        <span class="c1"># ( (TP * TN) - (FP * FN) ) /</span>
+                                    <span class="c1"># sqrt( (TP + FP) * (TP + FN) *</span>
+                                    <span class="c1">#       (TN + FP) * (TN + FN) )</span>
+
+    <span class="c1"># Following, only with positive_labels != None</span>
+    <span class="s1">&#39;sensitivity&#39;</span><span class="p">:</span>       <span class="o">--</span><span class="p">,</span>        <span class="c1"># P true rate: TP / (TP + FN)</span>
+    <span class="s1">&#39;specificity&#39;</span><span class="p">:</span>       <span class="o">--</span><span class="p">,</span>        <span class="c1"># N true rate: TN / (TN + FP)</span>
+    <span class="s1">&#39;precision&#39;</span><span class="p">:</span>         <span class="o">--</span><span class="p">,</span>        <span class="c1"># P predictive value: TP / (TP + FP)</span>
+    <span class="s1">&#39;recall&#39;</span><span class="p">:</span>            <span class="o">--</span><span class="p">,</span>        <span class="c1"># P true rate: TP / (TP + FN)</span>
+    <span class="s1">&#39;F_measure&#39;</span><span class="p">:</span>         <span class="o">--</span>         <span class="c1"># 2. * ( (Precision * Recall ) /</span>
+                                    <span class="c1">#        (Precision + Recall) )</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>confusion_matrix</strong> : dict</p>
+<blockquote>
+<div><p>Confusion matrix (as the one returned by <a class="reference internal" href="#palladio.utils.confusion_matrix" title="palladio.utils.confusion_matrix"><code class="xref py py-func docutils literal"><span class="pre">confusion_matrix()</span></code></a>).</p>
+</div></blockquote>
+<p><strong>positive_label</strong> : str</p>
+<blockquote>
+<div><p>Positive class label.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>summary</strong> : dict</p>
+<blockquote class="last">
+<div><p>Dictionary containing calculated measures.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="palladio.utils.set_module_defaults">
+<code class="descclassname">palladio.utils.</code><code class="descname">set_module_defaults</code><span class="sig-paren">(</span><em>module</em>, <em>dictionary</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#set_module_defaults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.set_module_defaults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set default variables of a module, given a dictionary.</p>
+<p>Used after the loading of the configuration file to set some defaults.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="palladio.utils.sec_to_timestring">
+<code class="descclassname">palladio.utils.</code><code class="descname">sec_to_timestring</code><span class="sig-paren">(</span><em>seconds</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#sec_to_timestring"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.sec_to_timestring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform seconds into a formatted time string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>seconds</strong> : int</p>
+<blockquote>
+<div><p>Seconds to be transformed.</p>
+</div></blockquote>
+<p><strong>Returns</strong> :</p>
+<p><strong>&#8212;&#8212;&#8212;&#8211;</strong> :</p>
+<p><strong>time</strong> : string</p>
+<blockquote class="last">
+<div><p>A well formatted time string.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/palladio_logo_npbg.png" alt="Logo"/>
+            </a></p>
+   
+      
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">API</a><ul>
+<li><a class="reference internal" href="#pipeline-utilities">Pipeline utilities</a></li>
+<li><a class="reference internal" href="#module-palladio.utils">Extra tools</a></li>
+</ul>
+</li>
+</ul>
+
+   
+
+   
+      
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tutorial.html"
+                        title="previous chapter">Quick start tutorial</a></p>
+   
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/api.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+    
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+    <p class="logo">
+       <img class="logo" src="_static/logos.png" alt="Logos" usemap="#logosmap" />
+    </p>
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Quick start tutorial"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 2.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    </div>
+  </body>
+</html>

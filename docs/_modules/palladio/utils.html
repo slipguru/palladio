@@ -1,0 +1,421 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>palladio.utils &#8212; PALLADIO 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/slipGuru.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<meta name="keywords"
+      content="SlipGuru, 'University of Genoa', statistical learning,
+      computational biology, Python, distributed, computing, parallel" />
+<map id="logosmap" name="logosmap">
+    <area shape="rect" alt="SlipGURU" title="SlipGURU" coords="0,0,89,112"
+          href="http://slipguru.disi.unige.it/" />
+    <area shape="rect" alt="Dipartimento di Informatica e Scienze dell'Informazione"
+          title="Dipartimento di Informatica e Scienze dell'Informazione"
+          coords="95,4,200,34" href="http://www.disi.unige.it/" />
+    <area shape="rect" alt="Università Degli Studi di Genova"
+          title="Università Degli Studi di Genova" coords="124,48,171,107"
+          href="http://www.unige.it/" />
+</map>
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">PALLADIO 2.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for palladio.utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Utilities functions and classes.&quot;&quot;&quot;</span>
+
+<span class="c1"># Author: Salvatore Masecchia &lt;salvatore.masecchia@disi.unige.it&gt;,</span>
+<span class="c1">#         Annalisa Barla &lt;annalisa.barla@disi.unige.it&gt;</span>
+<span class="c1"># License: new BSD.</span>
+<span class="c1"># PALLADIO Refactoring: Samuele Fiorini</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="signatures"><a class="viewcode-back" href="../../api.html#palladio.utils.signatures">[docs]</a><span class="k">def</span> <span class="nf">signatures</span><span class="p">(</span><span class="n">splits_results</span><span class="p">,</span> <span class="n">frequency_threshold</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return (almost) nested signatures for each correlation value.</span>
+
+<span class="sd">    The function returns 3 lists where each item refers to a signature</span>
+<span class="sd">    (for increasing value of linear correlation).</span>
+<span class="sd">    Each signature is orderer from the most to the least selected variable</span>
+<span class="sd">    across KCV splits results.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    splits_results : iterable</span>
+<span class="sd">        List of results from L1L2Py module, one for each external split.</span>
+<span class="sd">    frequency_threshold : float</span>
+<span class="sd">        Only the variables selected more (or equal) than this threshold are</span>
+<span class="sd">        included into the signature.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sign_totals : list of :class:`numpy.ndarray`.</span>
+<span class="sd">        Counts the number of times each variable in the signature is selected.</span>
+<span class="sd">    sign_freqs : list of :class:`numpy.ndarray`.</span>
+<span class="sd">        Frequencies calculated from ``sign_totals``.</span>
+<span class="sd">    sign_idxs : list of :class:`numpy.ndarray`.</span>
+<span class="sd">        Indexes of the signatures variables .</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from palladio.utils import signatures</span>
+<span class="sd">    &gt;&gt;&gt; splits_results = [{&#39;selected_list&#39;:[[True, False], [True, True]]},</span>
+<span class="sd">    ...                   {&#39;selected_list&#39;:[[True, False], [False, True]]}]</span>
+<span class="sd">    &gt;&gt;&gt; sign_totals, sign_freqs, sign_idxs = signatures(splits_results)</span>
+<span class="sd">    &gt;&gt;&gt; print sign_totals</span>
+<span class="sd">    [array([ 2.,  0.]), array([ 2.,  1.])]</span>
+<span class="sd">    &gt;&gt;&gt; print sign_freqs</span>
+<span class="sd">    [array([ 1.,  0.]), array([ 1. ,  0.5])]</span>
+<span class="sd">    &gt;&gt;&gt; print sign_idxs</span>
+<span class="sd">    [array([0, 1]), array([1, 0])]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Computing totals and frequencies</span>
+    <span class="n">selection_totals</span> <span class="o">=</span> <span class="n">selection_summary</span><span class="p">(</span><span class="n">splits_results</span><span class="p">)</span>
+    <span class="n">selection_freqs</span> <span class="o">=</span> <span class="n">selection_totals</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">splits_results</span><span class="p">)</span>
+
+    <span class="c1"># Variables are ordered and filtered by frequency threshold</span>
+    <span class="n">sorted_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">selection_freqs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">sorted_idxs</span> <span class="o">=</span> <span class="p">(</span><span class="n">sorted_idxs</span><span class="o">.</span><span class="n">T</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># Reverse order</span>
+
+    <span class="c1"># ... ordering</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">si</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sorted_idxs</span><span class="p">):</span>
+        <span class="n">selection_freqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">selection_freqs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">si</span><span class="p">]</span>
+        <span class="n">selection_totals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">selection_totals</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">si</span><span class="p">]</span>
+
+    <span class="c1"># ... filtering</span>
+    <span class="n">threshold_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">selection_freqs</span> <span class="o">&gt;=</span> <span class="n">frequency_threshold</span><span class="p">)</span>
+
+    <span class="c1"># Signatures Ordered and Filtered!</span>
+    <span class="n">sign_totals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">sign_freqs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">sign_idxs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mask</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">threshold_mask</span><span class="p">):</span>
+        <span class="n">sign_totals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">selection_totals</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">mask</span><span class="p">])</span>
+        <span class="n">sign_freqs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">selection_freqs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">mask</span><span class="p">])</span>
+        <span class="n">sign_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sorted_idxs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">mask</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">sign_totals</span><span class="p">,</span> <span class="n">sign_freqs</span><span class="p">,</span> <span class="n">sign_idxs</span></div>
+
+
+<div class="viewcode-block" id="selection_summary"><a class="viewcode-back" href="../../api.html#palladio.utils.selection_summary">[docs]</a><span class="k">def</span> <span class="nf">selection_summary</span><span class="p">(</span><span class="n">splits_results</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Count how many times each variables was selected.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    splits_results : iterable</span>
+<span class="sd">        List of results from L1L2Py module, one for each external split.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    summary : :class:`numpy.ndarray`</span>
+<span class="sd">        Selection summary. ``# mu_values X # variables`` matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Sum selection lists by mu values (mu_num x num_var)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sr</span><span class="p">[</span><span class="s1">&#39;selected_list&#39;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+                  <span class="k">for</span> <span class="n">sr</span> <span class="ow">in</span> <span class="n">splits_results</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="confusion_matrix"><a class="viewcode-back" href="../../api.html#palladio.utils.confusion_matrix">[docs]</a><span class="k">def</span> <span class="nf">confusion_matrix</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">predictions</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate a confusion matrix.</span>
+
+<span class="sd">    From given real and predicted labels, the function calculated</span>
+<span class="sd">    a confusion matrix as a double nested dictionary.</span>
+<span class="sd">    The external one contains two keys, ``&#39;T&#39;`` and ``&#39;F&#39;``.</span>
+<span class="sd">    Both internal dictionaries</span>
+<span class="sd">    contain a key for each class label. Then the ``[&#39;T&#39;][&#39;C1&#39;]`` entry counts</span>
+<span class="sd">    the number of correctly predicted ``&#39;C1&#39;`` labels,</span>
+<span class="sd">    while ``[&#39;F&#39;][&#39;C2&#39;]`` the incorrectly predicted ``&#39;C2&#39;`` labels.</span>
+
+<span class="sd">    Note that each external dictionary correspond to a confusion</span>
+<span class="sd">    matrix diagonal and the function works only on two-class labels.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    labels : iterable</span>
+<span class="sd">        Real labels.</span>
+
+<span class="sd">    predictions : iterable</span>
+<span class="sd">        Predicted labels.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    cm : dict</span>
+<span class="sd">        Dictionary containing the confusion matrix values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cm</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;T&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(),</span> <span class="s1">&#39;F&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">()}</span>
+
+    <span class="n">real_unique_labels</span><span class="p">,</span> <span class="n">real_C1</span><span class="p">,</span> <span class="n">real_C2</span> <span class="o">=</span> <span class="n">_check_unique_labels</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+    <span class="n">pred_unique_labels</span><span class="p">,</span> <span class="n">pred_C1</span><span class="p">,</span> <span class="n">pred_C2</span> <span class="o">=</span> <span class="n">_check_unique_labels</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">real_unique_labels</span> <span class="o">==</span> <span class="n">pred_unique_labels</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">PDException</span><span class="p">(</span><span class="s1">&#39;real and predicted labels differ.&#39;</span><span class="p">)</span>
+
+    <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">][</span><span class="n">real_unique_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">real_C1</span> <span class="o">&amp;</span> <span class="n">pred_C1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>  <span class="c1"># True C1</span>
+    <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">][</span><span class="n">real_unique_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">real_C2</span> <span class="o">&amp;</span> <span class="n">pred_C2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>  <span class="c1"># True C2</span>
+    <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;F&#39;</span><span class="p">][</span><span class="n">real_unique_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">real_C2</span> <span class="o">&amp;</span> <span class="n">pred_C1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>  <span class="c1"># False C1</span>
+    <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;F&#39;</span><span class="p">][</span><span class="n">real_unique_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">real_C1</span> <span class="o">&amp;</span> <span class="n">pred_C2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>  <span class="c1"># False C2</span>
+
+    <span class="k">return</span> <span class="n">cm</span></div>
+
+
+<div class="viewcode-block" id="classification_measures"><a class="viewcode-back" href="../../api.html#palladio.utils.classification_measures">[docs]</a><span class="k">def</span> <span class="nf">classification_measures</span><span class="p">(</span><span class="n">confusion_matrix</span><span class="p">,</span> <span class="n">positive_label</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate some classification measures.</span>
+
+<span class="sd">    Measures are calculated from a given confusion matrix</span>
+<span class="sd">    (see :func:`confusion_matrix` for a detailed description of the</span>
+<span class="sd">    required structure).</span>
+
+<span class="sd">    The ``positive_label`` arguments allows to specify what label has to be</span>
+<span class="sd">    considered the positive class. This is needed to calculate some</span>
+<span class="sd">    measures like F-measure and set some aliases (e.g. precision and recall</span>
+<span class="sd">    are respectively the &#39;predictive value&#39; and the &#39;true rate&#39; for the</span>
+<span class="sd">    positive class).</span>
+
+<span class="sd">    If ``positive_label`` is None, the resulting dictionary will not</span>
+<span class="sd">    contain all the measures. Assuming to have to classes &#39;C1&#39; and &#39;C2&#39;,</span>
+<span class="sd">    and to indicate &#39;C1&#39; as the positive (P) class, the function returns a</span>
+<span class="sd">    dictionary with the following structure::</span>
+
+<span class="sd">        {</span>
+<span class="sd">            &#39;C1&#39;: {&#39;predictive_value&#39;: --,  # TP / (TP + FP)</span>
+<span class="sd">                   &#39;true_rate&#39;:        --}, # TP / (TP + FN)</span>
+<span class="sd">            &#39;C2&#39;: {&#39;predictive_value&#39;: --,  # TN / (TN + FN)</span>
+<span class="sd">                   &#39;true_rate&#39;:        --}, # TN / (TN + FP)</span>
+<span class="sd">            &#39;accuracy&#39;:          --,        # (TP + TN) / (TP + FP + FN + TN)</span>
+<span class="sd">            &#39;balanced_accuracy&#39;: --,        # 0.5 * ( (TP / (TP + FN)) +</span>
+<span class="sd">                                            #         (TN / (TN + FP)) )</span>
+<span class="sd">            &#39;MCC&#39;:               --,        # ( (TP * TN) - (FP * FN) ) /</span>
+<span class="sd">                                            # sqrt( (TP + FP) * (TP + FN) *</span>
+<span class="sd">                                            #       (TN + FP) * (TN + FN) )</span>
+
+<span class="sd">            # Following, only with positive_labels != None</span>
+<span class="sd">            &#39;sensitivity&#39;:       --,        # P true rate: TP / (TP + FN)</span>
+<span class="sd">            &#39;specificity&#39;:       --,        # N true rate: TN / (TN + FP)</span>
+<span class="sd">            &#39;precision&#39;:         --,        # P predictive value: TP / (TP + FP)</span>
+<span class="sd">            &#39;recall&#39;:            --,        # P true rate: TP / (TP + FN)</span>
+<span class="sd">            &#39;F_measure&#39;:         --         # 2. * ( (Precision * Recall ) /</span>
+<span class="sd">                                            #        (Precision + Recall) )</span>
+<span class="sd">        }</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    confusion_matrix : dict</span>
+<span class="sd">        Confusion matrix (as the one returned by :func:`confusion_matrix`).</span>
+
+<span class="sd">    positive_label : str</span>
+<span class="sd">        Positive class label.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    summary : dict</span>
+<span class="sd">        Dictionary containing calculated measures.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Confusion Matrix</span>
+    <span class="c1">#           True P      True N</span>
+    <span class="c1"># Pred P      TP         FP         P Pred Value</span>
+    <span class="c1"># Pred N      FN         TN         N Pred Value</span>
+    <span class="c1">#         Sensitivity Specificity</span>
+
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">positive_label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">positive_label</span>
+        <span class="k">if</span> <span class="n">P</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PDException</span><span class="p">(</span><span class="s1">&#39;label </span><span class="si">%s</span><span class="s1"> not found.&#39;</span> <span class="o">%</span> <span class="n">positive_label</span><span class="p">)</span>
+
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">([</span><span class="n">positive_label</span><span class="p">])</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">P</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+
+    <span class="c1"># shortcuts ------------------------------------</span>
+    <span class="n">TP</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">][</span><span class="n">P</span><span class="p">]</span>
+    <span class="n">TN</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">][</span><span class="n">N</span><span class="p">]</span>
+    <span class="n">FP</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">[</span><span class="s1">&#39;F&#39;</span><span class="p">][</span><span class="n">P</span><span class="p">]</span>
+    <span class="n">FN</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">[</span><span class="s1">&#39;F&#39;</span><span class="p">][</span><span class="n">N</span><span class="p">]</span>
+    <span class="c1"># ----------------------------------------------</span>
+
+    <span class="n">summary</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">({</span><span class="n">P</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(),</span> <span class="n">N</span><span class="p">:</span> <span class="nb">dict</span><span class="p">()})</span>
+
+    <span class="n">summary</span><span class="p">[</span><span class="n">P</span><span class="p">][</span><span class="s1">&#39;predictive_value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TP</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">TP</span> <span class="o">+</span> <span class="n">FP</span><span class="p">)</span>
+    <span class="n">summary</span><span class="p">[</span><span class="n">P</span><span class="p">][</span><span class="s1">&#39;true_rate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TP</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">TP</span> <span class="o">+</span> <span class="n">FN</span><span class="p">)</span>           <span class="c1"># sensitivity</span>
+
+    <span class="n">summary</span><span class="p">[</span><span class="n">N</span><span class="p">][</span><span class="s1">&#39;predictive_value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TN</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">TN</span> <span class="o">+</span> <span class="n">FN</span><span class="p">)</span>
+    <span class="n">summary</span><span class="p">[</span><span class="n">N</span><span class="p">][</span><span class="s1">&#39;true_rate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TN</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">TN</span> <span class="o">+</span> <span class="n">FP</span><span class="p">)</span>           <span class="c1"># specificity</span>
+
+    <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">TP</span> <span class="o">+</span> <span class="n">TN</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">TP</span> <span class="o">+</span> <span class="n">FP</span> <span class="o">+</span> <span class="n">FN</span> <span class="o">+</span> <span class="n">TN</span><span class="p">)</span>
+    <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;balanced_accuracy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="n">P</span><span class="p">][</span><span class="s1">&#39;true_rate&#39;</span><span class="p">]</span> <span class="o">+</span>
+                                          <span class="n">summary</span><span class="p">[</span><span class="n">N</span><span class="p">][</span><span class="s1">&#39;true_rate&#39;</span><span class="p">])</span>
+
+    <span class="n">den</span> <span class="o">=</span> <span class="p">((</span><span class="n">TP</span> <span class="o">+</span> <span class="n">FP</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">TP</span> <span class="o">+</span> <span class="n">FN</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">TN</span> <span class="o">+</span> <span class="n">FP</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">TN</span> <span class="o">+</span> <span class="n">FN</span><span class="p">))</span>
+    <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;MCC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(((</span><span class="n">TP</span> <span class="o">*</span> <span class="n">TN</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">FP</span> <span class="o">*</span> <span class="n">FN</span><span class="p">))</span> <span class="o">/</span>
+                      <span class="p">(</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">den</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">den</span><span class="p">)))</span>
+
+    <span class="k">if</span> <span class="n">positive_label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="n">P</span><span class="p">][</span><span class="s1">&#39;true_rate&#39;</span><span class="p">]</span>
+        <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;specificity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="n">N</span><span class="p">][</span><span class="s1">&#39;true_rate&#39;</span><span class="p">]</span>
+
+        <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;precision&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="n">P</span><span class="p">][</span><span class="s1">&#39;predictive_value&#39;</span><span class="p">]</span>
+        <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;recall&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">]</span>
+
+        <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;F_measure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">2.</span> <span class="o">*</span> <span class="p">((</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;precision&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;recall&#39;</span><span class="p">])</span> <span class="o">/</span>
+                  <span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;precision&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">summary</span><span class="p">[</span><span class="s1">&#39;recall&#39;</span><span class="p">]))</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">summary</span></div>
+
+
+<span class="k">def</span> <span class="nf">_check_unique_labels</span><span class="p">(</span><span class="n">labels</span><span class="p">):</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">])</span>
+    <span class="n">unique_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_labels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">PDException</span><span class="p">(</span><span class="s1">&#39;more than 2 classes in labels.&#39;</span><span class="p">)</span>
+
+    <span class="n">unique_labels</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;mergesort&#39;</span><span class="p">)</span>
+    <span class="n">class1</span> <span class="o">=</span> <span class="p">(</span><span class="n">labels</span> <span class="o">==</span> <span class="n">unique_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">class2</span> <span class="o">=</span> <span class="p">(</span><span class="n">labels</span> <span class="o">==</span> <span class="n">unique_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">unique_labels</span><span class="p">,</span> <span class="n">class1</span><span class="p">,</span> <span class="n">class2</span>
+
+
+<div class="viewcode-block" id="set_module_defaults"><a class="viewcode-back" href="../../api.html#palladio.utils.set_module_defaults">[docs]</a><span class="k">def</span> <span class="nf">set_module_defaults</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">dictionary</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Set default variables of a module, given a dictionary.</span>
+
+<span class="sd">    Used after the loading of the configuration file to set some defaults.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dictionary</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sec_to_timestring"><a class="viewcode-back" href="../../api.html#palladio.utils.sec_to_timestring">[docs]</a><span class="k">def</span> <span class="nf">sec_to_timestring</span><span class="p">(</span><span class="n">seconds</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Transform seconds into a formatted time string.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    -----------</span>
+<span class="sd">    seconds : int</span>
+<span class="sd">        Seconds to be transformed.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -----------</span>
+<span class="sd">    time : string</span>
+<span class="sd">        A well formatted time string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="n">h</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%02d</span><span class="s2">:</span><span class="si">%02d</span><span class="s2">:</span><span class="si">%02d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/palladio_logo_npbg.png" alt="Logo"/>
+            </a></p>
+   
+      <h3>Download</h3>
+      <p>Current version: <b>2.0</b></p>
+      <p>Get PALLADIO from the
+         <a href="http://pypi.python.org/pypi/PALLADIO">Python Package Index</a>,
+         or install it with:
+      </p>
+      <pre>pip install --upgrade PALLADIO</pre>
+      <p> or clone it from our <a href="https://github.com/slipguru/PALLADIO">GitHub</a> repository: </p>
+      <pre>git clone https://github.com/slipguru/PALLADIO</pre>
+      <!--or:-->
+      <!--<pre>easy_install -U PALLADIO</pre>-->
+<!--      <p>Latest
+         <a href="https://bitbucket.org/slipguru/palladio/downloads/PALLADIO.pdf">
+            documentation in pdf
+         </a>
+         is also available. -->
+      </p>
+   
+
+   
+   
+
+    
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+    <p class="logo">
+       <img class="logo" src="../../_static/logos.png" alt="Logos" usemap="#logosmap" />
+    </p>
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">PALLADIO 2.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    </div>
+  </body>
+</html>

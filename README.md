@@ -19,8 +19,9 @@ PALLADIO is developed using Python 2.7 and inherits its main functionalities fro
 ### Authors and Contributors
 Current developers: Matteo Barbieri (@matteobarbieri), Samuele Fiorini (@samuelefiorini) and Federico Tomasi (@fdtomasi).
 
+
 ### Support or Contact
-Having trouble with PALLADIO? Check out our [documentation](http://www.slipguru.unige.it/Software/palladio/) or contact us:
+Having trouble with PALLADIO? Check out our [documentation](http://slipguru.github.io/palladio/) or contact us:
 * matteo [dot] barbieri [at] dibris [dot] unige [dot] it
 * samuele [dot] fiorini [at] dibris [dot] unige [dot] it
 * federico [dot] tomasi [at] dibris [dot] unige [dot] it

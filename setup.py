@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # palladio setup script
 
-from distutils.core import setup
+# from distutils.core import setup
+from setuptools import setup
 
 # Package Version
 from palladio import __version__ as version
@@ -39,8 +40,7 @@ setup(
               'sklearn (>=0.17)',
               'matplotlib (>=1.5.1)',
               'seaborn (>=0.7.0)',
-              'L1L2py (>=1.0.5)',
-              'mpi4py (>=2.0.0)'
+              # 'mpi4py (>=2.0.0)'
               ],
     scripts=['scripts/pd_run.py','scripts/pd_analysis.py'],
 )
