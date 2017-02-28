@@ -93,8 +93,11 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
         x_max = np.max(v_regular)
         _bins = 20
         kde = True
+        color_regular=colorsHex['lightBlue']
     else:
         kde = False
+        color_regular=colorsHex['lightGreen']
+        color_permutation=colorsHex['lightRed']
         if metric.lower() not in ['mcc']: # TODO fix this old notation here
             scale = 100
             _bins = np.arange(0, 105, 5)
@@ -110,7 +113,8 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
         'norm_hist': False,
         'kde': kde,
         'bins': _bins,
-        # hist_kws : {'alpha' : 0.8}
+        # hist_kws: {'alpha': 0.8}
+        'kde_kws': {'color': colorsHex['darkBlue']}
     }
 
     v_regular = np.array(v_regular)
@@ -126,17 +130,17 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
         sns.distplot(v_permutation[~np.isnan(v_permutation)] * scale,
                      # label="Permutation batch \nMean = {0:.2f}, STD = {1:.2f}"
                      # .format(perm_mean, perm_std),
-                     label="Permutation batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
-                           .format(perm_mean * 100, perm_std * 100),
-                     color=colorsHex['lightRed'], ax=ax,
+                     label="Permutation batch \nMean = {0:2.1f}, SD = {1:2.1f}"
+                           .format(perm_mean, perm_std),
+                     color=color_permutation, ax=ax,
                      hist_kws={'alpha': 0.8}, **kwargs)
 
     sns.distplot(v_regular[~np.isnan(v_regular)] * scale,
                  # label="Regular batch \nMean = {0:.2f}, STD = {1:.2f}"
                  #        .format(reg_mean, reg_std),
-                 label="Regular batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
-                       .format(reg_mean * 100, reg_std * 100),
-                 color=colorsHex['lightGreen'], ax=ax,
+                 label="Regular batch \nMean = {0:2.1f}, SD = {1:2.1f}"
+                       .format(reg_mean, reg_std),
+                 color=color_regular, ax=ax,
                  hist_kws={'alpha': 0.8}, **kwargs)
 
     # Fit a gaussian with permutation data (DEPRECATED)
@@ -147,8 +151,11 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
     # rstest = stats.ranksums(v_regular, v_permutation)
     if len(v_permutation) > 0:
         rstest = stats.wilcoxon(v_regular, v_permutation)
+        print("[{}] Wilcoxon Signed-rank test: {}".format(metric, rstest))
+        # print("Kolmogorov-Smirnov test: {}".format(kstest))
+        # print("[{}] Wilcoxon Rank-Sum test: {}".format(metric, rstest))
     else:
-        rstest = (0,0) # TODO fix here
+        rstest = None
 
     filemode = 'w' if first_run else 'a'
     with open(os.path.join(base_folder, 'stats.txt'), filemode) as f:
@@ -157,20 +164,17 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
         f.write("\n------------------------------------------\n")
         f.write("Metric : {}\n".format(metric))
         # f.write("Wilcoxon Rank-Sum test p-value: {0:.3e}\n".format(rstest[1]))
-        f.write("Wilcoxon Signed-rank test p-value: {0:.3e}\n".format(rstest[1]))
-        f.write("\n")
+        if len(v_permutation) > 0:
+            f.write("Wilcoxon Signed-rank test p-value: {0:.3e}\n".format(rstest[1]))
+            f.write("\n")
 
         f.write("Regular batch, {}\n".format(metric))
         f.write("Mean = {0:.2f}, SD = {1:.2f}\n".format(reg_mean, reg_std))
         f.write("Permutation batch, {}\n".format(metric))
         f.write("Mean = {0:.2f}, SD = {1:.2f}\n".format(perm_mean, perm_std))
 
-    # print("Kolmogorov-Smirnov test: {}".format(kstest))
-    # print("[{}] Wilcoxon Rank-Sum test: {}".format(metric, rstest))
-    print("[{}] Wilcoxon Signed-rank test: {}".format(metric, rstest))
-
     if metric.lower() not in ['mcc']:
-        plt.xlabel("{} (%)".format(metric), fontsize="large")
+        plt.xlabel("{}".format(metric), fontsize="large")
     else:
         plt.xlabel("{}".format(metric), fontsize="large")
     plt.ylabel("Absolute Frequency", fontsize="large")
@@ -187,12 +191,13 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='upper right',
                ncol=2, mode="expand", borderaxespad=0., fontsize="large")
 
-    # fig.text(0.1, 0.01, "Kolmogorov-Smirnov test p-value: {0:.3e}\n"
-    # .format(kstest[1]), fontsize=18)
-    fig.text(0.1, 0.005, "Wilcoxon Signed-Rank test p-value: {0:.3e}\n"
-                         .format(rstest[1]), fontsize=18)
-    # fig.text(0.1, 0.005, "Wilcoxon Rank-Sum test p-value: {0:.3e}\n"
-    #                      .format(rstest[1]), fontsize=18)
+    if len(v_permutation) > 0:
+        # fig.text(0.1, 0.01, "Kolmogorov-Smirnov test p-value: {0:.3e}\n"
+        # .format(kstest[1]), fontsize=18)
+        fig.text(0.1, 0.005, "Wilcoxon Signed-Rank test p-value: {0:.3e}\n"
+                             .format(rstest[1]), fontsize=18)
+        # fig.text(0.1, 0.005, "Wilcoxon Rank-Sum test p-value: {0:.3e}\n"
+        #                      .format(rstest[1]), fontsize=18)
 
     plt.savefig(os.path.join(base_folder, 'permutation_{}_distribution.pdf'
                                           .format(metric)))
@@ -323,7 +328,7 @@ def feature_frequencies(sorted_keys, frequencies, base_folder, threshold=.75):
     plt.axvline(x=mid, ls='-', lw=1, color=colorsHex['lightRed'])
 
     plt.xlabel("Feature names", fontsize="large")
-    plt.ylabel("Absolute Frequency", fontsize="large")
+    plt.ylabel("Relative frequency", fontsize="large")
     plt.ylim([0, 1.05])
 
     plt.tight_layout()

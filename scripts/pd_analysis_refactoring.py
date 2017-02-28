@@ -171,7 +171,10 @@ def main():
         for batch_name, cv_result in zip(names_, cv_results_):
             # cv_result['estimator'] is a list containing
             # the grid-search estimators
-            for estimator in cv_result['estimator']:
+            estimators = cv_result.get('estimator', None)
+            if estimators is None:
+                continue  # in case of no permutations skip this iter
+            for estimator in estimators:
                 selected_list = get_selected_list(
                     estimator, config.vs_analysis)
                 selected_variables = feature_names[selected_list]
@@ -200,8 +203,6 @@ def main():
         plotting.selected_over_threshold(
             selected['regular'], selected['permutation'],
             base_folder, threshold=threshold)
-
-
 
     # Generate distribution plots
     first_run = True
