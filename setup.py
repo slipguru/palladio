@@ -5,7 +5,8 @@
 from setuptools import setup
 
 # Package Version
-from palladio import __version__ as version
+# from palladio import __version__ as version
+version='2.0.0b2'
 
 setup(
     name='palladio',
