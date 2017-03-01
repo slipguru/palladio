@@ -7,4 +7,4 @@ FreeBSD License
 """
 from palladio.job_distribution import main
 
-__version__ = "2.0.0a"
+__version__ = "2.0.0b1"
