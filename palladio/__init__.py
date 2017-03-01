@@ -5,7 +5,6 @@ Annalisa Barla
 
 FreeBSD License
 """
-
-from .__version__ import version as __version__
-
 from palladio.job_distribution import main
+
+__version__ = "2.0.0b1"
