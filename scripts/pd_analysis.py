@@ -9,12 +9,7 @@ import pandas as pd
 import matplotlib; matplotlib.use('Agg')
 import warnings
 
-try:
-    import cPickle as pkl
-except:
-    import pickle as pkl
-
-# from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from six.moves import cPickle as pkl
 from sklearn.utils.deprecation import deprecated
 from palladio import plotting
 from palladio.metrics import (accuracy_score, precision_recall_fscore_support,

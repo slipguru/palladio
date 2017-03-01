@@ -7,6 +7,7 @@ from sklearn.feature_selection import RFE
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import LinearSVC
+from sklearn.model_selection import GridSearchCV
 
 from palladio import datasets
 
@@ -40,17 +41,6 @@ data, labels = dataset.data, dataset.target
 
 result_path = 'results'
 
-# The number of "regular" experiment
-N_jobs_regular = 100
-
-# The number of instances for the permutation tests
-# (labels in the training sets are randomly shuffled)
-N_jobs_permutation = 100
-
-# The ratio of the dataset held out for model assessment
-# It should be of the form 1/M
-test_set_ratio = 1/4.0
-
 # The learning task, if None palladio tries to guess it
 # [see sklearn.utils.multiclass.type_of_target]
 learning_task = None
@@ -77,24 +67,25 @@ pipe = Pipeline([
         ('classification', clf),
         ])
 
-# ### Set the estimator to be the pipeline
-estimator = pipe
 
-# ### Parameter grid for both steps
+# ### Set the estimator to be assessed a GridSearchCV
 param_grid = {
     'variable_selection__n_features_to_select': [10, 20, 50],
     'variable_selection__estimator__C': np.logspace(-4, 0, 5),
     'classification__C': np.logspace(-4, 0, 5),
 }
 
-# ~~ Cross validation options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cv_options = {
-    'param_grid': param_grid,
-    'cv': 3,
+estimator = GridSearchCV(pipe, param_grid=param_grid, cv=3, scoring='accuracy')
+
+# ### Set options for ModelAssessment
+ma_options = {
+    'test_size': 0.25,
     'scoring': 'accuracy',
+    'n_jobs': -1,
+    'n_splits': 2
 }
 
-final_scoring = 'accuracy'
+n_splits_permutation = 3
 
 # For the Pipeline object, indicate the name of the step from which to
 # retrieve the list of selected features
