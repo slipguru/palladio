@@ -35,7 +35,7 @@ setup(
     license = 'FreeBSD',
 
     packages=['palladio'],
-    requires=['numpy (>=1.10.1)',
+    install_requires=['numpy (>=1.10.1)',
               'scipy (>=0.16.1)',
               'sklearn (>=0.17)',
               'matplotlib (>=1.5.1)',
