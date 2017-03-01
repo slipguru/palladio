@@ -34,7 +34,7 @@ setup(
     ],
     license = 'FreeBSD',
 
-    packages=['palladio'],
+    packages=['palladio', 'palladio.wrappers'],
     install_requires=['numpy (>=1.10.1)',
               'scipy (>=0.16.1)',
               'scikit-learn (>=0.17)',
