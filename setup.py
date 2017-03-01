@@ -37,7 +37,7 @@ setup(
     packages=['palladio'],
     install_requires=['numpy (>=1.10.1)',
               'scipy (>=0.16.1)',
-              'sklearn (>=0.17)',
+              'scikit-learn (>=0.17)',
               'matplotlib (>=1.5.1)',
               'seaborn (>=0.7.0)',
               # 'mpi4py (>=2.0.0)'
