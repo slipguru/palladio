@@ -8,18 +8,15 @@ from __future__ import print_function
 
 import logging
 # import numpy
+import joblib as jl
 import numbers
 # import pandas
 import os
 import warnings
 
-try:
-    import cPickle as pkl
-except ImportError:  # python 3 compatibility
-    import pickle as pkl
-
 from collections import deque
 from collections import Iterable
+from six.moves import cPickle as pkl
 from sklearn.base import BaseEstimator, clone
 # from sklearn.model_selection import check_cv as _check_cv
 from sklearn.metrics.scorer import check_scoring
@@ -54,6 +51,90 @@ except ImportError:
 MAX_RESUBMISSIONS = 0  # resubmissions disabled
 DO_WORK = 100
 EXIT = 200
+
+
+def _worker(estimator_, i, X, y, train_index, test_index):
+    """Implement the worker resubmission in case of errors."""
+    # custom_name = "{}_p_{}_i_{}".format(
+    #     ("permutation" if is_permutation_test else "regular"), RANK, i)
+    # tmp_name_base = 'tmp_' + custom_name
+    experiment_resubmissions = 0
+    experiment_completed = False
+    while not experiment_completed and \
+            experiment_resubmissions <= MAX_RESUBMISSIONS:
+        try:
+            # tmp_name = tmp_name_base + '_submission_{}'.format(
+            #     experiment_resubmissions + 1)
+            # run_experiment(data, labels, None, config,
+            #                is_permutation_test, experiments_folder_path,
+            #                tmp_name)
+            Xtr = X[train_index, :]
+            Xts = X[test_index, :]
+            ytr = y[train_index]
+            yts = y[test_index]
+
+            # TODO necessary?
+            estimator = clone(estimator_.estimator)
+            if estimator_.shuffle_y:
+                random_state = check_random_state(estimator_.random_state)
+                ytr = _shuffle(ytr, estimator_.groups, random_state)
+            estimator.fit(Xtr, ytr)
+
+            yts_pred = estimator.predict(Xts)
+            ytr_pred = estimator.predict(Xtr)
+            lr_score = estimator_.scorer_(estimator, Xtr, ytr)
+            ts_score = estimator_.scorer_(estimator, Xts, yts)
+            # lr_score = estimator.score(Xtr, ytr)
+            # ts_score = estimator.score(Xts, yts)
+
+            if hasattr(estimator, 'cv_results_'):
+                # In case in which the estimator is a CV object
+                cv_results = estimator.cv_results_
+            else:
+                cv_results = None
+
+            cv_results_ = {
+                'split_i': i,
+                'learn_score': lr_score,
+                'test_score': ts_score,
+                'cv_results_': cv_results,
+                'ytr_pred': ytr_pred,
+                'yts_pred': yts_pred,
+                'test_index': test_index,
+                'train_index': train_index,
+                'estimator': estimator
+            }
+
+            experiment_completed = True
+
+            # ### Dump partial results
+            if estimator_.experiments_folder is not None:
+                pkl_name = (
+                    'permutation' if estimator_.shuffle_y else 'regular') + \
+                    '_%d.pkl' % i
+
+                # TODO use gzip?
+                with open(os.path.join(
+                        estimator_.experiments_folder, pkl_name), 'wb') as ff:
+                    # pkl.dump(partial_result, ff)
+                    pkl.dump(cv_results_, ff)
+
+        except StandardError as e:
+            # If somethings out of the ordinary happens,
+            # resubmit the job
+            experiment_resubmissions += 1
+            warnings.warn(
+                "[{}_{}] failed experiment {}, resubmission #{}\n"
+                "Exception raised: {}".format(
+                    NAME, RANK, i, experiment_resubmissions, e))
+
+    if not experiment_completed:
+        warnings.warn(
+            "[{}_{}] failed to complete experiment {}, "
+            "max resubmissions limit reached".format(NAME, RANK, i))
+        return {}
+    else:
+        return cv_results_
 
 
 def _check_cv(cv=3, y=None, classifier=False, **kwargs):
@@ -190,7 +271,7 @@ class ModelAssessment(BaseEstimator):
     """
 
     def __init__(self, estimator, cv=None, scoring=None, fit_params=None,
-                 multi_output=False, shuffle_y=False,
+                 multi_output=False, shuffle_y=False, n_jobs=1,
                  n_splits=10, test_size=0.1, train_size=None,
                  random_state=None, groups=None, experiments_folder=None):
         self.estimator = estimator
@@ -204,18 +285,25 @@ class ModelAssessment(BaseEstimator):
         self.random_state = random_state
         self.groups = groups
         self.experiments_folder = experiments_folder
+        self.n_jobs = n_jobs
 
         # Shuffle training labels
         self.shuffle_y = shuffle_y
 
     def _fit_single_job(self, job_list, X, y):
         cv_results_ = {}
-        for i, (train_index, test_index) in job_list:
-            LOG.info("Training fold %d", i + 1)
-
-            slave_result_ = self._worker(
-                i, X, y, train_index, test_index)
-
+        # for i, (train_index, test_index) in job_list:
+        #     LOG.info("Training fold %d", i + 1)
+        #
+        #     slave_result_ = self._worker(
+        #         i, X, y, train_index, test_index)
+        #
+        #     _build_cv_results(cv_results_, **slave_result_)
+        slave_results = jl.Parallel(n_jobs=self.n_jobs) \
+            (jl.delayed(_worker)(
+                self, i, X, y, train_index, test_index) for i, (
+                    train_index, test_index) in job_list)
+        for slave_result_ in slave_results:
             _build_cv_results(cv_results_, **slave_result_)
 
         self.cv_results_ = cv_results_
@@ -309,95 +397,13 @@ class ModelAssessment(BaseEstimator):
 
                 print("[{} {}]: Performing experiment {}".format(NAME, RANK, i))
 
-                cv_results_ = self._worker(i, X, y, train_index, test_index)
+                cv_results_ = _worker(self, i, X, y, train_index, test_index)
                 print("[{} {}]: Experiment {} completed".format(NAME, RANK, i))
                 COMM.send(cv_results_, dest=0, tag=0)
 
         except StandardError as exc:
             warnings.warn("Quitting ... TB:", str(exc))
 
-    def _worker(self, i, X, y, train_index, test_index):
-        """Implement the worker resubmission in case of errors."""
-        # custom_name = "{}_p_{}_i_{}".format(
-        #     ("permutation" if is_permutation_test else "regular"), RANK, i)
-        # tmp_name_base = 'tmp_' + custom_name
-        experiment_resubmissions = 0
-        experiment_completed = False
-        while not experiment_completed and \
-                experiment_resubmissions <= MAX_RESUBMISSIONS:
-            try:
-                # tmp_name = tmp_name_base + '_submission_{}'.format(
-                #     experiment_resubmissions + 1)
-                # run_experiment(data, labels, None, config,
-                #                is_permutation_test, experiments_folder_path,
-                #                tmp_name)
-                Xtr = X[train_index, :]
-                Xts = X[test_index, :]
-                ytr = y[train_index]
-                yts = y[test_index]
-
-                # TODO necessary?
-                estimator = clone(self.estimator)
-                if self.shuffle_y:
-                    random_state = check_random_state(self.random_state)
-                    ytr = _shuffle(ytr, self.groups, random_state)
-                estimator.fit(Xtr, ytr)
-
-                yts_pred = estimator.predict(Xts)
-                ytr_pred = estimator.predict(Xtr)
-                lr_score = self.scorer_(estimator, Xtr, ytr)
-                ts_score = self.scorer_(estimator, Xts, yts)
-                # lr_score = estimator.score(Xtr, ytr)
-                # ts_score = estimator.score(Xts, yts)
-
-                if hasattr(estimator, 'cv_results_'):
-                    # In case in which the estimator is a CV object
-                    cv_results = estimator.cv_results_
-                else:
-                    cv_results = None
-
-                cv_results_ = {
-                    'split_i': i,
-                    'learn_score': lr_score,
-                    'test_score': ts_score,
-                    'cv_results_': cv_results,
-                    'ytr_pred': ytr_pred,
-                    'yts_pred': yts_pred,
-                    'test_index': test_index,
-                    'train_index': train_index,
-                    'estimator': estimator
-                }
-
-                experiment_completed = True
-
-                # ### Dump partial results
-                if self.experiments_folder is not None:
-                    pkl_name = (
-                        'permutation' if self.shuffle_y else 'regular') + \
-                        '_%d.pkl' % i
-
-                    # TODO use gzip?
-                    with open(os.path.join(
-                            self.experiments_folder, pkl_name), 'wb') as ff:
-                        # pkl.dump(partial_result, ff)
-                        pkl.dump(cv_results_, ff)
-
-            except StandardError as e:
-                # If somethings out of the ordinary happens,
-                # resubmit the job
-                experiment_resubmissions += 1
-                warnings.warn(
-                    "[{}_{}] failed experiment {}, resubmission #{}\n"
-                    "Exception raised: {}".format(
-                        NAME, RANK, i, experiment_resubmissions, e))
-
-        if not experiment_completed:
-            warnings.warn(
-                "[{}_{}] failed to complete experiment {}, "
-                "max resubmissions limit reached".format(NAME, RANK, i))
-            return {}
-        else:
-            return cv_results_
 
     def fit(self, X, y):
         """Fit the model to the training data."""
