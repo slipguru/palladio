@@ -96,7 +96,7 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
         color_regular=colorsHex['lightBlue']
     else:
         kde = False
-        color_regular=colorsHex['lightGreen']
+        color_regular=colorsHex['lightBlue']
         color_permutation=colorsHex['lightRed']
         if metric.lower() not in ['mcc']: # TODO fix this old notation here
             scale = 100
@@ -150,13 +150,15 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
     # Wilcoxon rank sum test
     # rstest = stats.ranksums(v_regular, v_permutation)
     if len(v_permutation) > 0:
-        rstest = stats.wilcoxon(v_regular, v_permutation)
+        # rstest = stats.wilcoxon(v_regular, v_permutation)
+        rstest = stats.ranksums(v_regular, v_permutation)
         print("[{}] Wilcoxon Signed-rank test: {}".format(metric, rstest))
         # print("Kolmogorov-Smirnov test: {}".format(kstest))
         # print("[{}] Wilcoxon Rank-Sum test: {}".format(metric, rstest))
     else:
         rstest = None
 
+    ## XXX remove text file creation from here
     filemode = 'w' if first_run else 'a'
     with open(os.path.join(base_folder, 'stats.txt'), filemode) as f:
         # f.write("Kolmogorov-Smirnov test p-value: {0:.3e}\n".format(kstest[1]))
@@ -228,7 +230,7 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm,
     plt.figure()
 
     s_t = plt.scatter(fake_x, y_true, marker='h', alpha=0.8, s=10,
-                      color=colorsHex['lightGreen'])
+                      color=colorsHex['lightBlue'])
     s_p = plt.scatter(fake_x, y_perm, marker='h', alpha=0.8, s=10,
                       color=colorsHex['lightRed'])
     threshold_line = plt.axhline(y=threshold, ls='--', lw=0.5, color='k')
@@ -302,7 +304,7 @@ def feature_frequencies(sorted_keys, frequencies, base_folder, threshold=.75):
     plt.figure(figsize=(18, 10))
     plt.title("Manhattan plot - top features detail", fontsize=20)
 
-    ax = sns.barplot(x=x, y=y, color=colorsHex['lightGreen'], alpha=0.9)
+    ax = sns.barplot(x=x, y=y, color=colorsHex['lightBlue'], alpha=0.9)
 
     # ## Rotate x ticks
     for item in ax.get_xticklabels():
@@ -375,11 +377,11 @@ def selected_over_threshold(frequencies_true, frequencies_perm, base_folder,
     # make plot
     plt.figure()
     # plt.plot(100 * thresh_axis, sel_true, marker='h', alpha=0.8,
-    #          color=colorsHex['lightGreen'], label='Real signature')
+    #          color=colorsHex['lightBlue'], label='Real signature')
     # plt.plot(100 * thresh_axis, sel_perm, marker='h', alpha=0.8,
     #          color=colorsHex['lightRed'], label='Permutation signature')
     plt.plot(100 * thresh_axis, sel_true, marker='h', alpha=0.8,
-             color=colorsHex['lightGreen'], label='Regular batch')
+             color=colorsHex['lightBlue'], label='Regular batch')
     plt.plot(100 * thresh_axis, sel_perm, marker='h', alpha=0.8,
              color=colorsHex['lightRed'], label='Permutation batch')
     plt.axvline(x=threshold*100, ymin=0, ymax=n_feat, ls='--', lw=0.5,
