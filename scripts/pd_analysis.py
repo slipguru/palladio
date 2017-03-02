@@ -76,12 +76,10 @@ def main():
         'vs_analysis': None,
         'frequency_threshold': .75,
         'ma_options': None,
-        'n_splits_permutation': 0
     })
     analyse_results(
         regular_cv_results, permutation_cv_results, config.labels,
-        config.estimator, config.ma_options.get('n_splits', 10),
-        config.n_splits_permutation,
+        config.estimator,
         base_folder=base_folder,
         feature_names=config.feature_names, learning_task=config.learning_task,
         vs_analysis=config.vs_analysis, threshold=config.frequency_threshold,

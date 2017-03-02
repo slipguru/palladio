@@ -32,6 +32,12 @@ def retrieve_features(best_estimator):
     if hasattr(best_estimator, 'get_support'):
         return np.nonzero(best_estimator.get_support())[0]
     elif hasattr(best_estimator, 'coef_'):
+        if best_estimator.coef_.ndim > 1:
+            sel_feats = []
+            for dim in range(best_estimator.coef_.ndim):
+                sel_feats += np.nonzero(
+                    best_estimator.coef_[dim])[0].ravel().tolist()
+            return np.unique(sel_feats)
         return np.nonzero(best_estimator.coef_.flatten())[0]
     else:
         # Raise an error

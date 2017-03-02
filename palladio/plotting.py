@@ -108,6 +108,7 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
             x_min = -1.0
         x_max = 1.0
 
+    plt.close('all')
     fig, ax = plt.subplots(figsize=(18, 10))
     kwargs = {
         'norm_hist': False,
@@ -205,37 +206,39 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
                                           .format(metric)))
 
 
-def features_manhattan(sorted_keys, frequencies_true, frequencies_perm,
-                       base_folder, threshold=.75):
-    """
+def features_manhattan(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
+    """Plot selected features with a manhattan plot.
+
     Parameters
     ----------
-
-    sorted_keys : list
+    feat_arr_{r, p} : array-like, 2-dimensional
+        Array of feature names (first column) and frequencies (second col)
+        for regular and permutation batches.
+        They are like:
+        >>> array([['f1', 0.5],
+                   ['f2', 0.8],
+                   ['f3', 0.1]], dtype=object)
+    base_folder : string
+        Path to the folder where to save results.
+    threshold : float, optional, default 0.75
+        Selection threshold of the features.
     """
-    r_sorted_keys = reversed(sorted_keys)
+    # sort by frequencies of regular
+    idx = feat_arr_r[:, 1].argsort()[::-1]
+    s_feat_arr_r = feat_arr_r[idx]
+    s_feat_arr_p = feat_arr_p[idx]
 
-    fake_x = np.arange(len(sorted_keys))
-
-    y_true = list()
-    y_perm = list()
-
-    for k in r_sorted_keys:
-        y_true.append(frequencies_true[k])
-        y_perm.append(frequencies_perm[k])
-
-    y_true = np.array(y_true)
-    y_perm = np.array(y_perm)
-
+    plt.close('all')
     plt.figure()
 
-    s_t = plt.scatter(fake_x, y_true, marker='h', alpha=0.8, s=10,
+    xaxis = np.arange(feat_arr_r.shape[0])
+    s_t = plt.scatter(xaxis, s_feat_arr_r[:, 1], marker='h', alpha=0.8, s=10,
                       color=colorsHex['lightBlue'])
-    s_p = plt.scatter(fake_x, y_perm, marker='h', alpha=0.8, s=10,
+    s_p = plt.scatter(xaxis, s_feat_arr_p[:, 1], marker='h', alpha=0.8, s=10,
                       color=colorsHex['lightRed'])
     threshold_line = plt.axhline(y=threshold, ls='--', lw=0.5, color='k')
 
-    plt.xlim([-5, len(sorted_keys) + 5])
+    plt.xlim([-5, feat_arr_r.shape[0] + 5])
     plt.ylim([0, 1.05])
 
     plt.tick_params(
@@ -259,221 +262,102 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm,
     plt.xlabel('Features')
     plt.ylabel('Relative frequencies')
     plt.title("Feature frequencies")
-    plt.savefig(os.path.join(base_folder, 'manhattan_plot.pdf'))
+    plt.savefig(os.path.join(base_folder, 'manhattan_plot.pdf'),
+                bbox_inches='tight', dpi=300)
 
 
-def feature_frequencies(sorted_keys, frequencies, base_folder, threshold=.75):
+def feature_frequencies(feat_arr, base_folder, threshold=.75):
     """Plot a bar chart of the first 2 x M features in a signature.
 
     M is the number of features whose frequencies is over a given threshold.
 
     Parameters
     ----------
-
-    sorted_keys : list
-
-    frequencies : dict
+    feat_arr : array-like, 2-dimensional:
+        Array of feature names (first column) and frequencies (second col).
+        It is like:
+        >>> array([['f1', 0.5],
+                   ['f2', 0.8],
+                   ['f3', 0.1]], dtype=object)
+    base_folder : string
+        Path to the folder where to save results.
+    threshold : float, optional, default 0.75
+        Selection threshold of the features.
     """
-    x = list()
-    y = list()
+    n_over_threshold = feat_arr[feat_arr[:, 1] >= threshold].shape[0]
 
-    M = 0
-    r_sorted_keys = reversed(sorted_keys)
-    for k in r_sorted_keys:
-        if frequencies[k] >= threshold:
-            M += 1
-        else:
-            break
-    # print "M = {}".format(M)
+    # sort by frequencies
+    sorted_feat_arr = feat_arr[feat_arr[:, 1].argsort()[::-1]]
 
-    N = 2 * M
-    r_sorted_keys = reversed(sorted_keys)
-    for k in r_sorted_keys:
-        if N == 0:
-            break
+    plt.close('all')
+    sns.set_context('notebook')
+    # plt.figure(figsize=(18, 100))
+    ax = sns.barplot(
+        x=sorted_feat_arr[:2 * n_over_threshold, 0],
+        y=sorted_feat_arr[:2 * n_over_threshold, 1],
+        color=colorsHex['lightBlue'], alpha=0.9)
 
-        # x.append(k)
-        x.append('_' + str(k))  # ## This is required for some reason
-        y.append(frequencies[k])
-        # print frequencies[k]
-        N -= 1
+    # plot a horizontal line at the height of the selected threshold
+    plt.axhline(y=threshold, ls='--', lw=0.5, color='k', label='Threshold')
+    # plt.legend((threshold_line, ), ('Threshold',), scatterpoints=1,
+    #            loc='upper right', ncol=1, fontsize=12)
+    plt.legend(loc='upper right')
 
-    x = np.array(x)
-    y = np.array(y)
-
-    plt.figure(figsize=(18, 10))
-    plt.title("Manhattan plot - top features detail", fontsize=20)
-
-    ax = sns.barplot(x=x, y=y, color=colorsHex['lightBlue'], alpha=0.9)
-
-    # ## Rotate x ticks
-    for item in ax.get_xticklabels():
-        item.set_rotation(90)
-
-    # plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
-    # ## plot a horizontal line at the height of the selected threshold
-    threshold_line = plt.axhline(y=threshold, ls='--', lw=0.5, color='k')
-
-    plt.legend(
-        (threshold_line, ),
-        ('Threshold',),
-        scatterpoints=1,
-        loc='upper right',
-        ncol=1,
-        fontsize=12
-    )
-
-    # plot a vertical line which separates selected features from those
-    # not selected
-    xmin, xmax = ax.get_xbound()
-    mid = float(xmax + xmin) / 2
+    # vertical line to separate selected and not selected features
+    mid = np.sum(ax.get_xbound()) / 2.
     plt.axvline(x=mid, ls='-', lw=1, color=colorsHex['lightRed'])
 
+    plt.title("Manhattan plot - top features detail", fontsize=20)
     plt.xlabel("Feature names", fontsize="large")
     plt.ylabel("Relative frequency", fontsize="large")
     plt.ylim([0, 1.05])
 
-    plt.tight_layout()
-    plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
+    plt.setp(ax.get_xticklabels(), fontsize=2, rotation='vertical')
+    plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'),
+                bbox_inches='tight', dpi=300)
 
 
-def selected_over_threshold(frequencies_true, frequencies_perm, base_folder,
-                            threshold=.75):
+def select_over_threshold(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
     """Plot the selection trend against the selection frequency threshold.
 
     Parameters
     ----------
-
-    sorted_keys : list
+    feat_arr_{r, p} : array-like, 2-dimensional
+        Array of feature names (first column) and frequencies (second col)
+        for regular and permutation batches.
+        They are like:
+        >>> array([['f1', 0.5],
+                   ['f2', 0.8],
+                   ['f3', 0.1]], dtype=object)
+    base_folder : string
+        Path to the folder where to save results.
+    threshold : float, optional, default 0.75
+        Selection threshold of the features.
     """
     # horizontal axis REVERSED
     thresh_axis = np.linspace(0, 1, 21)[::-1]
 
-    # number of selected features for true/perm
-    y_true = list()
-    y_perm = list()
-
-    # Unroll dict
-    for k in frequencies_true.keys():
-        y_true.append(frequencies_true[k])
-        y_perm.append(frequencies_perm[k])
-    y_true = np.array(y_true)
-    y_perm = np.array(y_perm)
-
-    # tot number features
-    n_feat = len(y_true)
-
-    # init selected counts
-    sel_true = np.zeros(len(thresh_axis))
-    sel_perm = np.zeros(len(thresh_axis))
-
     # iterate over the horiz axis (i.e. the selection freq thresh)
+    sel_true = np.zeros(thresh_axis.size)
+    sel_perm = np.zeros(thresh_axis.size)
     for i, thr in enumerate(thresh_axis):
-        # sel_true[i] = np.count_nonzero(y_true > thr)
-        # sel_perm[i] = np.count_nonzero(y_perm > thr)
-        sel_true[i] = np.count_nonzero(y_true >= thr)
-        sel_perm[i] = np.count_nonzero(y_perm >= thr)
+        sel_true[i] = np.count_nonzero(feat_arr_r[:, 1] >= thr)
+        sel_perm[i] = np.count_nonzero(feat_arr_p[:, 1] >= thr)
 
-    # make plot
+    plt.close('all')
     plt.figure()
-    # plt.plot(100 * thresh_axis, sel_true, marker='h', alpha=0.8,
-    #          color=colorsHex['lightBlue'], label='Real signature')
-    # plt.plot(100 * thresh_axis, sel_perm, marker='h', alpha=0.8,
-    #          color=colorsHex['lightRed'], label='Permutation signature')
     plt.plot(100 * thresh_axis, sel_true, marker='h', alpha=0.8,
              color=colorsHex['lightBlue'], label='Regular batch')
     plt.plot(100 * thresh_axis, sel_perm, marker='h', alpha=0.8,
              color=colorsHex['lightRed'], label='Permutation batch')
-    plt.axvline(x=threshold*100, ymin=0, ymax=n_feat, ls='--', lw=0.5,
-                color='k', label='Threshold')
+    plt.axvline(x=threshold * 100, ymin=0, ymax=feat_arr_r.shape[0], ls='--',
+                lw=0.5, color='k', label='Threshold')
     plt.legend()
     plt.xlabel("Selection frequency %", fontsize="large")
     plt.ylabel("Number of selected features", fontsize="large")
-    plt.xlim(thresh_axis[-1]*100, thresh_axis[0]*100)
+    plt.xlim(thresh_axis[-1] * 100, thresh_axis[0] * 100)
 
     plt.savefig(os.path.join(base_folder, 'selected_over_threshold.pdf'))
-
-
-def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
-    """Generate plot surfaces for training and test error across experiments.
-
-    Parameters
-    ----------
-
-    kcv_err : list of arrays
-
-    exp : string
-        Either 'regular' or 'permutation'
-
-    base_folder: string
-        Path to base output folder.
-
-    param_ranges : list
-        list containing all the hyperparameter ranges. When using
-        l1l2Classifier this is [tau_range, lambda_range].
-    """
-    def most_common(lst):
-        """Return the most common element in a list."""
-        return max(set(lst), key=lst.count)
-
-    # average errors dictionary
-    avg_err = dict()
-
-    # iterate over tr and ts
-    for k in kcv_err.keys():
-        # it may happen that for a certain experiment a solution is not
-        # provided for each values of tau. we want to exclude such situations
-
-        # get the most common size of the matrix
-        mode = most_common([e.shape for e in kcv_err[k]])
-        kcv_err_k = filter(lambda x: x.shape == mode, kcv_err[k])
-        # get the number of experiment where everything worked fine
-        n_exp = len(kcv_err_k)
-        # perform reduce operation
-        avg_err[k] = sum(kcv_err_k) / float(n_exp)
-        # this is like avg_err = reduce(lambda x,y: x+y, kcv_err_k) / float(n_exp)
-
-    # PLOT SECTION
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    cmaps = [cm.Oranges, cm.Blues]
-    fc = {'tr': colorsHex['lightBlue'], 'ts': colorsHex['lightOrange']}
-
-    # legends
-    legend_handles = []
-    legend_labels = ['Test Error', 'Train Error']
-
-    # error surface
-    for k, c in zip(avg_err.keys(), cmaps):
-        ZZ = avg_err[k]
-
-        # xx = np.log10(param_ranges[0])  # tau
-        # NOTE: If ZZ has somw missing rows, it means that some tau was too big
-        xx = np.log10(param_ranges[0][:ZZ.shape[0]])  # tau
-        yy = np.log10(param_ranges[1])  # lambda
-        XX, YY = np.meshgrid(xx, yy)
-        ZZ = ZZ.reshape(xx.shape[0], yy.shape[0])
-
-        ax.plot_surface(
-            XX, YY, ZZ.T,
-            rstride=1, cstride=1, linewidth=0, antialiased=False, cmap=c)
-
-        legend_handles.append(Rectangle((0, 0), 1, 1, fc=fc[k]))
-
-    # plot minimum
-    ZZ = avg_err['ts'].reshape(xx.shape[0], yy.shape[0])
-    x_min_idxs, y_min_idxs = np.where(ZZ == np.min(ZZ))
-    ax.plot(xx[x_min_idxs], yy[y_min_idxs],
-            ZZ[x_min_idxs, y_min_idxs], 'o', c=colorsHex['darkBlue'])
-
-    # fig.colorbar()
-    ax.set_title('average KCV error of %s experiments' % exp)
-    ax.set_ylabel(r"$log_{10}(" + param_names[1] + ")$")
-    ax.set_xlabel(r"$log_{10}(" + param_names[0] + ")$")
-    ax.set_zlabel("avg kcv err")
-    ax.legend(legend_handles, legend_labels[:len(legend_handles)], loc='best')
-
-    plt.savefig(os.path.join(base_folder, 'kcv_err_%s.pdf' % exp))
 
 
 def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
@@ -536,6 +420,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
 
     pivot_names = list(product(*[[x] for x in pivoting_var])) * len(pivots)
 
+    plt.close('all')
     for id_pivot, (pivot, value) in enumerate(zip(pivot_names, pivots)):
         for id_param, (param1, param2) in enumerate(comb):
             param_names = 'param_' + np.array(
