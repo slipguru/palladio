@@ -6,11 +6,13 @@ import numpy as np
 import os
 
 from sklearn.base import is_regressor
+from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils.multiclass import type_of_target
 
 from palladio import plotting
 from palladio.metrics import __REGRESSION_METRICS__
 from palladio.metrics import __CLASSIFICATION_METRICS__
+from palladio.metrics import __MULTICLASS_CLASSIFICATION_METRICS__
 from palladio.utils import get_selected_list
 from palladio.utils import save_signature
 
@@ -56,7 +58,7 @@ def classification_analysis(cv_results, labels):
     Returns
     -------
     performance_metrics : dictionary
-        Regression metrics evaluated on the external splits results
+        Classification metrics evaluated on the external splits results
     """
     test_index = cv_results['test_index']
     yts_pred = cv_results['yts_pred']
@@ -71,9 +73,36 @@ def classification_analysis(cv_results, labels):
     return performance_metrics
 
 
+def multiclass_analysis(cv_results, labels):
+    """Evaluate the multiclassification metrics on the external splits results.
+
+    Parameters
+    ----------
+    cv_results : dictionary
+        As in `palladio.ModelAssessment.cv_results_`
+    config : module
+        Palladio config of the current experiment
+
+    Returns
+    -------
+    performance_metrics : dictionary
+        Classification metrics evaluated on the external splits results
+    """
+    test_index = cv_results['test_index']
+    yts_pred = cv_results['yts_pred']
+    yts_true = [labels[i] for i in test_index]
+
+    # Evaluate all the metrics on the results
+    performance_metrics = {}
+    for metric in __MULTICLASS_CLASSIFICATION_METRICS__:
+        performance_metrics[metric.__name__] = [
+            metric(*yy) for yy in zip(yts_true, yts_pred)]
+
+    return performance_metrics
+
+
 def analyse_results(
     regular_cv_results, permutation_cv_results, labels, estimator,
-    n_splits_regular, n_splits_permutation,
     base_folder, feature_names=None, learning_task=None, vs_analysis=None,
         threshold=.75, model_assessment_options=None,
         score_surfaces_options=None):
@@ -91,13 +120,17 @@ def analyse_results(
             learning_task = 'continuous'
         else:
             learning_task = type_of_target(labels)
-
     # Run the appropriate analysis according to the learning_task
     is_regression = learning_task.lower() in ('continuous', 'regression')
     if is_regression:
         # Perform regression analysis
         performance_regular = regression_analysis(regular_cv_results, labels)
         performance_permutation = {}  # for consistency only
+    elif learning_task.lower() == 'multiclass':
+        performance_regular = multiclass_analysis(
+            regular_cv_results, labels)
+        performance_permutation = multiclass_analysis(
+            permutation_cv_results, labels)
     else:
         # Perform classification analysis
         performance_regular = classification_analysis(
@@ -117,6 +150,8 @@ def analyse_results(
                                        np.zeros(len(feature_names))))
         selected['permutation'] = selected['regular'].copy()
 
+        n_splits_regular = len((regular_cv_results.values() or [[]])[0])
+        n_splits_permutation = len((permutation_cv_results.values() or [[]])[0])
         n_jobs = {'regular': n_splits_regular,
                   'permutation': n_splits_permutation}
         names_ = ('regular', 'permutation')
@@ -140,22 +175,24 @@ def analyse_results(
                 base_folder, 'signature_%s.txt' % batch_name)
             save_signature(filename, selected[batch_name], threshold)
 
-        sorted_keys_regular = sorted(
-            selected['regular'], key=selected['regular'].__getitem__)
+        # sorted_keys_regular = sorted(
+        #     selected['regular'], key=selected['regular'].__getitem__)
+        feat_arr_r = np.array(zip(*selected['regular'].items()), dtype=object).T
+        feat_arr_p = np.array(zip(*selected['permutation'].items()), dtype=object).T
+
+        # sort by name
+        feat_arr_r = feat_arr_r[feat_arr_r[:, 0].argsort()]
+        feat_arr_p = feat_arr_p[feat_arr_p[:, 0].argsort()]
 
         # # Save graphical summary
         plotting.feature_frequencies(
-            sorted_keys_regular, selected['regular'], base_folder,
-            threshold=threshold)
+            feat_arr_r, base_folder, threshold=threshold)
 
         plotting.features_manhattan(
-            sorted_keys_regular, selected['regular'],
-            selected['permutation'], base_folder,
-            threshold=threshold)
+            feat_arr_r, feat_arr_p, base_folder, threshold=threshold)
 
-        plotting.selected_over_threshold(
-            selected['regular'], selected['permutation'],
-            base_folder, threshold=threshold)
+        plotting.select_over_threshold(
+            feat_arr_r, feat_arr_p, base_folder, threshold=threshold)
 
     # Generate distribution plots
     first_run = True
@@ -171,8 +208,9 @@ def analyse_results(
 
     # Generate surfaces
     # This has meaning only if the estimator is an istance of GridSearchCV
-    from sklearn.model_selection._search import BaseSearchCV
     if isinstance(estimator, BaseSearchCV):
+        if score_surfaces_options is None:
+            score_surfaces_options = {}
         plotting.score_surfaces(
             param_grid=estimator.param_grid,
             results=regular_cv_results,

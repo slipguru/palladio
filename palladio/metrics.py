@@ -38,3 +38,34 @@ def balanced_accuracy(y_true, y_pred):
 __CLASSIFICATION_METRICS__ = (
     accuracy_score, precision_score, recall_score, f1_score,
     matthews_corrcoef, balanced_accuracy)
+
+
+def micro_precision_score(y_true, y_pred, labels=None, pos_label=1,
+                          sample_weight=None):
+    """Precision score for multiclass problems (micro averaged)."""
+    return precision_score(
+        y_true, y_pred, labels=labels, pos_label=pos_label,
+        sample_weight=sample_weight, average='micro')
+
+
+def micro_recall_score(y_true, y_pred, labels=None, pos_label=1,
+                       sample_weight=None):
+    """Precision score for multiclass problems (micro averaged)."""
+    return recall_score(
+        y_true, y_pred, labels=labels, pos_label=pos_label,
+        sample_weight=sample_weight, average='micro')
+
+
+def micro_f1_score(y_true, y_pred, labels=None, pos_label=1,
+                   sample_weight=None):
+    """Precision score for multiclass problems (micro averaged)."""
+    return f1_score(
+        y_true, y_pred, labels=labels, pos_label=pos_label,
+        sample_weight=sample_weight, average='micro')
+
+
+# List of callables for multiclass classification metrics
+__MULTICLASS_CLASSIFICATION_METRICS__ = (
+    accuracy_score, micro_precision_score,
+    micro_recall_score, micro_f1_score,
+    balanced_accuracy)
