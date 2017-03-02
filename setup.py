@@ -5,7 +5,8 @@
 from setuptools import setup
 
 # Package Version
-from palladio import __version__ as version
+# from palladio import __version__ as version
+version='2.0.0b2'
 
 setup(
     name='palladio',
@@ -34,10 +35,10 @@ setup(
     ],
     license = 'FreeBSD',
 
-    packages=['palladio'],
-    requires=['numpy (>=1.10.1)',
+    packages=['palladio', 'palladio.wrappers'],
+    install_requires=['numpy (>=1.10.1)',
               'scipy (>=0.16.1)',
-              'sklearn (>=0.17)',
+              'scikit-learn (>=0.17)',
               'matplotlib (>=1.5.1)',
               'seaborn (>=0.7.0)',
               # 'mpi4py (>=2.0.0)'
