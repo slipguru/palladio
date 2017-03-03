@@ -10,8 +10,6 @@ from palladio.utils import sec_to_timestring
 from palladio.model_assessment import ModelAssessment
 from palladio.datasets import copy_files
 
-from sklearn.model_selection import GridSearchCV
-
 try:
     from mpi4py import MPI
     COMM = MPI.COMM_WORLD
@@ -65,7 +63,6 @@ def main(config_path):
     # )
     #
     # data, labels, _ = dataset.load_dataset(config_dir)
-
     data, labels = config.data, config.labels
 
     # Session folder
@@ -101,42 +98,14 @@ def main(config_path):
         print('  * Data shape:', data.shape)
         print('  * Labels shape:', labels.shape)
 
-        # master(config, data, labels, experiments_folder_path)
-    else:
-        pass
-        # slave(data, labels, config, experiments_folder_path)
-
-    # HERE ALL STUFF
-
-    # Prepare estimator for internal loops (GridSearchCV)
-
-    # The internal estimator (e.g. Elastic Net Classifier)
-    # internal_estimator = config.learner(**config.learner_options)
     internal_estimator = config.estimator
-
-    # Grid search estimator
-    # internal_gridsearch = GridSearchCV(internal_estimator, **config.cv_options)
-
-    # Perform "regular" experiments
-    # external_estimator = ModelAssessment(
-    #     internal_gridsearch,
-    #     scoring=config.final_scoring,
-    #     shuffle_y=False,
-    #     n_splits=config.N_jobs_regular,
-    #     test_size=0.25,
-    #     train_size=None,
-    #     experiments_folder=experiments_folder_path)
     ma_options = config.ma_options if hasattr(config, 'ma_options') else {}
+    ma_options['experiments_folder'] = experiments_folder_path
 
     # XXX these depends on regular or permutation
     ma_options.pop('shuffle_y', None)
 
-    # overwrite these
-    ma_options['experiments_folder'] = experiments_folder_path
-    external_estimator = ModelAssessment(
-        internal_estimator,
-        **ma_options
-    )
+    external_estimator = ModelAssessment(internal_estimator, **ma_options)
     external_estimator.fit(data, labels)
 
     # Perform "permutation" experiments

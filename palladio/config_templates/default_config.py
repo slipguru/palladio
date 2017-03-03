@@ -49,26 +49,25 @@ learning_task = None
 #  LEARNER OPTIONS  ###
 #######################
 
-# ### PIPELINE ###
-
-# ### STEP 0: Preprocessing
+# PIPELINE ###
+# STEP 0: Preprocessing
 pp = MinMaxScaler(feature_range=(0, 1))
 
-# ### STEP 1: Variable selection
+# STEP 1: Variable selection
 vs = RFE(LinearSVC(loss='hinge'), step=0.3)
 
-# ### STEP 2: Classification
+# STEP 2: Classification
 clf = LinearSVC(loss='hinge')
 
-# ### COMPOSE THE PIPELINE
+# COMPOSE THE PIPELINE
 pipe = Pipeline([
-	('preprocessing', pp),
-        ('variable_selection', vs),
-        ('classification', clf),
-        ])
+    ('preprocessing', pp),
+    ('variable_selection', vs),
+    ('classification', clf),
+])
 
 
-# ### Set the estimator to be assessed a GridSearchCV
+# Set the estimator to be a GridSearchCV
 param_grid = {
     'variable_selection__n_features_to_select': [10, 20, 50],
     'variable_selection__estimator__C': np.logspace(-4, 0, 5),
@@ -77,7 +76,7 @@ param_grid = {
 
 estimator = GridSearchCV(pipe, param_grid=param_grid, cv=3, scoring='accuracy')
 
-# ### Set options for ModelAssessment
+# Set options for ModelAssessment
 ma_options = {
     'test_size': 0.25,
     'scoring': 'accuracy',
@@ -97,5 +96,7 @@ vs_analysis = 'variable_selection'
 frequency_threshold = None
 
 # ~~ Plotting Options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-logspace = ['variable_selection__C']
-plot_errors = True
+score_surfaces_options = {
+    'logspace': ['variable_selection__C'],
+    'plot_errors': True
+}
