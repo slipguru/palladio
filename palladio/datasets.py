@@ -1,16 +1,123 @@
 """Dataset loading utilities."""
-import os
-import time
-import shutil
-import pandas as pd
-import numpy as np
 try:
     import cPickle as pkl
 except:
     import pickle as pkl
+import numpy as np
+import os
+import pandas as pd
+import shutil
+import time
 import warnings
+from sklearn.datasets.base import Bunch
+from sklearn.utils.deprecation import deprecated
 
-__all__ = ('DatasetCSV', 'DatasetNPY', 'DatasetXLS')
+__all__ = ('DatasetCSV', 'DatasetNPY', 'DatasetXLS', 'load_csv')
+
+
+def load_csv(data_path, target_path, return_X_y=False,
+             data_loading_options=None, target_loading_options=None,
+             samples_on='row'):
+    """Tabular data loading utiliy.
+
+    Parameters
+    ----------
+
+    data_path : string.
+        The path to the csv file containing the `data`.
+    target_path : string.
+        The path to the csv file containing the `target` (labels).
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object.
+        See below for more information about the `data` and `target` object.
+    data_loading_options : dictionary.
+        The options passed to `pandas.read_csv()` function when loading the
+        `data`.
+    target_loading_options : dictionary.
+        The options passed to `pandas.read_csv()` function when loading the
+        `target`.
+    samples_on : string.
+        If in `col` or `cols`, the samples are assumed on columns; else the
+        samples are assumed on rows (default).
+
+    Returns
+    -------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the data to learn, 'target', the classification labels,
+        'target_names', the meaning of the labels, 'feature_names', the
+        meaning of the features.
+    (data, target) : tuple if ``return_X_y`` is True
+    """
+    data_df = pd.read_csv(data_path, **(data_loading_options or {}))
+    target_df = pd.read_csv(target_path, **(target_loading_options or {}))
+
+    if samples_on.lower() in ['col', 'cols']:
+        data_df = data_df.transpose()
+
+    # Unpack pandas DataFrame
+    data = data_df.values
+    target = target_df.values.ravel()
+
+    # Retrieve feature names from the column names of the DataFrame
+    feature_names = data_df.columns
+    if feature_names.shape[0] != np.unique(feature_names).shape[0]:
+        warnings.warn("Feature names specified are not unique. "
+                      "Assigning a unique label.\n")
+        feature_names_u = np.array(feature_names, dtype=str)
+        for it, _ in enumerate(feature_names_u):
+            feature_names_u[it] += '_{}'.format(it)
+            np.savetxt("id_correspondence.csv",
+                       np.stack((np.array(feature_names),
+                                 feature_names_u), axis=-1),
+                       delimiter=",", fmt='%s')
+
+    # Select target names
+    target_names = np.sort(np.unique(target))
+
+    if return_X_y:
+        return data, target
+
+    return Bunch(data=data, target=target,
+                 target_names=target_names,
+                 feature_names=feature_names)
+
+
+def load_npypkl():
+    raise NotImplementedError('.npy .pkl function not yet implemented')
+
+
+def copy_files(data_path, target_path, base_path, session_folder):
+    """Create a hard link of all dataset files inside the session folder.
+
+    Create a hard link of all files required by the dataset,
+    conveniently renaming them (the destination name is the
+    corresponding key in the dataset_files dictionary).
+
+    Parameters
+    ----------
+
+    data_path : string.
+        The path to the csv file containing the `data`.
+    target_path : string.
+        The path to the csv file containing the `target` (labels).
+    base_path : string
+        The base path relative to which files are stored.
+    sessio_folder : string
+        The folder inside which files links are being created.
+    """
+    while not os.path.exists(session_folder):
+        time.sleep(0.5)
+    # print("\n{} created".format(session_folder))
+
+    dataset_files = {'data': data_path, 'labels': target_path}
+
+    for link_name in dataset_files.keys():
+        # os.link(
+        shutil.copy2(
+            os.path.join(base_path, dataset_files[link_name]),  # SRC
+            os.path.join(session_folder, link_name)             # DST
+        )
 
 
 class Dataset(object):
@@ -39,15 +146,15 @@ class Dataset(object):
             self._dataset_files = dataset_files
 
         self._dataset_options = dataset_options
-        # self._poslab = dataset_options['positive_label']
+
         self.positive_label = dataset_options.get('positive_label', None)
         self.negative_label = dataset_options.get('negative_label', None)
         self.multiclass = dataset_options.get('multiclass', False)
-        if self.positive_label is None and not self.multiclass:
-            warnings.warn(
-                "Positive label unspecified for binary classification "
-                "problems. If you want a multiclass learning, please "
-                "specify multiclass=True in the dataset_options dictionary.")
+        # if self.positive_label is None and not self.multiclass:
+        #     warnings.warn(
+        #         "Positive label unspecified for binary classification "
+        #         "problems. If you want a multiclass learning, please "
+        #         "specify multiclass=True in the dataset_options dictionary.")
 
     def get_file(self, file_key):
         return self._dataset_files[file_key]
@@ -91,7 +198,7 @@ class Dataset(object):
                 os.path.join(session_folder, link_name)             # DST
             )
 
-
+@deprecated('Use load_csv()')
 class DatasetCSV(Dataset):
     """Dataset composed by data matrix and labels vector.
 

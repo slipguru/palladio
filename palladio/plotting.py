@@ -13,47 +13,36 @@ matplotlib.use('Agg')  # create plots from remote
 matplotlib.rcParams['pdf.fonttype'] = 42  # avoid bitmapped fonts in pdf
 matplotlib.rcParams['ps.fonttype'] = 42
 
-from matplotlib import cm
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.patches import Rectangle
-import matplotlib.pyplot as plt
-import seaborn as sns
+import matplotlib.pyplot as plt  # noqa
+import seaborn as sns  # noqa
+
+from matplotlib import cm  # noqa
+from matplotlib.patches import Rectangle  # noqa
+from mpl_toolkits.mplot3d import Axes3D  # noqa
+
+from palladio.colors import COLORS_HEX  # noqa
 
 
-# Dictionary of nice colors
-colorsHex = {
-    "Aluminium6": "#2e3436",
-    "Aluminium5": "#555753",
-    "Aluminium4": "#888a85",
-    "Aluminium3": "#babdb6",
-    "Aluminium2": "#d3d7cf",
-    "Aluminium1": "#eeeeec",
-    "lightPurple": "#ad7fa8",
-    "mediumPurple": "#75507b",
-    "darkPurple": "#5c3566",
-    "lightBlue": "#729fcf",
-    "mediumBlue": "#3465a4",
-    "darkBlue": "#204a87",
-    "lightGreen": "#8ae234",
-    "mediumGreen": "#73d216",
-    "darkGreen": "#4e9a06",
-    "lightChocolate": "#e9b96e",
-    "mediumChocolate": "#c17d11",
-    "darkChocolate": "#8f5902",
-    "lightRed": "#ef2929",
-    "mediumRed": "#cc0000",
-    "darkRed": "#a40000",
-    "lightOrange": "#fcaf3e",
-    "mediumOrange": "#f57900",
-    "darkOrange": "#ce5c00",
-    "lightButter": "#fce94f",
-    "mediumButter": "#edd400",
-    "darkButter": "#c4a000"
-}
+def stats_to_file(rstest, r_mean, r_std, p_mean, p_std, metric, base_folder,
+                  first_run=True):
+    """Save stats to file."""
+    filemode = 'w' if first_run else 'a'
+    with open(os.path.join(base_folder, 'stats.txt'), filemode) as f:
+        f.write("\n------------------------------------------\n"
+                "Metric : %s\n" % metric)
+        if rstest is not None:
+            f.write("Wilcoxon Rank-Sum test p-value: %.3e\n\n" % rstest[1])
+            # f.write("Wilcoxon Signed-rank test p-value: %.3e\n" % rstest[1])
+
+        f.write("Regular batch, %s\n"
+                "Mean = %.3f, SD = %.3f\n" % (metric, r_mean, r_std))
+        if rstest is not None:
+            f.write("Permutation batch, %s\n"
+                    "Mean = %.3f, SD = %.3f\n" % (metric, p_mean, p_std))
 
 
 def distributions(v_regular, v_permutation, base_folder='', metric='nd',
-                  first_run=False):
+                  first_run=False, is_regression=False):
     """Create a plot of the distributions of performance metrics.
 
     Plots are created for both "regular" experiments and permutation tests.
@@ -75,6 +64,10 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
     first_run : bool, optional, default False
         If not first_run, append the logs to a single file. Otherwise append
         logs to a cleared file.
+
+    is_regression : bool, optional, default False
+        If True and plot_errors is True, do errors = -scores instead of
+        1 - scores.
     """
     if np.any(np.equal(v_regular, None)) or \
             np.any(np.equal(v_permutation, None)):
@@ -82,134 +75,128 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
             "Cannot create {} plot due to some nan values".format(metric))
         return
     # scaling factor for percentage plot
-    if metric.lower() not in ['mcc']:
-        scale = 100
-        _bins = np.arange(0, 105, 5)
-        x_min = 0.0
-    else:
-        scale = 1
-        _bins = np.arange(-1, 1, 0.05)
-        x_min = -1.0
-    x_max = 1.0
 
+    if is_regression:
+        scale = 1
+        x_min = np.min(v_regular)
+        x_max = np.max(v_regular)
+        _bins = 20
+        kde = True
+        color_regular = COLORS_HEX['lightBlue']
+    else:
+        kde = False
+        color_regular = COLORS_HEX['lightBlue']
+        color_permutation = COLORS_HEX['lightRed']
+
+        # XXX do we need to separate mcc from the rest?
+        if metric.lower() == 'matthews_corrcoef':
+            scale = 1
+            _bins = np.arange(-1, 1, 0.05)
+            x_min = -1.0
+        else:
+            scale = 100
+            _bins = np.arange(0, 105, 5)
+            x_min = 0.0
+        x_max = 1.0
+
+    plt.close('all')
     fig, ax = plt.subplots(figsize=(18, 10))
     kwargs = {
         'norm_hist': False,
-        'kde': False,
+        'kde': kde,
         'bins': _bins,
-        # hist_kws : {'alpha' : 0.8}
+        'hist_kws': {'alpha': 0.8},
+        'kde_kws': {'color': COLORS_HEX['darkBlue']}
     }
 
-    reg_mean = np.nanmean(v_regular)
-    reg_std = np.nanstd(v_regular)
+    v_regular, v_permutation = np.array(v_regular), np.array(v_permutation)
+    r_mean, r_std = np.nanmean(v_regular), np.nanstd(v_regular)
+    p_mean, p_std = np.nanmean(v_permutation), np.nanstd(v_permutation)
 
-    perm_mean = np.nanmean(v_permutation)
-    perm_std = np.nanstd(v_permutation)
+    if len(v_permutation) > 0:
+        sns.distplot(v_permutation[~np.isnan(v_permutation)] * scale,
+                     # label="Permutation batch\nMean = {0:.2f}, STD = {1:.2f}"
+                     # .format(perm_mean, perm_std),
+                     label="Permutation batch\nMean = {0:2.1f}, SD = {1:2.1f}"
+                           .format(p_mean, p_std),
+                     color=color_permutation, ax=ax, **kwargs)
 
-    sns.distplot(v_permutation[~np.isnan(v_permutation)] * scale,
-                 # label="Permutation batch \nMean = {0:.2f}, STD = {1:.2f}"
-                 # .format(perm_mean, perm_std),
-                 label="Permutation batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
-                       .format(perm_mean * 100, perm_std * 100),
-                 color=colorsHex['lightRed'], ax=ax,
-                 hist_kws={'alpha': 0.8}, **kwargs)
     sns.distplot(v_regular[~np.isnan(v_regular)] * scale,
                  # label="Regular batch \nMean = {0:.2f}, STD = {1:.2f}"
                  #        .format(reg_mean, reg_std),
-                 label="Regular batch \nMean = {0:2.1f} %, SD = {1:2.1f} %"
-                       .format(reg_mean * 100, reg_std * 100),
-                 color=colorsHex['lightGreen'], ax=ax,
-                 hist_kws={'alpha': 0.8}, **kwargs)
+                 label="Regular batch \nMean = {0:2.1f}, SD = {1:2.1f}"
+                       .format(r_mean, r_std),
+                 color=color_regular, ax=ax, **kwargs)
 
-    # Fit a gaussian with permutation data (DEPRECATED)
-    # (mu, sigma) = stats.norm.fit(v_permutation*100)
-    # kstest = stats.kstest(v_regular*100, 'norm', args=(mu, sigma))
-
-    # Wilcoxon rank sum test
-    # rstest = stats.ranksums(v_regular, v_permutation)
-    rstest = stats.wilcoxon(v_regular, v_permutation)
-
-    filemode = 'w' if first_run else 'a'
-    with open(os.path.join(base_folder, 'stats.txt'), filemode) as f:
-        # f.write("Kolmogorov-Smirnov test p-value: {0:.3e}\n".format(kstest[1]))
-        # f.write("Testing distributions")
-        f.write("\n------------------------------------------\n")
-        f.write("Metric : {}\n".format(metric))
-        # f.write("Wilcoxon Rank-Sum test p-value: {0:.3e}\n".format(rstest[1]))
-        f.write("Wilcoxon Signed-rank test p-value: {0:.3e}\n".format(rstest[1]))
-        f.write("\n")
-
-        f.write("Regular batch, {}\n".format(metric))
-        f.write("Mean = {0:.2f}, SD = {1:.2f}\n".format(reg_mean, reg_std))
-        f.write("Permutation batch, {}\n".format(metric))
-        f.write("Mean = {0:.2f}, SD = {1:.2f}\n".format(perm_mean, perm_std))
-
-    # print("Kolmogorov-Smirnov test: {}".format(kstest))
-    # print("[{}] Wilcoxon Rank-Sum test: {}".format(metric, rstest))
-    print("[{}] Wilcoxon Signed-rank test: {}".format(metric, rstest))
-
-    if metric.lower() not in ['mcc']:
-        plt.xlabel("{} (%)".format(metric), fontsize="large")
+    if len(v_permutation) > 0:
+        # rstest = stats.wilcoxon(v_regular, v_permutation)
+        # print("[{}] Wilcoxon Signed-rank test: {}".format(metric, rstest))
+        rstest = stats.ranksums(v_regular, v_permutation)
+        print("[{}] Wilcoxon Rank-Sum test: {}".format(metric, rstest))
     else:
-        plt.xlabel("{}".format(metric), fontsize="large")
-    plt.ylabel("Absolute Frequency", fontsize="large")
+        rstest = None
 
-    plt.title("Distribution of {}".format(metric), fontsize=20)
+    plt.xlabel(metric, fontsize="large")
+    plt.ylabel("Absolute Frequency", fontsize="large")
+    plt.title("Distribution of %s" % metric, fontsize=20)
 
     # ## Determine limits for the x axis
     # x_min = v_permutation.min() - v_permutation.mean()/10
     # x_max = v_regular.max() + v_regular.mean()/10
     # see above
-
     plt.xlim([x_min * scale, x_max * scale])
-
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='upper right',
                ncol=2, mode="expand", borderaxespad=0., fontsize="large")
 
-    # fig.text(0.1, 0.01, "Kolmogorov-Smirnov test p-value: {0:.3e}\n"
-    # .format(kstest[1]), fontsize=18)
-    fig.text(0.1, 0.005, "Wilcoxon Signed-Rank test p-value: {0:.3e}\n"
-                         .format(rstest[1]), fontsize=18)
-    # fig.text(0.1, 0.005, "Wilcoxon Rank-Sum test p-value: {0:.3e}\n"
-    #                      .format(rstest[1]), fontsize=18)
+    if rstest is not None:
+        # fig.text(0.1, 0.005, "Wilcoxon Signed-Rank test p-value: {0:.3e}\n"
+        #                      .format(rstest[1]), fontsize=18)
+        fig.text(0.1, 0.005, "Wilcoxon Rank-Sum test p-value: {0:.3e}\n"
+                             .format(rstest[1]), fontsize=18)
 
-    plt.savefig(os.path.join(base_folder, 'permutation_{}_distribution.pdf'
-                                          .format(metric)))
+    plt.savefig(os.path.join(
+        base_folder, 'permutation_%s_distribution.pdf' % metric),
+        bbox_inches='tight', dpi=300)
+
+    # XXX save to txt; maybe not here?
+    stats_to_file(
+        rstest, r_mean, r_std, p_mean, p_std, metric, base_folder, first_run)
 
 
-def features_manhattan(sorted_keys, frequencies_true, frequencies_perm,
-                       base_folder, N_jobs_regular, N_jobs_permutation,
-                       threshold=75):
-    """
+def features_manhattan(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
+    """Plot selected features with a manhattan plot.
+
     Parameters
     ----------
-
-    sorted_keys : list
+    feat_arr_{r, p} : array-like, 2-dimensional
+        Array of feature names (first column) and frequencies (second col)
+        for regular and permutation batches.
+        They are like:
+        >>> array([['f1', 0.5],
+                   ['f2', 0.8],
+                   ['f3', 0.1]], dtype=object)
+    base_folder : string
+        Path to the folder where to save results.
+    threshold : float, optional, default 0.75
+        Selection threshold of the features.
     """
-    r_sorted_keys = reversed(sorted_keys)
+    # sort by frequencies of regular
+    idx = feat_arr_r[:, 1].argsort()[::-1]
+    s_feat_arr_r = feat_arr_r[idx]
+    s_feat_arr_p = feat_arr_p[idx]
 
-    fake_x = np.arange(len(sorted_keys))
-
-    y_true = list()
-    y_perm = list()
-
-    for k in r_sorted_keys:
-        y_true.append(frequencies_true[k])
-        y_perm.append(frequencies_perm[k])
-
-    y_true = np.array(y_true)
-    y_perm = np.array(y_perm)
-
+    plt.close('all')
     plt.figure()
 
-    s_t = plt.scatter(fake_x, y_true, marker='h', alpha=0.8, s=10,
-                      color=colorsHex['lightGreen'])
-    s_p = plt.scatter(fake_x, y_perm, marker='h', alpha=0.8, s=10,
-                      color=colorsHex['lightRed'])
+    xaxis = np.arange(feat_arr_r.shape[0])
+    s_t = plt.scatter(xaxis, s_feat_arr_r[:, 1], marker='h', alpha=0.8, s=10,
+                      color=COLORS_HEX['lightBlue'])
+    s_p = plt.scatter(xaxis, s_feat_arr_p[:, 1], marker='h', alpha=0.8, s=10,
+                      color=COLORS_HEX['lightRed'])
     threshold_line = plt.axhline(y=threshold, ls='--', lw=0.5, color='k')
 
-    plt.xlim([-5, len(sorted_keys) + 5])
-    plt.ylim([-5, N_jobs_regular + 5])
+    plt.xlim([-5, feat_arr_r.shape[0] + 5])
+    plt.ylim([0, 1.05])
 
     plt.tick_params(
         axis='x',          # changes apply to the x-axis
@@ -230,227 +217,109 @@ def features_manhattan(sorted_keys, frequencies_true, frequencies_perm,
     )
 
     plt.xlabel('Features')
-    plt.ylabel('Absolute frequencies ({} regular, {} permutation)'
-               .format(N_jobs_regular, N_jobs_permutation))
+    plt.ylabel('Relative frequencies')
     plt.title("Feature frequencies")
-    plt.savefig(os.path.join(base_folder, 'manhattan_plot.pdf'))
+    plt.savefig(os.path.join(base_folder, 'manhattan_plot.pdf'),
+                bbox_inches='tight', dpi=300)
 
 
-def feature_frequencies(sorted_keys, frequencies, base_folder, threshold=75):
+def feature_frequencies(feat_arr, base_folder, threshold=.75):
     """Plot a bar chart of the first 2 x M features in a signature.
 
     M is the number of features whose frequencies is over a given threshold.
 
     Parameters
     ----------
-
-    sorted_keys : list
-
-    frequencies : dict
+    feat_arr : array-like, 2-dimensional:
+        Array of feature names (first column) and frequencies (second col).
+        It is like:
+        >>> array([['f1', 0.5],
+                   ['f2', 0.8],
+                   ['f3', 0.1]], dtype=object)
+    base_folder : string
+        Path to the folder where to save results.
+    threshold : float, optional, default 0.75
+        Selection threshold of the features.
     """
-    x = list()
-    y = list()
+    n_over_threshold = feat_arr[feat_arr[:, 1] >= threshold].shape[0]
 
-    M = 0
-    r_sorted_keys = reversed(sorted_keys)
-    for k in r_sorted_keys:
-        if frequencies[k] >= threshold:
-            M += 1
-        else:
-            break
-    # print "M = {}".format(M)
+    # sort by frequencies
+    sorted_feat_arr = feat_arr[feat_arr[:, 1].argsort()[::-1]]
 
-    N = 2 * M
-    r_sorted_keys = reversed(sorted_keys)
-    for k in r_sorted_keys:
-        if N == 0:
-            break
+    plt.close('all')
+    sns.set_context('notebook')
+    # plt.figure(figsize=(18, 100))
+    ax = sns.barplot(
+        x=sorted_feat_arr[:2 * n_over_threshold, 0],
+        y=sorted_feat_arr[:2 * n_over_threshold, 1],
+        color=COLORS_HEX['lightBlue'], alpha=0.9)
 
-        # x.append(k)
-        x.append('_' + str(k))  # ## This is required for some reason
-        y.append(frequencies[k])
-        # print frequencies[k]
-        N -= 1
+    # plot a horizontal line at the height of the selected threshold
+    plt.axhline(y=threshold, ls='--', lw=0.5, color='k', label='Threshold')
+    # plt.legend((threshold_line, ), ('Threshold',), scatterpoints=1,
+    #            loc='upper right', ncol=1, fontsize=12)
+    plt.legend(loc='upper right')
 
-    x = np.array(x)
-    y = np.array(y)
+    # vertical line to separate selected and not selected features
+    mid = np.sum(ax.get_xbound()) / 2.
+    plt.axvline(x=mid, ls='-', lw=1, color=COLORS_HEX['lightRed'])
 
-    plt.figure(figsize=(18, 10))
     plt.title("Manhattan plot - top features detail", fontsize=20)
-
-    ax = sns.barplot(x=x, y=y, color=colorsHex['lightGreen'], alpha=0.9)
-
-    # ## Rotate x ticks
-    for item in ax.get_xticklabels():
-        item.set_rotation(90)
-
-    # plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
-    # ## plot a horizontal line at the height of the selected threshold
-    threshold_line = plt.axhline(y=threshold, ls='--', lw=0.5, color='k')
-
-    plt.legend(
-        (threshold_line, ),
-        ('Threshold',),
-        scatterpoints=1,
-        loc='upper right',
-        ncol=1,
-        fontsize=12
-    )
-
-    # plot a vertical line which separates selected features from those
-    # not selected
-    xmin, xmax = ax.get_xbound()
-    mid = float(xmax + xmin) / 2
-    plt.axvline(x=mid, ls='-', lw=1, color=colorsHex['lightRed'])
-
     plt.xlabel("Feature names", fontsize="large")
-    plt.ylabel("Absolute Frequency", fontsize="large")
+    plt.ylabel("Relative frequency", fontsize="large")
+    plt.ylim([0, 1.05])
 
-    plt.tight_layout()
-    plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'))
+    plt.setp(ax.get_xticklabels(), fontsize=2, rotation='vertical')
+    plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'),
+                bbox_inches='tight', dpi=300)
 
 
-def selected_over_threshold(frequencies_true, frequencies_perm, N_jobs_regular,
-                            N_jobs_permutation, base_folder, threshold=75):
+def select_over_threshold(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
     """Plot the selection trend against the selection frequency threshold.
 
     Parameters
     ----------
-
-    sorted_keys : list
+    feat_arr_{r, p} : array-like, 2-dimensional
+        Array of feature names (first column) and frequencies (second col)
+        for regular and permutation batches.
+        They are like:
+        >>> array([['f1', 0.5],
+                   ['f2', 0.8],
+                   ['f3', 0.1]], dtype=object)
+    base_folder : string
+        Path to the folder where to save results.
+    threshold : float, optional, default 0.75
+        Selection threshold of the features.
     """
     # horizontal axis REVERSED
     thresh_axis = np.linspace(0, 1, 21)[::-1]
 
-    # number of selected features for true/perm
-    y_true = list()
-    y_perm = list()
-
-    # Unroll dict
-    for k in frequencies_true.keys():
-        y_true.append(frequencies_true[k])
-        y_perm.append(frequencies_perm[k])
-    y_true = np.array(y_true)
-    y_perm = np.array(y_perm)
-
-    # tot number features
-    n_feat = len(y_true)
-
-    # init selected counts
-    sel_true = np.zeros(len(thresh_axis))
-    sel_perm = np.zeros(len(thresh_axis))
-
     # iterate over the horiz axis (i.e. the selection freq thresh)
+    sel_true = np.zeros(thresh_axis.size)
+    sel_perm = np.zeros(thresh_axis.size)
     for i, thr in enumerate(thresh_axis):
-        # sel_true[i] = np.count_nonzero(y_true > thr)
-        # sel_perm[i] = np.count_nonzero(y_perm > thr)
-        sel_true[i] = np.count_nonzero(y_true >= thr * N_jobs_regular)
-        sel_perm[i] = np.count_nonzero(y_perm >= thr * N_jobs_permutation)
+        sel_true[i] = np.count_nonzero(feat_arr_r[:, 1] >= thr)
+        sel_perm[i] = np.count_nonzero(feat_arr_p[:, 1] >= thr)
 
-    # make plot
+    plt.close('all')
     plt.figure()
-    # plt.plot(100 * thresh_axis, sel_true, marker='h', alpha=0.8,
-    #          color=colorsHex['lightGreen'], label='Real signature')
-    # plt.plot(100 * thresh_axis, sel_perm, marker='h', alpha=0.8,
-    #          color=colorsHex['lightRed'], label='Permutation signature')
     plt.plot(100 * thresh_axis, sel_true, marker='h', alpha=0.8,
-             color=colorsHex['lightGreen'], label='Regular batch')
+             color=COLORS_HEX['lightBlue'], label='Regular batch')
     plt.plot(100 * thresh_axis, sel_perm, marker='h', alpha=0.8,
-             color=colorsHex['lightRed'], label='Permutation batch')
-    plt.axvline(x=threshold, ymin=0, ymax=n_feat, ls='--', lw=0.5,
-                color='k', label='Threshold')
+             color=COLORS_HEX['lightRed'], label='Permutation batch')
+    plt.axvline(x=threshold * 100, ymin=0, ymax=feat_arr_r.shape[0], ls='--',
+                lw=0.5, color='k', label='Threshold')
     plt.legend()
     plt.xlabel("Selection frequency %", fontsize="large")
     plt.ylabel("Number of selected features", fontsize="large")
-    plt.xlim(thresh_axis[-1]*100, thresh_axis[0]*100)
+    plt.xlim(thresh_axis[-1] * 100, thresh_axis[0] * 100)
 
     plt.savefig(os.path.join(base_folder, 'selected_over_threshold.pdf'))
 
 
-def kcv_err_surfaces(kcv_err, exp, base_folder, param_ranges, param_names):
-    """Generate plot surfaces for training and test error across experiments.
-
-    Parameters
-    ----------
-
-    kcv_err : list of arrays
-
-    exp : string
-        Either 'regular' or 'permutation'
-
-    base_folder: string
-        Path to base output folder.
-
-    param_ranges : list
-        list containing all the hyperparameter ranges. When using
-        l1l2Classifier this is [tau_range, lambda_range].
-    """
-    def most_common(lst):
-        """Return the most common element in a list."""
-        return max(set(lst), key=lst.count)
-
-    # average errors dictionary
-    avg_err = dict()
-
-    # iterate over tr and ts
-    for k in kcv_err.keys():
-        # it may happen that for a certain experiment a solution is not
-        # provided for each values of tau. we want to exclude such situations
-
-        # get the most common size of the matrix
-        mode = most_common([e.shape for e in kcv_err[k]])
-        kcv_err_k = filter(lambda x: x.shape == mode, kcv_err[k])
-        # get the number of experiment where everything worked fine
-        n_exp = len(kcv_err_k)
-        # perform reduce operation
-        avg_err[k] = sum(kcv_err_k) / float(n_exp)
-        # this is like avg_err = reduce(lambda x,y: x+y, kcv_err_k) / float(n_exp)
-
-    # PLOT SECTION
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    cmaps = [cm.Oranges, cm.Blues]
-    fc = {'tr': colorsHex['lightBlue'], 'ts': colorsHex['lightOrange']}
-
-    # legends
-    legend_handles = []
-    legend_labels = ['Test Error', 'Train Error']
-
-    # error surface
-    for k, c in zip(avg_err.keys(), cmaps):
-        ZZ = avg_err[k]
-
-        # xx = np.log10(param_ranges[0])  # tau
-        # NOTE: If ZZ has somw missing rows, it means that some tau was too big
-        xx = np.log10(param_ranges[0][:ZZ.shape[0]])  # tau
-        yy = np.log10(param_ranges[1])  # lambda
-        XX, YY = np.meshgrid(xx, yy)
-        ZZ = ZZ.reshape(xx.shape[0], yy.shape[0])
-
-        ax.plot_surface(
-            XX, YY, ZZ.T,
-            rstride=1, cstride=1, linewidth=0, antialiased=False, cmap=c)
-
-        legend_handles.append(Rectangle((0, 0), 1, 1, fc=fc[k]))
-
-    # plot minimum
-    ZZ = avg_err['ts'].reshape(xx.shape[0], yy.shape[0])
-    x_min_idxs, y_min_idxs = np.where(ZZ == np.min(ZZ))
-    ax.plot(xx[x_min_idxs], yy[y_min_idxs],
-            ZZ[x_min_idxs, y_min_idxs], 'o', c=colorsHex['darkBlue'])
-
-    # fig.colorbar()
-    ax.set_title('average KCV error of %s experiments' % exp)
-    ax.set_ylabel(r"$log_{10}(" + param_names[1] + ")$")
-    ax.set_xlabel(r"$log_{10}(" + param_names[0] + ")$")
-    ax.set_zlabel("avg kcv err")
-    ax.legend(legend_handles, legend_labels[:len(legend_handles)], loc='best')
-
-    plt.savefig(os.path.join(base_folder, 'kcv_err_%s.pdf' % exp))
-
-
 def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
-                   base_folder=None, logspace=None, plot_errors=False):
+                   base_folder=None, logspace=None, plot_errors=False,
+                   is_regression=False):
     """Plot error surfaces.
 
     Parameters
@@ -471,6 +340,11 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
         Folder where to save the plots.
     logspace : array-like or None, optional, default None
         List to specify which variable to visualise in logspace.
+    plot_errors : bool, optional, default False
+        If True, plot errors instead of scores.
+    is_regression : bool, optional, default False
+        If True and plot_errors is True, do errors = -scores instead of
+        1 - scores.
     """
     def multicond(*args):
         cond = args[0]
@@ -483,7 +357,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             zip(indep_var, [param_grid[x] for x in indep_var]), 2)
     else:
         comb = [sorted(list(
-            param_grid.iteritems()), key=lambda item:len(item[1]))[-2:]]
+            param_grid.iteritems()), key=lambda item: len(item[1]))[-2:]]
         if len(comb[0]) == 1:
             warnings.warn("Only one grid parameter, cannot create 3D plot")
             return
@@ -503,6 +377,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
 
     pivot_names = list(product(*[[x] for x in pivoting_var])) * len(pivots)
 
+    plt.close('all')
     for id_pivot, (pivot, value) in enumerate(zip(pivot_names, pivots)):
         for id_param, (param1, param2) in enumerate(comb):
             param_names = 'param_' + np.array(
@@ -545,7 +420,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                 colors = (cm.Oranges, cm.Blues)
             for s, h, c in zip(
                     ('train', 'test'),
-                    (colorsHex['lightOrange'], colorsHex['lightBlue']),
+                    (COLORS_HEX['lightOrange'], COLORS_HEX['lightBlue']),
                     colors):
 
                 # The score is the mean of each external split
@@ -553,7 +428,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                     dff['mean_%s_score' % s].tolist()), axis=0)[cond]
                 Z = zz.reshape(param_grid_xx_size, param_grid_yy_size)
                 if plot_errors:
-                    Z = 1 - Z
+                    Z = -Z if is_regression else 1 - Z
 
                 # plt.close('all')
                 ax.plot_surface(
@@ -566,7 +441,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             func_max = np.min if plot_errors else np.max
             pos_max = np.where(Z == func_max(Z))
             ax.plot(X[pos_max], Y[pos_max], Z[pos_max], 'o',
-                    c=colorsHex['darkRed'])
+                    c=COLORS_HEX['darkRed'])
 
             # fig.colorbar()
             ax.legend(legend_handles, legend_labels[:len(legend_handles)],

@@ -1,12 +1,14 @@
 """Module for the metrics used by PALLADIO."""
 import numpy as np
 
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from sklearn.metrics import (accuracy_score, precision_score,
+                             recall_score, f1_score)
 from sklearn.metrics import matthews_corrcoef
+from sklearn.metrics.regression import *
+from sklearn.metrics.regression import __ALL__ as rmetrics
 
-__all__ = (
-    'accuracy_score', 'precision_recall_fscore_support',
-    'matthews_corrcoef', 'balanced_accuracy')
+# List of callables for regression metrics
+__REGRESSION_METRICS__ = [locals()[m] for m in rmetrics]
 
 
 def balanced_accuracy(y_true, y_pred):
@@ -30,3 +32,40 @@ def balanced_accuracy(y_true, y_pred):
         specificity = tn / float(tn + fp)
         perclass_balanced_accuracy[i] = (sensitivity + specificity) / 2.
     return np.mean(perclass_balanced_accuracy)
+
+
+# List of callables for classification metrics
+__CLASSIFICATION_METRICS__ = (
+    accuracy_score, precision_score, recall_score, f1_score,
+    matthews_corrcoef, balanced_accuracy)
+
+
+def micro_precision_score(y_true, y_pred, labels=None, pos_label=1,
+                          sample_weight=None):
+    """Precision score for multiclass problems (micro averaged)."""
+    return precision_score(
+        y_true, y_pred, labels=labels, pos_label=pos_label,
+        sample_weight=sample_weight, average='micro')
+
+
+def micro_recall_score(y_true, y_pred, labels=None, pos_label=1,
+                       sample_weight=None):
+    """Precision score for multiclass problems (micro averaged)."""
+    return recall_score(
+        y_true, y_pred, labels=labels, pos_label=pos_label,
+        sample_weight=sample_weight, average='micro')
+
+
+def micro_f1_score(y_true, y_pred, labels=None, pos_label=1,
+                   sample_weight=None):
+    """Precision score for multiclass problems (micro averaged)."""
+    return f1_score(
+        y_true, y_pred, labels=labels, pos_label=pos_label,
+        sample_weight=sample_weight, average='micro')
+
+
+# List of callables for multiclass classification metrics
+__MULTICLASS_CLASSIFICATION_METRICS__ = (
+    accuracy_score, micro_precision_score,
+    micro_recall_score, micro_f1_score,
+    balanced_accuracy)

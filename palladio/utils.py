@@ -8,6 +8,72 @@
 import numpy as np
 
 
+def save_signature(filename, selected, threshold=0.75):
+    """Save signature summary."""
+    with open(filename, 'w') as f:
+        line_drawn = False
+        for k in reversed(sorted(
+                selected, key=selected.__getitem__)):
+            if not line_drawn and float(selected[k]) < threshold:
+                line_drawn = True
+                f.write("=" * 40)
+                f.write("\n")
+            f.write("{} : {}\n".format(k, selected[k] * 100.))
+            # f.write("{}\n".format(k))
+
+
+def retrieve_features(best_estimator):
+    """Retrieve selected features from any estimator.
+
+    In case it has the 'get_support' method, use it.
+    Else, if it has a 'coef_' attribute, assume it's a linear model and the
+    features correspond to the indices of the coefficients != 0
+    """
+    if hasattr(best_estimator, 'get_support'):
+        return np.nonzero(best_estimator.get_support())[0]
+    elif hasattr(best_estimator, 'coef_'):
+        if best_estimator.coef_.ndim > 1:
+            sel_feats = []
+            for dim in range(best_estimator.coef_.ndim):
+                sel_feats += np.nonzero(
+                    best_estimator.coef_[dim])[0].ravel().tolist()
+            return np.unique(sel_feats)
+        return np.nonzero(best_estimator.coef_.flatten())[0]
+    else:
+        # Raise an error
+        raise AttributeError('The best_estimator object does not have '
+                             'neither the `coef_` attribute nor the '
+                             '`get_support` method')
+
+
+def get_selected_list(grid_search, vs_analysis=True):
+    """Retrieve the list of selected features.
+
+    Retrieves the list of selected features automatically identifying the
+    type of object
+
+    Returns
+    -------
+    index : nunmpy.array
+        The indices of the selected features
+    """
+    # First, check whether it's a string, which means the list of features
+    # must be taken from a step of a Pipeline object
+    if type(vs_analysis) == str:
+        selected_features = retrieve_features(
+            grid_search.best_estimator_.named_steps[vs_analysis])
+    else:
+        selected_features = retrieve_features(grid_search.best_estimator_)
+    return selected_features
+
+
+def build_cv_results(dictionary, **results):
+    """Function to build final cv_results_ dictionary with partial results."""
+    for k, v in results.iteritems():
+        if v is not None:
+            dictionary.setdefault(k, []).append(v)
+
+
 def signatures(splits_results, frequency_threshold=0.0):
     """Return (almost) nested signatures for each correlation value.
 
@@ -125,7 +191,7 @@ def confusion_matrix(labels, predictions):
     pred_unique_labels, pred_C1, pred_C2 = _check_unique_labels(predictions)
 
     if not np.all(real_unique_labels == pred_unique_labels):
-        raise PDException('real and predicted labels differ.')
+        raise ValueError('real and predicted labels differ.')
 
     cm['T'][real_unique_labels[0]] = (real_C1 & pred_C1).sum()  # True C1
     cm['T'][real_unique_labels[1]] = (real_C2 & pred_C2).sum()  # True C2
@@ -198,7 +264,7 @@ def classification_measures(confusion_matrix, positive_label=None):
     if positive_label is not None:
         P = positive_label
         if P not in labels:
-            raise PDException('label %s not found.' % positive_label)
+            raise ValueError('label %s not found.' % positive_label)
 
         N = set(labels).difference([positive_label]).pop()
     else:
@@ -246,8 +312,8 @@ def _check_unique_labels(labels):
     labels = np.array([str(s).strip() for s in labels])
     unique_labels = np.unique(labels)
 
-    if not len(unique_labels) == 2:
-        raise PDException('more than 2 classes in labels.')
+    if len(unique_labels) != 2:
+        raise ValueError('more than 2 classes in labels.')
 
     unique_labels.sort(kind='mergesort')
     class1 = (labels == unique_labels[0])
