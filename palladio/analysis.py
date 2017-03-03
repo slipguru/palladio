@@ -17,8 +17,10 @@ from palladio.utils import get_selected_list
 from palladio.utils import save_signature
 
 
-def regression_analysis(cv_results, labels):
-    """Evaluate the regression metrics on the external splits results.
+def performance_metrics(cv_results, labels, target='regression'):
+    """Evaluate metrics on the external splits results.
+
+    Appropriate metrics are chosen based on the "target" parameter.
 
     Parameters
     ----------
@@ -26,79 +28,28 @@ def regression_analysis(cv_results, labels):
         As in `palladio.ModelAssessment.cv_results_`
     config : module
         Palladio config of the current experiment
+    target : ('regression', 'classification', 'multiclass')
+        Type of metrics to use.
 
     Returns
     -------
     performance_metrics : dictionary
         Regression metrics evaluated on the external splits results
     """
+    metrics_ = dict(regression=__REGRESSION_METRICS__,
+                    classification=__CLASSIFICATION_METRICS__,
+                    multiclass=__MULTICLASS_CLASSIFICATION_METRICS__)
     test_index = cv_results['test_index']
     yts_pred = cv_results['yts_pred']
     yts_true = [labels[i] for i in test_index]
 
     # Evaluate all the metrics on the results
-    performance_metrics = {}
-    for metric in __REGRESSION_METRICS__:
-        performance_metrics[metric.__name__] = [
+    performance_metrics_ = {}
+    for metric in metrics_[target]:
+        performance_metrics_[metric.__name__] = [
             metric(*yy) for yy in zip(yts_true, yts_pred)]
 
-    return performance_metrics
-
-
-def classification_analysis(cv_results, labels):
-    """Evaluate the classification metrics on the external splits results.
-
-    Parameters
-    ----------
-    cv_results : dictionary
-        As in `palladio.ModelAssessment.cv_results_`
-    config : module
-        Palladio config of the current experiment
-
-    Returns
-    -------
-    performance_metrics : dictionary
-        Classification metrics evaluated on the external splits results
-    """
-    test_index = cv_results['test_index']
-    yts_pred = cv_results['yts_pred']
-    yts_true = [labels[i] for i in test_index]
-
-    # Evaluate all the metrics on the results
-    performance_metrics = {}
-    for metric in __CLASSIFICATION_METRICS__:
-        performance_metrics[metric.__name__] = [
-            metric(*yy) for yy in zip(yts_true, yts_pred)]
-
-    return performance_metrics
-
-
-def multiclass_analysis(cv_results, labels):
-    """Evaluate the multiclassification metrics on the external splits results.
-
-    Parameters
-    ----------
-    cv_results : dictionary
-        As in `palladio.ModelAssessment.cv_results_`
-    config : module
-        Palladio config of the current experiment
-
-    Returns
-    -------
-    performance_metrics : dictionary
-        Classification metrics evaluated on the external splits results
-    """
-    test_index = cv_results['test_index']
-    yts_pred = cv_results['yts_pred']
-    yts_true = [labels[i] for i in test_index]
-
-    # Evaluate all the metrics on the results
-    performance_metrics = {}
-    for metric in __MULTICLASS_CLASSIFICATION_METRICS__:
-        performance_metrics[metric.__name__] = [
-            metric(*yy) for yy in zip(yts_true, yts_pred)]
-
-    return performance_metrics
+    return performance_metrics_
 
 
 def analyse_results(
@@ -124,19 +75,20 @@ def analyse_results(
     is_regression = learning_task.lower() in ('continuous', 'regression')
     if is_regression:
         # Perform regression analysis
-        performance_regular = regression_analysis(regular_cv_results, labels)
+        performance_regular = performance_metrics(
+            regular_cv_results, labels, target='regression')
         performance_permutation = {}  # for consistency only
     elif learning_task.lower() == 'multiclass':
-        performance_regular = multiclass_analysis(
-            regular_cv_results, labels)
-        performance_permutation = multiclass_analysis(
-            permutation_cv_results, labels)
+        performance_regular = performance_metrics(
+            regular_cv_results, labels, target='multiclass')
+        performance_permutation = performance_metrics(
+            permutation_cv_results, labels, target='multiclass')
     else:
         # Perform classification analysis
-        performance_regular = classification_analysis(
-            regular_cv_results, labels)
-        performance_permutation = classification_analysis(
-            permutation_cv_results, labels)
+        performance_regular = performance_metrics(
+            regular_cv_results, labels, target='classification')
+        performance_permutation = performance_metrics(
+            permutation_cv_results, labels, target='classification')
 
     if model_assessment_options is None:
         model_assessment_options = {}
@@ -195,16 +147,13 @@ def analyse_results(
             feat_arr_r, feat_arr_p, base_folder, threshold=threshold)
 
     # Generate distribution plots
-    first_run = True
-    for metric in performance_regular:
+    for i, metric in enumerate(performance_regular):
         plotting.distributions(
             v_regular=performance_regular[metric],
             v_permutation=performance_permutation.get(metric, []),
             base_folder=base_folder, metric=metric,
-            first_run=first_run,
+            first_run=i == 0,
             is_regression=is_regression)
-        if first_run:
-            first_run = False
 
     # Generate surfaces
     # This has meaning only if the estimator is an istance of GridSearchCV
