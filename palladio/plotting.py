@@ -155,7 +155,7 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
                              .format(rstest[1]), fontsize=18)
 
     plt.savefig(os.path.join(
-        base_folder, 'permutation_%s_distribution.pdf' % metric),
+        base_folder, '%s_distribution.pdf' % metric),
         bbox_inches='tight', dpi=300)
 
     # XXX save to txt; maybe not here?
