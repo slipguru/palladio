@@ -11,6 +11,8 @@ from sklearn.model_selection import GridSearchCV
 
 from palladio import datasets
 
+import os
+
 #####################
 #   DATASET PATHS ###
 #####################
@@ -18,8 +20,13 @@ from palladio import datasets
 # * All the path are w.r.t. config file path
 
 # The list of all files required for the experiments
-data_path = 'data.csv'
-target_path = 'labels.csv'
+# data_path = '~/shared/palladio_example/data/gedm.csv'
+# target_path = '~/shared/palladio_example/data/labels.csv'
+
+data_path = 'data/gedm.csv'
+target_path = 'data/labels.csv'
+
+print(os.path.dirname(__file__))
 
 # pandas.read_csv options
 data_loading_options = {
@@ -29,10 +36,11 @@ data_loading_options = {
 }
 target_loading_options = data_loading_options
 
-dataset = datasets.load_csv(data_path, target_path,
+dataset = datasets.load_csv(os.path.join(os.path.dirname(__file__),data_path),
+                            os.path.join(os.path.dirname(__file__),target_path),
                             data_loading_options=data_loading_options,
                             target_loading_options=target_loading_options,
-                            samples_on='row')
+                            samples_on='col')
 data, labels = dataset.data, dataset.target
 
 #######################
@@ -61,7 +69,7 @@ clf = LinearSVC(loss='hinge')
 
 # COMPOSE THE PIPELINE
 pipe = Pipeline([
-    ('preprocessing', pp),
+    # ('preprocessing', pp),
     ('variable_selection', vs),
     ('classification', clf),
 ])
@@ -71,7 +79,6 @@ pipe = Pipeline([
 param_grid = {
     'variable_selection__n_features_to_select': [10, 20, 50],
     'variable_selection__estimator__C': np.logspace(-4, 0, 5),
-    'classification__C': np.logspace(-4, 0, 5),
 }
 
 estimator = GridSearchCV(pipe, param_grid=param_grid, cv=3, scoring='accuracy')
@@ -81,10 +88,10 @@ ma_options = {
     'test_size': 0.25,
     'scoring': 'accuracy',
     'n_jobs': -1,
-    'n_splits': 2
+    'n_splits': 10
 }
 
-n_splits_permutation = 3
+n_splits_permutation = 10
 
 # For the Pipeline object, indicate the name of the step from which to
 # retrieve the list of selected features
