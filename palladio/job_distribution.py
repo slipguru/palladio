@@ -6,6 +6,11 @@ import numbers
 import shutil
 import time
 
+try:
+    import cPickle as pkl
+except:
+    import pickle as pkl
+
 from palladio.utils import sec_to_timestring
 from palladio.model_assessment import ModelAssessment
 from palladio.datasets import copy_files
@@ -24,12 +29,13 @@ except ImportError:
     NAME = 'localhost'
     IS_MPI_JOB = False
 
+
 MAX_RESUBMISSIONS = 2
 DO_WORK = 100
 EXIT = 200
 
 
-def main(config_path):
+def main(config=None, config_path=None):
     """Main function.
 
     The main function, performs initial tasks such as creating the main session
@@ -45,28 +51,33 @@ def main(config_path):
     if RANK == 0:
         t0 = time.time()
 
-    # Load config
-    config_dir = os.path.dirname(config_path)
 
-    # For some reason, it must be atomic
-    imp.acquire_lock()
-    config = imp.load_source('config', config_path)
-    imp.release_lock()
+    if config is None and config_path is None:
+        raise Exception("Both config and config_path are None")
+
+    if config_path is not None:
+        # Load config
+        config_dir = os.path.dirname(config_path)
+
+        # For some reason, it must be atomic
+        imp.acquire_lock()
+        config = imp.load_source('config', config_path)
+        imp.release_lock()
 
     # Load dataset
     if RANK == 0:
         print("Loading dataset...")
 
-    # dataset = config.dataset_class(
-    #     config.dataset_files,
-    #     config.dataset_options
-    # )
-    #
-    # data, labels, _ = dataset.load_dataset(config_dir)
     data, labels = config.data, config.labels
 
     # Session folder
-    result_path = os.path.join(config_dir, config.result_path)
+    # Depends whether the configuration path is specified
+    # or the object itself
+    if config_path is not None:
+        result_path = os.path.join(config_dir, config.result_path)
+    else:
+        result_path = config.result_path
+
     experiments_folder_path = os.path.join(result_path, 'experiments')
 
     # Create base session folder
@@ -83,7 +94,13 @@ def main(config_path):
         # be created)
         os.mkdir(experiments_folder_path)
 
-        shutil.copy(config_path, os.path.join(result_path, 'config.py'))
+        # If a config file was provided, make a copy in the session folder
+        if config_path is not None:
+            shutil.copy(config_path, os.path.join(result_path, 'config.py'))
+        # Else, dump the configuration object using pickle
+        else:
+            with open(os.path.join(result_path, 'config.pkl'), 'wb') as f:
+                pkl.dump(config, f)
 
         # CREATE HARD LINK IN SESSION FOLDER
         if hasattr(config, 'data_path') and hasattr(config, 'target_path'):

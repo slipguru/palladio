@@ -36,7 +36,7 @@ def init_main():
         from shutil import copy
         copy(std_config_path, args.configuration_file)
     else:
-        pd.main(os.path.abspath(args.configuration_file))
+        pd.main(config_path=os.path.abspath(args.configuration_file))
 
 
 if __name__ == '__main__':
