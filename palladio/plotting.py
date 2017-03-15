@@ -31,7 +31,7 @@ def stats_to_file(rstest, r_mean, r_std, p_mean, p_std, metric, base_folder,
         f.write("\n------------------------------------------\n"
                 "Metric : %s\n" % metric)
         if rstest is not None:
-            f.write("Wilcoxon Rank-Sum test p-value: %.3e\n\n" % rstest[1])
+            f.write("Two sample Kolmogorov-Smirnov test p-value: %.3e\n\n" % rstest[1])
             # f.write("Wilcoxon Signed-rank test p-value: %.3e\n" % rstest[1])
 
         f.write("Regular batch, %s\n"
@@ -131,8 +131,10 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
     if len(v_permutation) > 0:
         # rstest = stats.wilcoxon(v_regular, v_permutation)
         # print("[{}] Wilcoxon Signed-rank test: {}".format(metric, rstest))
-        rstest = stats.ranksums(v_regular, v_permutation)
-        print("[{}] Wilcoxon Rank-Sum test: {}".format(metric, rstest))
+        # rstest = stats.ranksums(v_regular, v_permutation)
+        # print("[{}] Wilcoxon Rank-Sum test: {}".format(metric, rstest))
+        rstest = stats.ks_2samp(v_regular, v_permutation)
+        print("[{}] Two sample Kolmogorov-Smirnov test: {}".format(metric, rstest))
     else:
         rstest = None
 
@@ -151,7 +153,7 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
     if rstest is not None:
         # fig.text(0.1, 0.005, "Wilcoxon Signed-Rank test p-value: {0:.3e}\n"
         #                      .format(rstest[1]), fontsize=18)
-        fig.text(0.1, 0.005, "Wilcoxon Rank-Sum test p-value: {0:.3e}\n"
+        fig.text(0.1, 0.005, "Two sample Kolmogorov-Smirnov test p-value: {0:.3e}\n"
                              .format(rstest[1]), fontsize=18)
 
     plt.savefig(os.path.join(
