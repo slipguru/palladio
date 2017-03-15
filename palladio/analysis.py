@@ -53,8 +53,8 @@ def performance_metrics(cv_results, labels, target='regression'):
 
 
 def analyse_results(
-    regular_cv_results, permutation_cv_results, labels, estimator,
-    base_folder, feature_names=None, learning_task=None, vs_analysis=None,
+        regular_cv_results, permutation_cv_results, labels, estimator,
+        base_folder, feature_names=None, learning_task=None, vs_analysis=None,
         threshold=.75, model_assessment_options=None,
         score_surfaces_options=None):
     """Summary and plot generation."""
@@ -117,6 +117,8 @@ def analyse_results(
             for estimator in estimators:
                 selected_list = get_selected_list(
                     estimator, vs_analysis)
+                if len(selected_list) < 1:
+                    continue
                 selected_variables = feature_names[selected_list]
 
                 for var in selected_variables:
