@@ -74,38 +74,39 @@ def main(config=None, config_path=None):
     # Depends whether the configuration path is specified
     # or the object itself
     if config_path is not None:
-        result_path = os.path.join(config_dir, config.result_path)
+        session_folder = os.path.join(config_dir, config.session_folder)
     else:
-        result_path = config.result_path
+        session_folder = config.session_folder
 
-    experiments_folder_path = os.path.join(result_path, 'experiments')
+    experiments_folder_path = os.path.join(session_folder, 'experiments')
 
     # Create base session folder
     # Also copy dataset files inside it
     if RANK == 0:
         # Create main session folder
-        if os.path.exists(result_path):  # TODO: why [:-1]?
-            shutil.move(result_path, result_path[:-1] + '_old')
+        if os.path.exists(session_folder):  # TODO: why [:-1]?
+            # shutil.move(session_folder, session_folder[:-1] + '_old')
             # raise Exception("Session folder {} already exists, aborting."
-            #                 .format(result_path))
+            #                 .format(session_folder))
+            pass
 
-        os.mkdir(result_path)
+        os.mkdir(session_folder)
         # Create experiments folder (where all experiments sub-folders will
         # be created)
         os.mkdir(experiments_folder_path)
 
         # If a config file was provided, make a copy in the session folder
         if config_path is not None:
-            shutil.copy(config_path, os.path.join(result_path, 'config.py'))
+            shutil.copy(config_path, os.path.join(session_folder, 'config.py'))
         # Else, dump the configuration object using pickle
         else:
-            with open(os.path.join(result_path, 'config.pkl'), 'wb') as f:
+            with open(os.path.join(session_folder, 'config.pkl'), 'wb') as f:
                 pkl.dump(config, f)
 
         # CREATE HARD LINK IN SESSION FOLDER
         if hasattr(config, 'data_path') and hasattr(config, 'target_path'):
             copy_files(config.data_path, config.target_path,
-                       config_dir, result_path)
+                       config_dir, session_folder)
 
     if IS_MPI_JOB:
         # Wait for the folder to be created and files to be copied
@@ -145,6 +146,6 @@ def main(config=None, config_path=None):
 
     if RANK == 0:
         t100 = time.time()
-        with open(os.path.join(result_path, 'report.txt'), 'w') as rf:
+        with open(os.path.join(session_folder, 'report.txt'), 'w') as rf:
             rf.write("Total elapsed time: {}".format(
                 sec_to_timestring(t100 - t0)))

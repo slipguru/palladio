@@ -43,27 +43,37 @@ def performance_metrics(cv_results, labels, target='regression'):
     yts_pred = cv_results['yts_pred']
     yts_true = [labels[i] for i in test_index]
 
+    # Guessing positive label
+    pos_label = np.unique(yts_true)[0]
+
     # Evaluate all the metrics on the results
     performance_metrics_ = {}
     for metric in metrics_[target]:
-        performance_metrics_[metric.__name__] = [
-            metric(*yy) for yy in zip(yts_true, yts_pred)]
+        print("computing {}".format(metric.__name__))
+
+        if metric.__name__ in ['f1_score', 'precision_score', 'recall_score']:
+            performance_metrics_[metric.__name__] = [
+                metric(*yy, pos_label = pos_label) for yy in zip(yts_true, yts_pred)]
+        else:
+            performance_metrics_[metric.__name__] = [
+                metric(*yy) for yy in zip(yts_true, yts_pred)]
+
 
     return performance_metrics_
 
 
 def analyse_results(
         regular_cv_results, permutation_cv_results, labels, estimator,
-        base_folder, feature_names=None, learning_task=None, vs_analysis=None,
+        base_folder, feature_names, learning_task=None, vs_analysis=None,
         threshold=.75, model_assessment_options=None,
         score_surfaces_options=None):
     """Summary and plot generation."""
     # Get feature names
-    if feature_names is None:
-        # what follows creates [feat_0, feat_1, ..., feat_d]
-        feature_names = 'feat_' + np.arange(
-            labels.size).astype(str).astype(object)
-
+    # if feature_names is None:
+        # # what follows creates [feat_0, feat_1, ..., feat_d]
+        # feature_names = 'feat_' + np.arange(
+            # labels.size).astype(str).astype(object)
+    print("feature names: {}".format(feature_names))
     # learning_task follows the convention of
     # sklearn.utils.multiclass.type_of_target
     if learning_task is None:

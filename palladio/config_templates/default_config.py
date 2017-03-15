@@ -5,7 +5,6 @@ import numpy as np
 
 from sklearn.feature_selection import RFE
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import GridSearchCV
 
@@ -20,13 +19,9 @@ import os
 # * All the path are w.r.t. config file path
 
 # The list of all files required for the experiments
-# data_path = '~/shared/palladio_example/data/gedm.csv'
-# target_path = '~/shared/palladio_example/data/labels.csv'
 
 data_path = 'data/gedm.csv'
 target_path = 'data/labels.csv'
-
-print(os.path.dirname(__file__))
 
 # pandas.read_csv options
 data_loading_options = {
@@ -36,18 +31,28 @@ data_loading_options = {
 }
 target_loading_options = data_loading_options
 
-dataset = datasets.load_csv(os.path.join(os.path.dirname(__file__),data_path),
-                            os.path.join(os.path.dirname(__file__),target_path),
-                            data_loading_options=data_loading_options,
-                            target_loading_options=target_loading_options,
-                            samples_on='col')
+try:
+    dataset = datasets.load_csv(os.path.join(os.path.dirname(__file__),data_path),
+                                os.path.join(os.path.dirname(__file__),target_path),
+                                data_loading_options=data_loading_options,
+                                target_loading_options=target_loading_options,
+                                samples_on='col')
+except:
+    dataset = datasets.load_csv(os.path.join(os.path.dirname(__file__), 'data'),
+                                os.path.join(os.path.dirname(__file__), 'labels'),
+                                data_loading_options=data_loading_options,
+                                target_loading_options=target_loading_options,
+                                samples_on='col')
+
+
 data, labels = dataset.data, dataset.target
+feature_names = dataset.feature_names
 
 #######################
 #   SESSION OPTIONS ###
 #######################
 
-result_path = 'results'
+session_folder = 'palladio_test_session'
 
 # The learning task, if None palladio tries to guess it
 # [see sklearn.utils.multiclass.type_of_target]
@@ -58,8 +63,6 @@ learning_task = None
 #######################
 
 # PIPELINE ###
-# STEP 0: Preprocessing
-pp = MinMaxScaler(feature_range=(0, 1))
 
 # STEP 1: Variable selection
 vs = RFE(LinearSVC(loss='hinge'), step=0.3)
@@ -69,7 +72,6 @@ clf = LinearSVC(loss='hinge')
 
 # COMPOSE THE PIPELINE
 pipe = Pipeline([
-    # ('preprocessing', pp),
     ('variable_selection', vs),
     ('classification', clf),
 ])
@@ -81,7 +83,7 @@ param_grid = {
     'variable_selection__estimator__C': np.logspace(-4, 0, 5),
 }
 
-estimator = GridSearchCV(pipe, param_grid=param_grid, cv=3, scoring='accuracy')
+estimator = GridSearchCV(pipe, param_grid=param_grid, cv=3, scoring='accuracy', n_jobs=1)
 
 # Set options for ModelAssessment
 ma_options = {
