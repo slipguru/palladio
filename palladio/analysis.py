@@ -49,7 +49,7 @@ def performance_metrics(cv_results, labels, target='regression'):
     # Evaluate all the metrics on the results
     performance_metrics_ = {}
     for metric in metrics_[target]:
-        print("computing {}".format(metric.__name__))
+        # print("computing {}".format(metric.__name__))
 
         if metric.__name__ in ['f1_score', 'precision_score', 'recall_score']:
             performance_metrics_[metric.__name__] = [
@@ -73,7 +73,6 @@ def analyse_results(
         # # what follows creates [feat_0, feat_1, ..., feat_d]
         # feature_names = 'feat_' + np.arange(
             # labels.size).astype(str).astype(object)
-    print("feature names: {}".format(feature_names))
     # learning_task follows the convention of
     # sklearn.utils.multiclass.type_of_target
     if learning_task is None:
