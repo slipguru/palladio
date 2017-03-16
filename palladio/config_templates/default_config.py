@@ -58,6 +58,12 @@ session_folder = 'palladio_test_session'
 # [see sklearn.utils.multiclass.type_of_target]
 learning_task = None
 
+# The number of repetitions of 'regular' experiments
+n_splits_regular = 50
+
+# The number of repetitions of 'permutation' experiments
+n_splits_permutation = 50
+
 #######################
 #  LEARNER OPTIONS  ###
 #######################
@@ -90,10 +96,9 @@ ma_options = {
     'test_size': 0.25,
     'scoring': 'accuracy',
     'n_jobs': -1,
-    'n_splits': 10
+    'n_splits': n_splits_regular
 }
 
-n_splits_permutation = 10
 
 # For the Pipeline object, indicate the name of the step from which to
 # retrieve the list of selected features
