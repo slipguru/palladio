@@ -85,7 +85,7 @@ def load_csv(data_path, target_path, return_X_y=False,
 
 
 
-def load_npypkl(data_path, target_path, meta_path=None, return_X_y=False,
+def load_npypkl(data_path, target_path, return_X_y=False,
              samples_on='row'):
 
 
@@ -126,12 +126,17 @@ def load_npypkl(data_path, target_path, meta_path=None, return_X_y=False,
         return data, target
 
     # META INFO
-    with open(meta_path, 'rb') as f:
-        res = pkl.load(f)
+    # with open(meta_path, 'rb') as f:
+        # res = pkl.load(f)
 
-        feature_names = np.array(res['feature_names'])
-        target_names = np.array(res['target_names'])
+        # feature_names = np.array(res['feature_names'])
+        # target_names = np.array(res['target_names'])
 
+    n, d = data.shape
+
+
+    target_names = ['T{}'.format(str(i+1)) for i in range(n)]
+    feature_names = ['F{}'.format(str(i+1)) for i in range(d)]
 
     return Bunch(data=data, target=target,
                  target_names=target_names,

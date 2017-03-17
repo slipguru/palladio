@@ -57,11 +57,11 @@ def main():
     parser = parse_args()
     base_folder = parser.result_folder
 
-    # Load previously dumped configuration object
-    with open(os.path.join(base_folder, 'config.py'), 'rb') as f:
-        config = pkl.load(f)
+    # # Load previously dumped configuration object
+    # with open(os.path.join(base_folder, 'config.py'), 'rb') as f:
+        # config = pkl.load(f)
 
-    # config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
+    config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
 
     # Load results from pkl
     regular_cv_results, permutation_cv_results = load_results(base_folder)

@@ -12,6 +12,7 @@ except:
     import pickle as pkl
 
 from palladio.utils import sec_to_timestring
+from palladio.utils import objectify_config
 from palladio.model_assessment import ModelAssessment
 from palladio.datasets import copy_files
 
@@ -98,10 +99,10 @@ def main(config=None, config_path=None):
         # If a config file was provided, make a copy in the session folder
         if config_path is not None:
             shutil.copy(config_path, os.path.join(session_folder, 'config.py'))
-
-        # Dump the configuration object using pickle
-        with open(os.path.join(session_folder, 'config.pkl'), 'wb') as f:
-            pkl.dump(config, f)
+        else:
+            # Dump the configuration object using pickle
+            with open(os.path.join(session_folder, 'config.pkl'), 'wb') as f:
+                pkl.dump(config, f)
 
         # CREATE HARD LINK IN SESSION FOLDER
         if hasattr(config, 'data_path') and hasattr(config, 'target_path'):

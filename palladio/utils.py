@@ -7,6 +7,9 @@
 
 import numpy as np
 
+from types import ModuleType
+
+from sklearn.datasets.base import Bunch
 
 def save_signature(filename, selected, threshold=0.75):
     """Save signature summary."""
@@ -349,3 +352,31 @@ def sec_to_timestring(seconds):
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
     return "%02d:%02d:%02d" % (h, m, s)
+
+def objectify_config(config_module):
+    """
+
+    Parameters
+    ----------
+
+    config : module
+        The module corresponding to the loaded configuration file
+    """
+
+    # Retrieve all attributes
+    attribute_list = dir(config_module)
+
+    config_dict = dict()
+
+    for a in attribute_list:
+
+        # Don't include imported modules
+
+        attr = config_module.__dict__[a]
+
+        if not isinstance(attr, ModuleType):
+            config_dict[a] = attr
+
+    return Bunch(**config_dict)
+
+
