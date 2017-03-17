@@ -83,8 +83,59 @@ def load_csv(data_path, target_path, return_X_y=False,
                  feature_names=feature_names)
 
 
-def load_npypkl():
-    raise NotImplementedError('.npy .pkl function not yet implemented')
+
+
+def load_npypkl(data_path, target_path, meta_path=None, return_X_y=False,
+             samples_on='row'):
+
+
+    r"""Read data matrix and labels vector from files.
+
+    Requires a .pkl file containing a dictionary storing
+    samples and features names (keys ``index`` and
+    ``columns`` respectively).
+
+    Parameters
+    ----------
+
+    base_path : string
+        The base path relative to which files are stored.
+
+    Returns
+    -------
+
+    data : ndarray
+        The :math:`n \\times p` data matrix .
+
+    labels : ndarray
+        The :math:`n`-dimensional vector containing labels.
+
+    feature_names : list
+        The list containing the names of the features
+
+    """
+
+    # DATA + LABELS
+    data = np.load(data_path)
+    target = np.load(target_path)
+
+    if samples_on == 'col':
+        data = data.T
+
+    if return_X_y:
+        return data, target
+
+    # META INFO
+    with open(meta_path, 'rb') as f:
+        res = pkl.load(f)
+
+        feature_names = np.array(res['feature_names'])
+        target_names = np.array(res['target_names'])
+
+
+    return Bunch(data=data, target=target,
+                 target_names=target_names,
+                 feature_names=feature_names)
 
 
 def copy_files(data_path, target_path, base_path, session_folder):
