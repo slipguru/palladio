@@ -98,10 +98,10 @@ def main(config=None, config_path=None):
         # If a config file was provided, make a copy in the session folder
         if config_path is not None:
             shutil.copy(config_path, os.path.join(session_folder, 'config.py'))
-        # Else, dump the configuration object using pickle
-        else:
-            with open(os.path.join(session_folder, 'config.pkl'), 'wb') as f:
-                pkl.dump(config, f)
+
+        # Dump the configuration object using pickle
+        with open(os.path.join(session_folder, 'config.pkl'), 'wb') as f:
+            pkl.dump(config, f)
 
         # CREATE HARD LINK IN SESSION FOLDER
         if hasattr(config, 'data_path') and hasattr(config, 'target_path'):

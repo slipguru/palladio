@@ -56,7 +56,12 @@ def main():
     """Summary and plot generation."""
     parser = parse_args()
     base_folder = parser.result_folder
-    config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
+
+    # Load previously dumped configuration object
+    with open(os.path.join(base_folder, 'config.py'), 'rb') as f:
+        config = pkl.load(f)
+
+    # config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
 
     # Load results from pkl
     regular_cv_results, permutation_cv_results = load_results(base_folder)
