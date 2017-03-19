@@ -134,6 +134,15 @@ def _worker(estimator_, i, X, y, train_index, test_index):
             "max resubmissions limit reached".format(NAME, RANK, i))
         return {}
     else:
+
+        if not IS_MPI_JOB:
+            print("Experiment {} completed [{}]".format(
+                    i,
+                    ('permutation' if estimator_.shuffle_y else 'regular')
+                )
+            )
+
+
         return cv_results_
 
 
