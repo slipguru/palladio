@@ -134,9 +134,11 @@ def load_npypkl(data_path, target_path, return_X_y=False,
 
     n, d = data.shape
 
-
     target_names = ['T{}'.format(str(i+1)) for i in range(n)]
     feature_names = ['F{}'.format(str(i+1)) for i in range(d)]
+
+    target_names = np.array(target_names)
+    feature_names = np.array(feature_names)
 
     return Bunch(data=data, target=target,
                  target_names=target_names,
