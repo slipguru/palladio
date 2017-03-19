@@ -4,7 +4,6 @@
 import numpy as np
 
 from sklearn.feature_selection import RFE
-from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import GridSearchCV
 
@@ -24,11 +23,11 @@ data_path = 'data/binclass_data.npy'
 target_path = 'data/binclass_target.npy'
 
 try:
-    dataset = datasets.load_npypkl(os.path.join(os.path.dirname(__file__),data_path),
+    dataset = datasets.load_npy(os.path.join(os.path.dirname(__file__),data_path),
                                 os.path.join(os.path.dirname(__file__),target_path),
                                 samples_on='row')
 except:
-    dataset = datasets.load_npypkl(os.path.join(os.path.dirname(__file__), 'data'),
+    dataset = datasets.load_npy(os.path.join(os.path.dirname(__file__), 'data'),
                                 os.path.join(os.path.dirname(__file__), 'labels'),
                                 samples_on='row')
 
@@ -46,37 +45,23 @@ session_folder = 'palladio_test_binclass'
 learning_task = None
 
 # The number of repetitions of 'regular' experiments
-n_splits_regular = 50
+n_splits_regular = 100
 
 # The number of repetitions of 'permutation' experiments
-n_splits_permutation = 50
+n_splits_permutation = 100
 
 #######################
 #  LEARNER OPTIONS  ###
 #######################
 
-# PIPELINE ###
-
-# STEP 1: Variable selection
 vs = RFE(LinearSVC(loss='hinge'), step=0.3)
 
-# STEP 2: Classification
-clf = LinearSVC(loss='hinge')
-
-# COMPOSE THE PIPELINE
-pipe = Pipeline([
-    ('variable_selection', vs),
-    ('classification', clf),
-])
-
-
-# Set the estimator to be a GridSearchCV
 param_grid = {
-    'variable_selection__n_features_to_select': [10, 20, 50],
-    'variable_selection__estimator__C': np.logspace(-4, 0, 5),
+    'n_features_to_select': [10, 20, 50],
+    'estimator__C': np.logspace(-4, 0, 5),
 }
 
-estimator = GridSearchCV(pipe, param_grid=param_grid, cv=3, scoring='accuracy', n_jobs=1)
+estimator = GridSearchCV(vs, param_grid=param_grid, cv=3, scoring='accuracy', n_jobs=1)
 
 # Set options for ModelAssessment
 ma_options = {
@@ -91,7 +76,7 @@ ma_options = {
 # retrieve the list of selected features
 # For a single estimator which has a `coef_` attributes (e.g., elastic net or
 # lasso) set to True
-vs_analysis = 'variable_selection'
+vs_analysis = True
 
 # ~~ Signature Parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 frequency_threshold = None

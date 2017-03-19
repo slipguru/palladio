@@ -85,7 +85,7 @@ def load_csv(data_path, target_path, return_X_y=False,
 
 
 
-def load_npypkl(data_path, target_path, return_X_y=False,
+def load_npy(data_path, target_path, return_X_y=False,
              samples_on='row'):
 
 
