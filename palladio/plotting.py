@@ -390,6 +390,8 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
     pivot_names = list(product(*[[x] for x in pivoting_var])) * len(pivots)
 
     plt.close('all')
+    scoring = 'error' if plot_errors else 'score'
+    legend_labels = np.array(['Train ', 'Validation '], dtype=object) + scoring
     for id_pivot, (pivot, value) in enumerate(zip(pivot_names, pivots)):
         for id_param, (param1, param2) in enumerate(comb):
             param_names = 'param_' + np.array(
@@ -398,7 +400,6 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             fig = plt.figure()
             ax = fig.gca(projection='3d')
             legend_handles = []
-            legend_labels = ['Train Score', 'Validation Score']
             dff = pd.DataFrame(results['cv_results_'])
 
             # get parameter grid from the first row, since they should be equal
@@ -409,7 +410,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                     dff.iloc[0][param_names[0]].data.size, dtype=bool)
             else:
                 cond = _multicond(*[dff.iloc[0]['param_' + p].data == v
-                                   for p, v in zip(pivot, value)])
+                                    for p, v in zip(pivot, value)])
             xx = dff.iloc[0][param_names[0]][cond].data.astype(float)
             yy = dff.iloc[0][param_names[1]][cond].data.astype(float)
             log10_x, log10_y = '', ''
@@ -458,7 +459,6 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             # fig.colorbar()
             ax.legend(legend_handles, legend_labels[:len(legend_handles)],
                       loc='best')
-            scoring = 'error' if plot_errors else 'score'
             ax.set_title('average KCV %s, pivot %s = %s' % (
                 scoring, pivot, value))
             ax.set_xlabel(log10_x + param_names[0][6:])
@@ -521,6 +521,8 @@ def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
     pivot_names = list(product(*[[x] for x in pivoting_var])) * len(pivots)
 
     plt.close('all')
+    scoring = 'error' if plot_errors else 'score'
+    legend_labels = np.array(['Train ', 'Validation '], dtype=object) + scoring
     for id_pivot, (pivot, value) in enumerate(zip(pivot_names, pivots)):
         param_name = 'param_' + indep_var
 
@@ -543,7 +545,7 @@ def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
         for string, color, label in zip(
                 ('train', 'test'),
                 (COLORS_HEX['lightOrange'], COLORS_HEX['lightBlue']),
-                ('Train Score', 'Validation Score')):
+                legend_labels):
             # The score is the mean of each external split
             score = np.mean(np.vstack(
                 dff['mean_%s_score' % string].tolist()), axis=0)[cond]
@@ -559,7 +561,6 @@ def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
         plot(param_range[pos_max], score[pos_max], 'o', c=COLORS_HEX['darkRed'])
 
         ax.legend()
-        scoring = 'error' if plot_errors else 'score'
         ax.set_title('average KCV %s, pivot %s = %s' % (scoring, pivot, value))
         ax.set_xlabel(indep_var)
         ax.set_ylabel("avg kcv %s" % scoring)
