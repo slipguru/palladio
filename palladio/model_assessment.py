@@ -25,6 +25,7 @@ from sklearn.model_selection._split import _CVIterableWrapper
 from sklearn.model_selection._validation import _shuffle
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.utils import check_X_y, check_random_state
+from sklearn.utils.metaestimators import _safe_split
 from sklearn.utils.multiclass import type_of_target
 
 from palladio.utils import build_cv_results as _build_cv_results
@@ -53,7 +54,7 @@ DO_WORK = 100
 EXIT = 200
 
 
-def _worker(estimator_, i, X, y, train_index, test_index):
+def _worker(estimator_, i, X, y, train, test):
     """Implement the worker resubmission in case of errors."""
     # custom_name = "{}_p_{}_i_{}".format(
     #     ("permutation" if is_permutation_test else "regular"), RANK, i)
@@ -68,22 +69,26 @@ def _worker(estimator_, i, X, y, train_index, test_index):
             # run_experiment(data, labels, None, config,
             #                is_permutation_test, experiments_folder_path,
             #                tmp_name)
-            Xtr = X[train_index, :]
-            Xts = X[test_index, :]
-            ytr = y[train_index]
-            yts = y[test_index]
-
             # TODO necessary?
             estimator = clone(estimator_.estimator)
+
+            # need to get the deepest estimator to use _safe_split
+            estimator__ = clone(estimator)
+            while hasattr(estimator__, 'estimator'):
+                estimator__ = clone(estimator__.estimator)
+
+            X_train, y_train = _safe_split(estimator__, X, y, train)
+            X_test, y_test = _safe_split(estimator__, X, y, test, train)
+
             if estimator_.shuffle_y:
                 random_state = check_random_state(estimator_.random_state)
-                ytr = _shuffle(ytr, estimator_.groups, random_state)
-            estimator.fit(Xtr, ytr)
+                y_train = _shuffle(y_train, estimator_.groups, random_state)
+            estimator.fit(X_train, y_train)
 
-            yts_pred = estimator.predict(Xts)
-            ytr_pred = estimator.predict(Xtr)
-            lr_score = estimator_.scorer_(estimator, Xtr, ytr)
-            ts_score = estimator_.scorer_(estimator, Xts, yts)
+            yts_pred = estimator.predict(X_test)
+            ytr_pred = estimator.predict(X_train)
+            lr_score = estimator_.scorer_(estimator, X_train, y_train)
+            ts_score = estimator_.scorer_(estimator, X_test, y_test)
             # lr_score = estimator.score(Xtr, ytr)
             # ts_score = estimator.score(Xts, yts)
 
@@ -100,8 +105,8 @@ def _worker(estimator_, i, X, y, train_index, test_index):
                 'cv_results_': cv_results,
                 'ytr_pred': ytr_pred,
                 'yts_pred': yts_pred,
-                'test_index': test_index,
-                'train_index': train_index,
+                'test_index': test,
+                'train_index': train,
                 'estimator': estimator
             }
 
@@ -114,19 +119,17 @@ def _worker(estimator_, i, X, y, train_index, test_index):
                     '_%d.pkl' % i
 
                 # TODO use gzip?
-                with open(os.path.join(
-                        estimator_.experiments_folder, pkl_name), 'wb') as ff:
-                    # pkl.dump(partial_result, ff)
-                    pkl.dump(cv_results_, ff)
+                pkl.dump(cv_results_, open(os.path.join(
+                    estimator_.experiments_folder, pkl_name), 'wb'))
 
-        except StandardError as e:
+        except StandardError as error:
             # If somethings out of the ordinary happens,
             # resubmit the job
             experiment_resubmissions += 1
             warnings.warn(
                 "[{}_{}] failed experiment {}, resubmission #{}\n"
                 "Exception raised: {}".format(
-                    NAME, RANK, i, experiment_resubmissions, e))
+                    NAME, RANK, i, experiment_resubmissions, error))
 
     if not experiment_completed:
         warnings.warn(

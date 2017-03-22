@@ -59,7 +59,7 @@ def main():
 
     # # Load previously dumped configuration object
     # with open(os.path.join(base_folder, 'config.py'), 'rb') as f:
-        # config = pkl.load(f)
+    #   config = pkl.load(f)
 
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
 
