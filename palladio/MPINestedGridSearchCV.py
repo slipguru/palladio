@@ -87,7 +87,7 @@ def _fit_and_score_with_parameters(X, y, cv, best_parameters):
     comm.bcast((X, y), root=0)
 
     # Compability with sklearn > 0.18 TODO
-    _splitted_cv = [(a, b) for a, b in cv.split(X)]
+    _splitted_cv = [(a, b) for a, b in cv.split(X, y)]
 
     assert comm_size >= len(_splitted_cv)
 
@@ -189,13 +189,13 @@ class NestedGridSearchCV(BaseEstimator):
     def _grid_search(self, train_X, train_y):
         if callable(self.inner_cv):
             # inner_cv = self.inner_cv(train_X, train_y)
-            inner_cv = self.inner_cv.split(train_X)
+            inner_cv = self.inner_cv.split(train_X, train_y)
         else:
             # inner_cv = _check_cv(self.inner_cv, train_X, train_y,
             #                      classifier=is_classifier(self.estimator))
             inner_cv = _check_cv(self.inner_cv, train_y,
                                  classifier=is_classifier(
-                                    self.estimator)).split(train_X)
+                                    self.estimator)).split(train_X, train_y)
 
         master = MPIGridSearchCVMaster(self.param_grid, inner_cv,
                                        self.estimator, self.scorer_,
@@ -207,7 +207,7 @@ class NestedGridSearchCV(BaseEstimator):
 
         best_parameters = []
         grid_search_results = []
-        for i, (train_index, test_index) in enumerate(cv.split(X)):
+        for i, (train_index, test_index) in enumerate(cv.split(X, y)):
             LOG.info("Training fold %d", i + 1)
 
             train_X = X[train_index, :]
