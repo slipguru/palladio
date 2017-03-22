@@ -59,7 +59,7 @@ def main():
 
     # # Load previously dumped configuration object
     # with open(os.path.join(base_folder, 'config.py'), 'rb') as f:
-        # config = pkl.load(f)
+    #   config = pkl.load(f)
 
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
 
@@ -81,6 +81,7 @@ def main():
         'vs_analysis': None,
         'frequency_threshold': .75,
         'ma_options': None,
+        'analysis_folder': 'analysis'
     })
     analyse_results(
         regular_cv_results, permutation_cv_results, config.labels,
