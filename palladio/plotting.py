@@ -23,6 +23,14 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa
 from palladio.colors import COLORS_HEX  # noqa
 
 
+def _multicond(*args):
+    """Util function to concatenate multiple selection conditions."""
+    cond = args[0]
+    for arg in args[1:]:
+        cond = np.logical_and(cond, arg)
+    return cond
+
+
 def stats_to_file(rstest, r_mean, r_std, p_mean, p_std, metric, base_folder,
                   first_run=True):
     """Save stats to file."""
@@ -153,12 +161,13 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
     if rstest is not None:
         # fig.text(0.1, 0.005, "Wilcoxon Signed-Rank test p-value: {0:.3e}\n"
         #                      .format(rstest[1]), fontsize=18)
-        fig.text(0.1, 0.005, "Two sample Kolmogorov-Smirnov test p-value: {0:.3e}\n"
-                             .format(rstest[1]), fontsize=18)
+        fig.text(0.1, 0.005,
+                 "Two sample Kolmogorov-Smirnov test p-value: {0:.3e}\n"
+                 .format(rstest[1]), fontsize=18)
 
     plt.savefig(os.path.join(
-        base_folder, '%s_distribution.pdf' % metric),
-        bbox_inches='tight', dpi=300)
+                base_folder, '%s_distribution.pdf' % metric),
+                bbox_inches='tight', dpi=300)
 
     # XXX save to txt; maybe not here?
     stats_to_file(
@@ -348,23 +357,24 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
         If True and plot_errors is True, do errors = -scores instead of
         1 - scores.
     """
-    def multicond(*args):
-        cond = args[0]
-        for arg in args[1:]:
-            cond = np.logical_and(cond, arg)
-        return cond
-
     if indep_var is not None:
-        comb = combinations(
-            zip(indep_var, [param_grid[x] for x in indep_var]), 2)
+        grid = zip(indep_var, [param_grid[x] for x in indep_var])
     else:
-        comb = [sorted(list(
-            param_grid.iteritems()), key=lambda item: len(item[1]))[-2:]]
-        if len(comb[0]) == 1:
-            warnings.warn("Only one grid parameter, cannot create 3D plot")
-            return
-        indep_var = [comb[0][0][0], comb[0][1][0]]
+        grid = sorted(list(
+            param_grid.iteritems()), key=lambda item: len(item[1]))[-2:]
+        indep_var = [name[0] for name in grid]
 
+    if len(grid) < 1:
+        warnings.warn("No grid parameters, cannot create validation plot")
+        return
+    elif len(grid) < 2:
+        # warnings.warn("Only one grid parameter, cannot create 3D plot")
+        score_plot(param_grid, results, indep_var[0], pivoting_var,
+                   base_folder=base_folder, logspace=logspace,
+                   plot_errors=plot_errors, is_regression=is_regression)
+        return
+
+    comb = combinations(grid, 2)
     if pivoting_var is None:
         pivoting_var = list(set(param_grid.keys()).difference(set(indep_var)))
 
@@ -398,7 +408,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                 cond = np.ones(
                     dff.iloc[0][param_names[0]].data.size, dtype=bool)
             else:
-                cond = multicond(*[dff.iloc[0]['param_' + p].data == v
+                cond = _multicond(*[dff.iloc[0]['param_' + p].data == v
                                    for p, v in zip(pivot, value)])
             xx = dff.iloc[0][param_names[0]][cond].data.astype(float)
             yy = dff.iloc[0][param_names[1]][cond].data.astype(float)
@@ -461,3 +471,102 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                         scoring, id_pivot, id_param)))
             else:
                 plt.show()
+
+
+def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
+               base_folder=None, logspace=None, plot_errors=False,
+               is_regression=False):
+    """Plot error 2d plot.
+
+    Parameters
+    ----------
+    param_grid : dict
+        Dictionary of grid parameters for GridSearch.
+    results : dict
+        Instance of an equivalent of cv_results_, as given by ModelAssessment.
+    indep_var : array-like, optional, default None
+        List of independent variables on which plots are based. If more that 2,
+        a plot for each combination is made. If None, the 2 longest parameters
+        in param_grid are selected.
+    pivoting_var : array-like, optional, default None
+        List of pivoting variables. For each of them, a plot is made.
+        If unspecified, get the unspecified independent variable with the best
+        model values.
+    base_folder : str or None, optional, default None
+        Folder where to save the plots.
+    logspace : array-like or None, optional, default None
+        List to specify which variable to visualise in logspace.
+    plot_errors : bool, optional, default False
+        If True, plot errors instead of scores.
+    is_regression : bool, optional, default False
+        If True and plot_errors is True, do errors = -scores instead of
+        1 - scores.
+    """
+    if indep_var is None:
+        indep_var = sorted(list(
+            param_grid.iteritems()), key=lambda item: len(item[1]))[-1][0]
+
+    if pivoting_var is None:
+        pivoting_var = list(set(param_grid.keys()).difference(set([indep_var])))
+
+        ordered_df = pd.DataFrame(pd.DataFrame(results).sort_values(
+            'test_score', ascending=False).iloc[0]['cv_results_']).sort_values(
+                'mean_test_score', ascending=False).iloc[0]
+
+        # use best model, one pivot
+        pivots = [tuple(ordered_df['param_' + x] for x in pivoting_var)]
+    else:
+        pivots = list(product(*[param_grid[x] for x in pivoting_var]))
+
+    pivot_names = list(product(*[[x] for x in pivoting_var])) * len(pivots)
+
+    plt.close('all')
+    for id_pivot, (pivot, value) in enumerate(zip(pivot_names, pivots)):
+        param_name = 'param_' + indep_var
+
+        f, ax = plt.subplots(1)
+        dff = pd.DataFrame(results['cv_results_'])
+
+        # get parameter grid from the first row, since they should be equal
+        # but pivoting
+        if len(pivot) == 0:
+            # no pivoting
+            cond = np.ones(
+                dff.iloc[0][param_name].data.size, dtype=bool)
+        else:
+            cond = _multicond(*[dff.iloc[0]['param_' + p].data == v
+                                for p, v in zip(pivot, value)])
+        param_range = dff.iloc[0][param_name][cond].data.astype(float)
+        if logspace is not None:
+            plot = ax.semilogx if indep_var in logspace else ax.plot
+
+        for string, color, label in zip(
+                ('train', 'test'),
+                (COLORS_HEX['lightOrange'], COLORS_HEX['lightBlue']),
+                ('Train Score', 'Validation Score')):
+            # The score is the mean of each external split
+            score = np.mean(np.vstack(
+                dff['mean_%s_score' % string].tolist()), axis=0)[cond]
+            if plot_errors:
+                score = -score if is_regression else 1 - score
+
+            # plt.close('all')
+            plot(param_range, score, c=color, label=label)
+
+        # plot max
+        func_max = np.min if plot_errors else np.max
+        pos_max = np.where(score == func_max(score))
+        plot(param_range[pos_max], score[pos_max], 'o', c=COLORS_HEX['darkRed'])
+
+        ax.legend()
+        scoring = 'error' if plot_errors else 'score'
+        ax.set_title('average KCV %s, pivot %s = %s' % (scoring, pivot, value))
+        ax.set_xlabel(indep_var)
+        ax.set_ylabel("avg kcv %s" % scoring)
+
+        if base_folder is not None:
+            plt.savefig(os.path.join(
+                base_folder, 'kcv_%s_piv%d_param_%s.pdf' % (
+                    scoring, id_pivot, indep_var)))
+        else:
+            plt.show()
