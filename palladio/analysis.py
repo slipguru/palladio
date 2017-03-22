@@ -64,16 +64,11 @@ def performance_metrics(cv_results, labels, target='regression'):
 
 def analyse_results(
         regular_cv_results, permutation_cv_results, labels, estimator,
-        base_folder, feature_names, learning_task=None, vs_analysis=None,
+        base_folder, feature_names=None, learning_task=None, vs_analysis=None,
         threshold=.75, model_assessment_options=None,
         analysis_folder='analysis',
         score_surfaces_options=None):
     """Summary and plot generation."""
-    # Get feature names
-    # if feature_names is None:
-        # # what follows creates [feat_0, feat_1, ..., feat_d]
-        # feature_names = 'feat_' + np.arange(
-            # labels.size).astype(str).astype(object)
     # learning_task follows the convention of
     # sklearn.utils.multiclass.type_of_target
     if learning_task is None:
@@ -107,6 +102,14 @@ def analyse_results(
         model_assessment_options = {}
     # Handle variable selection step
     if vs_analysis is not None:
+        # Get feature names
+        if feature_names is None:
+            # what follows creates [feat_0, feat_1, ..., feat_d]
+            # feature_names = 'feat_' + np.arange(
+            #     labels.size).astype(str).astype(object)
+            raise ValueError(
+                "Variable selection analysis was specified, but no feature "
+                "names were provided.")
         if threshold is None:
             threshold = .75
         selected = {}
