@@ -90,6 +90,7 @@ def main():
         feature_names=config.feature_names, learning_task=config.learning_task,
         vs_analysis=config.vs_analysis, threshold=config.frequency_threshold,
         model_assessment_options=config.ma_options,
+        analysis_folder=config.analysis_folder,
         score_surfaces_options=score_surfaces_options)
 
 

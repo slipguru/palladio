@@ -66,6 +66,7 @@ def analyse_results(
         regular_cv_results, permutation_cv_results, labels, estimator,
         base_folder, feature_names, learning_task=None, vs_analysis=None,
         threshold=.75, model_assessment_options=None,
+        analysis_folder='analysis',
         score_surfaces_options=None):
     """Summary and plot generation."""
     # Get feature names
@@ -98,6 +99,9 @@ def analyse_results(
             regular_cv_results, labels, target='classification')
         performance_permutation = performance_metrics(
             permutation_cv_results, labels, target='classification')
+
+    if not os.path.exists(os.path.join(base_folder, analysis_folder)):
+        os.makedirs(os.path.join(base_folder, analysis_folder))
 
     if model_assessment_options is None:
         model_assessment_options = {}
@@ -135,7 +139,7 @@ def analyse_results(
 
             # Save selected variables textual summary
             filename = os.path.join(
-                base_folder, 'signature_%s.txt' % batch_name)
+                base_folder, analysis_folder, 'signature_%s.txt' % batch_name)
             save_signature(filename, selected[batch_name], threshold)
 
         # sorted_keys_regular = sorted(
@@ -149,20 +153,20 @@ def analyse_results(
 
         # # Save graphical summary
         plotting.feature_frequencies(
-            feat_arr_r, base_folder, threshold=threshold)
+            feat_arr_r, os.path.join(base_folder, analysis_folder), threshold=threshold)
 
         plotting.features_manhattan(
-            feat_arr_r, feat_arr_p, base_folder, threshold=threshold)
+            feat_arr_r, feat_arr_p, os.path.join(base_folder, analysis_folder), threshold=threshold)
 
         plotting.select_over_threshold(
-            feat_arr_r, feat_arr_p, base_folder, threshold=threshold)
+            feat_arr_r, feat_arr_p, os.path.join(base_folder, analysis_folder), threshold=threshold)
 
     # Generate distribution plots
     for i, metric in enumerate(performance_regular):
         plotting.distributions(
             v_regular=performance_regular[metric],
             v_permutation=performance_permutation.get(metric, []),
-            base_folder=base_folder, metric=metric,
+            base_folder=os.path.join(base_folder, analysis_folder), metric=metric,
             first_run=i == 0,
             is_regression=is_regression)
 
@@ -174,6 +178,6 @@ def analyse_results(
         plotting.score_surfaces(
             param_grid=estimator.param_grid,
             results=regular_cv_results,
-            base_folder=base_folder,
+            base_folder=os.path.join(base_folder, analysis_folder),
             is_regression=is_regression,
             **score_surfaces_options)
