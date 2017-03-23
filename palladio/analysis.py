@@ -53,7 +53,7 @@ def performance_metrics(cv_results, labels, target='regression'):
 
         if metric.__name__ in ['f1_score', 'precision_score', 'recall_score']:
             performance_metrics_[metric.__name__] = [
-                metric(*yy, pos_label = pos_label) for yy in zip(yts_true, yts_pred)]
+                metric(*yy, pos_label=pos_label) for yy in zip(yts_true, yts_pred)]
         else:
             performance_metrics_[metric.__name__] = [
                 metric(*yy) for yy in zip(yts_true, yts_pred)]
@@ -64,7 +64,7 @@ def performance_metrics(cv_results, labels, target='regression'):
 
 def analyse_results(
         regular_cv_results, permutation_cv_results, labels, estimator,
-        base_folder, feature_names=None, learning_task=None, vs_analysis=None,
+        base_folder='', feature_names=None, learning_task=None, vs_analysis=None,
         threshold=.75, model_assessment_options=None,
         analysis_folder='analysis',
         score_surfaces_options=None):
