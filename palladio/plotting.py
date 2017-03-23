@@ -49,7 +49,7 @@ def stats_to_file(rstest, r_mean, r_std, p_mean, p_std, metric, base_folder,
                     "Mean = %.3f, SD = %.3f\n" % (metric, p_mean, p_std))
 
 
-def distributions(v_regular, v_permutation, base_folder='', metric='nd',
+def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
                   first_run=False, is_regression=False):
     """Create a plot of the distributions of performance metrics.
 
@@ -165,13 +165,19 @@ def distributions(v_regular, v_permutation, base_folder='', metric='nd',
                  "Two sample Kolmogorov-Smirnov test p-value: {0:.3e}\n"
                  .format(rstest[1]), fontsize=18)
 
-    plt.savefig(os.path.join(
-                base_folder, '%s_distribution.pdf' % metric),
-                bbox_inches='tight', dpi=300)
+
+    if base_folder is not None:
+        plt.savefig(os.path.join(
+                    base_folder, '%s_distribution.pdf' % metric),
+                    bbox_inches='tight', dpi=300)
+    else:
+        plt.show()
 
     # XXX save to txt; maybe not here?
-    stats_to_file(
-        rstest, r_mean, r_std, p_mean, p_std, metric, base_folder, first_run)
+    if base_folder is not None:
+        # Only if base_folder is defined
+        stats_to_file(
+            rstest, r_mean, r_std, p_mean, p_std, metric, base_folder, first_run)
 
 
 def features_manhattan(feat_arr_r, feat_arr_p, base_folder, threshold=.75):

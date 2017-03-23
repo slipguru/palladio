@@ -127,6 +127,8 @@ def main(config=None, config_path=None):
     external_estimator = ModelAssessment(internal_estimator, **ma_options)
     external_estimator.fit(data, labels)
 
+    ma_regular = external_estimator
+
     # Perform "permutation" experiments
     ma_options.pop('n_splits', None)
     n_splits_permutation = int(config.n_splits_permutation) if hasattr(
@@ -141,6 +143,10 @@ def main(config=None, config_path=None):
         )
         external_estimator.fit(data, labels)
 
+        ma_permutation = external_estimator
+    else:
+        ma_permutation = None
+
     if IS_MPI_JOB:
         # Wait for all jobs to end
         COMM.barrier()
@@ -150,3 +156,5 @@ def main(config=None, config_path=None):
         with open(os.path.join(session_folder, 'report.txt'), 'w') as rf:
             rf.write("Total elapsed time: {}".format(
                 sec_to_timestring(t100 - t0)))
+
+    return ma_regular, ma_permutation

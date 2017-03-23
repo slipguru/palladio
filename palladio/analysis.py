@@ -64,9 +64,8 @@ def performance_metrics(cv_results, labels, target='regression'):
 
 def analyse_results(
         regular_cv_results, permutation_cv_results, labels, estimator,
-        base_folder='', feature_names=None, learning_task=None, vs_analysis=None,
+        base_folder, analysis_folder='analysis', feature_names=None, learning_task=None, vs_analysis=None,
         threshold=.75, model_assessment_options=None,
-        analysis_folder='analysis',
         score_surfaces_options=None):
     """Summary and plot generation."""
     # learning_task follows the convention of

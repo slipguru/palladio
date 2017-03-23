@@ -83,6 +83,7 @@ def main():
         'ma_options': None,
         'analysis_folder': 'analysis'
     })
+    
     analyse_results(
         regular_cv_results, permutation_cv_results, config.labels,
         config.estimator,
