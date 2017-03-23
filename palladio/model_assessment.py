@@ -267,6 +267,9 @@ class ModelAssessment(BaseEstimator):
     experiments_folder : string, optional, default: None
         The path to the folder used to save the results.
 
+    verbose : bool, optional, default: False
+        Print debug messages.
+
     Attributes
     ----------
     scorer_ : function
