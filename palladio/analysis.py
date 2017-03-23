@@ -156,20 +156,24 @@ def analyse_results(
 
         # # Save graphical summary
         plotting.feature_frequencies(
-            feat_arr_r, os.path.join(base_folder, analysis_folder), threshold=threshold)
+            feat_arr_r, os.path.join(base_folder, analysis_folder),
+            threshold=threshold)
 
         plotting.features_manhattan(
-            feat_arr_r, feat_arr_p, os.path.join(base_folder, analysis_folder), threshold=threshold)
+            feat_arr_r, feat_arr_p, os.path.join(base_folder, analysis_folder),
+            threshold=threshold)
 
         plotting.select_over_threshold(
-            feat_arr_r, feat_arr_p, os.path.join(base_folder, analysis_folder), threshold=threshold)
+            feat_arr_r, feat_arr_p, os.path.join(base_folder, analysis_folder),
+            threshold=threshold)
 
     # Generate distribution plots
     for i, metric in enumerate(performance_regular):
         plotting.distributions(
             v_regular=performance_regular[metric],
             v_permutation=performance_permutation.get(metric, []),
-            base_folder=os.path.join(base_folder, analysis_folder), metric=metric,
+            base_folder=os.path.join(base_folder, analysis_folder),
+            metric=metric,
             first_run=i == 0,
             is_regression=is_regression)
 
