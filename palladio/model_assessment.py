@@ -137,14 +137,9 @@ def _worker(estimator_, i, X, y, train, test):
             "max resubmissions limit reached".format(NAME, RANK, i))
         return {}
     else:
-
-        if not IS_MPI_JOB:
+        if not IS_MPI_JOB and estimator_.verbose:
             print("Experiment {} completed [{}]".format(
-                    i,
-                    ('permutation' if estimator_.shuffle_y else 'regular')
-                )
-            )
-
+                i, ('permutation' if estimator_.shuffle_y else 'regular')))
 
         return cv_results_
 
@@ -285,7 +280,8 @@ class ModelAssessment(BaseEstimator):
     def __init__(self, estimator, cv=None, scoring=None, fit_params=None,
                  multi_output=False, shuffle_y=False, n_jobs=1,
                  n_splits=10, test_size=0.1, train_size=None,
-                 random_state=None, groups=None, experiments_folder=None):
+                 random_state=None, groups=None, experiments_folder=None,
+                 verbose=False):
         self.estimator = estimator
         self.scoring = scoring
         self.fit_params = fit_params
@@ -298,6 +294,7 @@ class ModelAssessment(BaseEstimator):
         self.groups = groups
         self.experiments_folder = experiments_folder
         self.n_jobs = n_jobs
+        self.verbose = verbose
 
         # Shuffle training labels
         self.shuffle_y = shuffle_y
@@ -406,11 +403,14 @@ class ModelAssessment(BaseEstimator):
                     return
                 # do the work
                 i, (train_index, test_index) = received
-
-                print("[{} {}]: Performing experiment {}".format(NAME, RANK, i))
+                if self.verbose:
+                    print("[{} {}]: Performing experiment {}".format(
+                        NAME, RANK, i))
 
                 cv_results_ = _worker(self, i, X, y, train_index, test_index)
-                print("[{} {}]: Experiment {} completed".format(NAME, RANK, i))
+                if self.verbose:
+                    print("[{} {}]: Experiment {} completed".format(
+                        NAME, RANK, i))
                 COMM.send(cv_results_, dest=0, tag=0)
 
         except StandardError as exc:
