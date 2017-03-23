@@ -215,12 +215,11 @@ class ModelAssessment(BaseEstimator):
     estimator : object type that implements the "fit" and "predict" methods
         A object of that type is instantiated for each grid point.
 
-    param_grid : dict or list of dictionaries
-        Dictionary with parameters names (string) as keys and lists of
-        parameter settings to try as values, or a list of such
-        dictionaries, in which case the grids spanned by each dictionary
-        in the list are explored. This enables searching over any sequence
-        of parameter settings.
+    cv : integer or cross-validation generator, optional, default: 3
+        If an integer is passed, it is the number of folds.
+        Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
+
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -228,35 +227,48 @@ class ModelAssessment(BaseEstimator):
         ``scorer(estimator, X, y)``.
         See sklearn.metrics.get_scorer for details.
 
-    fit_params : dict, optional
+    fit_params : dict, optional, default: None
         Parameters to pass to the fit method.
 
-    cv : integer or cross-validation generator, default=3
-        If an integer is passed, it is the number of folds.
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
-
-    inner_cv : integer or callable, default=3
-        If an integer is passed, it is the number of folds.
-        If callable, the function must have the signature
-        ``inner_cv_func(X, y)`` and return a cross-validation object,
-        see sklearn.model_selection module for the list of possible objects.
-
-    multi_output : boolean, default=False
+    multi_output : boolean, default: False
         Allow multi-output y, as for multivariate regression.
+
+    shuffle_y : bool, optional, default=False
+        When True, the object is used to perform permutation test.
+
+    n_jobs : int, optional, default: 1
+        The number of jobs to use for the computation. This works by computing
+        each of the Monte Carlo runs in parallel.
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debugging. Ignored when using MPI.
+
+     n_splits: int, optional, default: 10
+        The number of cross-validation splits (folds/iterations).
+
+    test_size : float (default 0.1), int, or None
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the test split. If
+        int, represents the absolute number of test samples. If None,
+        the value is automatically set to the complement of the train size.
+
+    train_size : float, int, or None (default is None)
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the train split. If
+        int, represents the absolute number of train samples. If None,
+        the value is automatically set to the complement of the test size.
+
+     random_state : int or RandomState, optional, default: None
+        Pseudo-random number generator state used for random sampling.
+
+     groups : array-like, with shape (n_samples,), optional, default: None
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+    experiments_folder : string, optional, default: None
+        The path to the folder used to save the results.
 
     Attributes
     ----------
-    best_params_ : pandas.DataFrame
-        Contains selected parameter settings for each fold.
-        The validation score refers to average score across all folds of the
-        inner cross-validation, the test score to the score on the test set
-        of the outer cross-validation loop.
-
-    grid_scores_ : list of pandas.DataFrame
-        Contains full results of grid search for each training set of the
-        outer cross-validation loop.
-
     scorer_ : function
         Scorer function used on the held out data to choose the best
         parameters for the model.
