@@ -8,6 +8,12 @@ from sklearn.metrics.regression import *
 from sklearn.metrics.regression import __ALL__ as rmetrics
 
 # List of callables for regression metrics
+
+print('mean_absolute_error' in locals().keys())
+print(locals()['mean_absolute_error'])
+
+print(locals().keys())
+
 __REGRESSION_METRICS__ = [locals()[m] for m in rmetrics]
 
 
