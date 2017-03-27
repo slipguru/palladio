@@ -38,7 +38,7 @@ setup(
     packages=['palladio', 'palladio.wrappers', 'palladio.config_templates'],
     install_requires=['numpy (>=1.10.1)',
               'scipy (>=0.16.1)',
-              'scikit-learn (>=0.17)',
+              'scikit-learn (>=0.18)',
               'matplotlib (>=1.5.1)',
               'seaborn (>=0.7.0)',
               'joblib',
