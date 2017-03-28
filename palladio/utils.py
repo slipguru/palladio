@@ -11,6 +11,8 @@ from types import ModuleType
 
 from sklearn.datasets.base import Bunch
 
+from six import iteritems
+
 def save_signature(filename, selected, threshold=0.75):
     """Save signature summary."""
     with open(filename, 'w') as f:
@@ -72,7 +74,9 @@ def get_selected_list(grid_search, vs_analysis=True):
 
 def build_cv_results(dictionary, **results):
     """Function to build final cv_results_ dictionary with partial results."""
-    for k, v in results.iteritems():
+    # for k, v in results.iteritems():
+    for k, v in iteritems(results):
+
         if v is not None:
             dictionary.setdefault(k, []).append(v)
 
@@ -330,7 +334,9 @@ def set_module_defaults(module, dictionary):
 
     Used after the loading of the configuration file to set some defaults.
     """
-    for k, v in dictionary.iteritems():
+    # for k, v in dictionary.iteritems():
+    for k, v in iteritems(dictionary):
+
         try:
             getattr(module, k)
         except AttributeError:
@@ -378,5 +384,3 @@ def objectify_config(config_module):
             config_dict[a] = attr
 
     return Bunch(**config_dict)
-
-

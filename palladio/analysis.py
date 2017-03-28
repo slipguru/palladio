@@ -16,6 +16,8 @@ from palladio.metrics import __MULTICLASS_CLASSIFICATION_METRICS__
 from palladio.utils import get_selected_list
 from palladio.utils import save_signature
 
+from six import itervalues
+from six import iteritems
 
 def performance_metrics(cv_results, labels, target='regression'):
     """Evaluate metrics on the external splits results.
@@ -117,8 +119,22 @@ def analyse_results(
                                        np.zeros(len(feature_names))))
         selected['permutation'] = selected['regular'].copy()
 
-        n_splits_regular = len((regular_cv_results.values() or [[]])[0])
-        n_splits_permutation = len((permutation_cv_results.values() or [[]])[0])
+        # n_splits_regular = len((regular_cv_results.values() or [[]])[0])
+        # n_splits_permutation = len((permutation_cv_results.values() or [[]])[0])
+
+        try:
+            n_splits_regular = len(regular_cv_results['cv_results_'])
+        except:
+            n_splits_regular = 0
+
+        try:
+            n_splits_permutation = len(permutation_cv_results['cv_results_'])
+        except:
+            n_splits_permutation = 0
+
+        # print(n_splits_regular)
+        # print(n_splits_permutation)
+
         n_jobs = {'regular': n_splits_regular,
                   'permutation': n_splits_permutation}
         names_ = ('regular', 'permutation')
@@ -144,16 +160,48 @@ def analyse_results(
                 base_folder, analysis_folder, 'signature_%s.txt' % batch_name)
             save_signature(filename, selected[batch_name], threshold)
 
+        # print(type(selected['regular']))
+
         # sorted_keys_regular = sorted(
         #     selected['regular'], key=selected['regular'].__getitem__)
-        feat_arr_r = np.array(zip(*selected['regular'].items()), dtype=object).T
-        feat_arr_p = np.array(zip(*selected['permutation'].items()), dtype=object).T
+
+        # feat_arr_r = np.array(zip(*selected['regular'].items()), dtype=object).T
+        # feat_arr_p = np.array(zip(*selected['permutation'].items()), dtype=object).T
+
+        l = list()
+        for it in iteritems(selected['regular']):
+            l.append(it)
+
+        la = np.array(l, dtype=object)
+        feat_arr_r = la
+
+        l = list()
+        for it in iteritems(selected['permutation']):
+            l.append(it)
+
+        la = np.array(l, dtype=object)
+        feat_arr_p = la
+
+        # print(la.shape)
+
+        # print("Selected regular")
+        # print(selected['regular'].values())
+
+        # feat_arr_r = np.array(zip(*iteritems(selected['regular'])), dtype=object).T
+        # feat_arr_p = np.array(zip(*iteritems(selected['permutation'])), dtype=object).T
+
+        # print(feat_arr_r[:,0])
+        # print(feat_arr_p)
+
+        # feat_arr_r = np.array(zip(*selected['regular'].items()), dtype=object).T
+        # feat_arr_p = np.array(zip(*selected['permutation'].items()), dtype=object).T
 
         # sort by name
         feat_arr_r = feat_arr_r[feat_arr_r[:, 0].argsort()]
         feat_arr_p = feat_arr_p[feat_arr_p[:, 0].argsort()]
 
         # # Save graphical summary
+
         plotting.feature_frequencies(
             feat_arr_r, os.path.join(base_folder, analysis_folder),
             threshold=threshold)

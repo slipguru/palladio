@@ -22,6 +22,7 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa
 
 from palladio.colors import COLORS_HEX  # noqa
 
+from six import iteritems
 
 def _multicond(*args):
     """Util function to concatenate multiple selection conditions."""
@@ -278,6 +279,7 @@ def feature_frequencies(feat_arr, base_folder, threshold=.75):
     plt.close('all')
     sns.set_context('notebook')
     # plt.figure(figsize=(18, 100))
+
     ax = sns.barplot(
         x=sorted_feat_arr[:2 * n_over_threshold, 0],
         y=sorted_feat_arr[:2 * n_over_threshold, 1],
@@ -378,8 +380,10 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
     if indep_var is not None:
         grid = zip(indep_var, [param_grid[x] for x in indep_var])
     else:
+        # grid = sorted(list(
+        #     param_grid.iteritems()), key=lambda item: len(item[1]))[-2:]
         grid = sorted(list(
-            param_grid.iteritems()), key=lambda item: len(item[1]))[-2:]
+            iteritems(param_grid)), key=lambda item: len(item[1]))[-2:]
         indep_var = [name[0] for name in grid]
 
     if len(grid) < 1:
