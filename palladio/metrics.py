@@ -8,7 +8,8 @@ from sklearn.metrics.regression import *
 from sklearn.metrics.regression import __ALL__ as rmetrics
 
 # List of callables for regression metrics
-__REGRESSION_METRICS__ = [locals()[m] for m in rmetrics]
+VARS = locals()
+__REGRESSION_METRICS__ = [VARS[m] for m in rmetrics]
 
 
 def balanced_accuracy(y_true, y_pred):
