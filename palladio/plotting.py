@@ -78,10 +78,10 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
         1 - scores.
 
     fig : matplotlib fig, optional, default None
+        Used to plot the distribution on a pre-existing figure
 
     ax : matplotlib axis, optional, default None
-        Used in order to have graphs being plotted on specific axes (useful in
-        case there is a need for subtplots)
+        Used to plot the distribution on a pre-existing axis
     """
     if np.any(np.equal(v_regular, None)) or \
             np.any(np.equal(v_permutation, None)):
@@ -159,10 +159,6 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
     else:
         rstest = None
 
-    # plt.xlabel(metric, fontsize="large")
-    # plt.ylabel("Absolute Frequency", fontsize="large")
-    # plt.title("Distribution of %s" % metric, fontsize=20)
-
     ax.set_xlabel(metric, fontsize="large")
     ax.set_ylabel("Absolute Frequency", fontsize="large")
     ax.set_title("Distribution of %s" % metric, fontsize=20)
@@ -172,21 +168,14 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
     # x_max = v_regular.max() + v_regular.mean()/10
     # see above
 
-    # plt.xlim([x_min * scale, x_max * scale])
-    # plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='upper right',
-    #            ncol=2, mode="expand", borderaxespad=0., fontsize="large")
-
     ax.set_xlim([x_min * scale, x_max * scale])
     ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='upper right',
                ncol=2, mode="expand", borderaxespad=0., fontsize="large")
 
     if rstest is not None:
-        # fig.text(0.1, 0.005, "Wilcoxon Signed-Rank test p-value: {0:.3e}\n"
-        #                      .format(rstest[1]), fontsize=18)
         fig.text(0.1, 0.005,
                  "Two sample Kolmogorov-Smirnov test p-value: {0:.3e}\n"
                  .format(rstest[1]), fontsize=18)
-
 
     if base_folder is not None:
         plt.savefig(os.path.join(
