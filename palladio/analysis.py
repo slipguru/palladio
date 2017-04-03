@@ -8,6 +8,7 @@ import os
 from sklearn.base import is_regressor
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.utils.multiclass import type_of_target
+from six import iteritems
 
 from palladio import plotting
 from palladio.metrics import __REGRESSION_METRICS__
@@ -16,10 +17,8 @@ from palladio.metrics import __MULTICLASS_CLASSIFICATION_METRICS__
 from palladio.utils import get_selected_list
 from palladio.utils import save_signature
 
-from six import itervalues
-from six import iteritems
 
-def performance_metrics(cv_results, labels, target='regression'):
+def performance_metrics(cv_results, labels, target='regression', metric=None):
     """Evaluate metrics on the external splits results.
 
     Appropriate metrics are chosen based on the "target" parameter.
@@ -50,22 +49,30 @@ def performance_metrics(cv_results, labels, target='regression'):
 
     # Evaluate all the metrics on the results
     performance_metrics_ = {}
-    for metric in metrics_[target]:
-        # print("computing {}".format(metric.__name__))
+    for metric_ in metrics_[target]:
+        if metric is not None and metric_.__name__ != metric:
+            # restrict the analysis to 'metric'
+            continue
 
-        if metric.__name__ in ['f1_score', 'precision_score', 'recall_score']:
-            performance_metrics_[metric.__name__] = [
-                metric(*yy, pos_label=pos_label) for yy in zip(yts_true, yts_pred)]
+        if metric_.__name__ in ['f1_score', 'precision_score', 'recall_score']:
+            performance_metrics_[metric_.__name__] = [
+                metric_(*yy, pos_label=pos_label) for yy in zip(yts_true, yts_pred)]
         else:
-            performance_metrics_[metric.__name__] = [
-                metric(*yy) for yy in zip(yts_true, yts_pred)]
+            performance_metrics_[metric_.__name__] = [
+                metric_(*yy) for yy in zip(yts_true, yts_pred)]
 
+    if metric is not None and len(performance_metrics_) < 1:
+        raise ValueError(
+            "No '%s' metric found in available '%s' metrics. "
+            "Possible values are %s. Alternatively, "
+            "Try to specify another type of target. "
+            % (metric, target, [x.__name__ for x in metrics_[target]]))
     return performance_metrics_
 
 
 def analyse_results(
         regular_cv_results, permutation_cv_results, labels, estimator,
-        base_folder='', analysis_folder='analysis', feature_names=None,
+        base_folder=None, analysis_folder='analysis', feature_names=None,
         learning_task=None, vs_analysis=None,
         threshold=.75, model_assessment_options=None,
         score_surfaces_options=None):
@@ -96,8 +103,12 @@ def analyse_results(
         performance_permutation = performance_metrics(
             permutation_cv_results, labels, target='classification')
 
-    if not os.path.exists(os.path.join(base_folder, analysis_folder)):
-        os.makedirs(os.path.join(base_folder, analysis_folder))
+    if base_folder is not None and analysis_folder is not None:
+        analysis_folder = os.path.join(base_folder, analysis_folder)
+        if not os.path.exists(analysis_folder):
+            os.makedirs(analysis_folder)
+    else:
+        analysis_folder = None
 
     if model_assessment_options is None:
         model_assessment_options = {}
@@ -123,17 +134,6 @@ def analyse_results(
 
         n_splits_regular = len((regular_cv_results.values() or [[]])[0])
         n_splits_permutation = len((permutation_cv_results.values() or [[]])[0])
-
-        # try:
-        #     n_splits_regular = len(regular_cv_results['cv_results_'])
-        # except:
-        #     n_splits_regular = 0
-        #
-        # try:
-        #     n_splits_permutation = len(permutation_cv_results['cv_results_'])
-        # except:
-        #     n_splits_permutation = 0
-
         n_jobs = {'regular': n_splits_regular,
                   'permutation': n_splits_permutation}
         names_ = ('regular', 'permutation')
@@ -155,9 +155,10 @@ def analyse_results(
                     selected[batch_name][var] += 1. / n_jobs[batch_name]
 
             # Save selected variables textual summary
-            filename = os.path.join(
-                base_folder, analysis_folder, 'signature_%s.txt' % batch_name)
-            save_signature(filename, selected[batch_name], threshold)
+            if analysis_folder is not None:
+                save_signature(os.path.join(
+                    analysis_folder, 'signature_%s.txt' % batch_name),
+                    selected[batch_name], threshold)
 
         # sorted_keys_regular = sorted(
         #     selected['regular'], key=selected['regular'].__getitem__)
@@ -171,15 +172,15 @@ def analyse_results(
 
         # Save graphical summary
         plotting.feature_frequencies(
-            feat_arr_r, os.path.join(base_folder, analysis_folder),
+            feat_arr_r, analysis_folder,
             threshold=threshold)
 
         plotting.features_manhattan(
-            feat_arr_r, feat_arr_p, os.path.join(base_folder, analysis_folder),
+            feat_arr_r, feat_arr_p, analysis_folder,
             threshold=threshold)
 
         plotting.select_over_threshold(
-            feat_arr_r, feat_arr_p, os.path.join(base_folder, analysis_folder),
+            feat_arr_r, feat_arr_p, analysis_folder,
             threshold=threshold)
 
     # Generate distribution plots
@@ -187,7 +188,7 @@ def analyse_results(
         plotting.distributions(
             v_regular=performance_regular[metric],
             v_permutation=performance_permutation.get(metric, []),
-            base_folder=os.path.join(base_folder, analysis_folder),
+            base_folder=analysis_folder,
             metric=metric,
             first_run=i == 0,
             is_regression=is_regression)
@@ -200,6 +201,6 @@ def analyse_results(
         plotting.score_surfaces(
             param_grid=estimator.param_grid,
             results=regular_cv_results,
-            base_folder=os.path.join(base_folder, analysis_folder),
+            base_folder=analysis_folder,
             is_regression=is_regression,
             **score_surfaces_options)
