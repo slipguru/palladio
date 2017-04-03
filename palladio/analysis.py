@@ -60,13 +60,13 @@ def performance_metrics(cv_results, labels, target='regression'):
             performance_metrics_[metric.__name__] = [
                 metric(*yy) for yy in zip(yts_true, yts_pred)]
 
-
     return performance_metrics_
 
 
 def analyse_results(
         regular_cv_results, permutation_cv_results, labels, estimator,
-        base_folder, analysis_folder='analysis', feature_names=None, learning_task=None, vs_analysis=None,
+        base_folder='', analysis_folder='analysis', feature_names=None,
+        learning_task=None, vs_analysis=None,
         threshold=.75, model_assessment_options=None,
         score_surfaces_options=None):
     """Summary and plot generation."""
@@ -111,6 +111,8 @@ def analyse_results(
             raise ValueError(
                 "Variable selection analysis was specified, but no feature "
                 "names were provided.")
+
+        feature_names = np.array(feature_names)  # force feature names to array
         if threshold is None:
             threshold = .75
         selected = {}
@@ -119,21 +121,18 @@ def analyse_results(
                                        np.zeros(len(feature_names))))
         selected['permutation'] = selected['regular'].copy()
 
-        # n_splits_regular = len((regular_cv_results.values() or [[]])[0])
-        # n_splits_permutation = len((permutation_cv_results.values() or [[]])[0])
+        n_splits_regular = len((regular_cv_results.values() or [[]])[0])
+        n_splits_permutation = len((permutation_cv_results.values() or [[]])[0])
 
-        try:
-            n_splits_regular = len(regular_cv_results['cv_results_'])
-        except:
-            n_splits_regular = 0
-
-        try:
-            n_splits_permutation = len(permutation_cv_results['cv_results_'])
-        except:
-            n_splits_permutation = 0
-
-        # print(n_splits_regular)
-        # print(n_splits_permutation)
+        # try:
+        #     n_splits_regular = len(regular_cv_results['cv_results_'])
+        # except:
+        #     n_splits_regular = 0
+        #
+        # try:
+        #     n_splits_permutation = len(permutation_cv_results['cv_results_'])
+        # except:
+        #     n_splits_permutation = 0
 
         n_jobs = {'regular': n_splits_regular,
                   'permutation': n_splits_permutation}
@@ -160,48 +159,17 @@ def analyse_results(
                 base_folder, analysis_folder, 'signature_%s.txt' % batch_name)
             save_signature(filename, selected[batch_name], threshold)
 
-        # print(type(selected['regular']))
-
         # sorted_keys_regular = sorted(
         #     selected['regular'], key=selected['regular'].__getitem__)
 
-        # feat_arr_r = np.array(zip(*selected['regular'].items()), dtype=object).T
-        # feat_arr_p = np.array(zip(*selected['permutation'].items()), dtype=object).T
-
-        l = list()
-        for it in iteritems(selected['regular']):
-            l.append(it)
-
-        la = np.array(l, dtype=object)
-        feat_arr_r = la
-
-        l = list()
-        for it in iteritems(selected['permutation']):
-            l.append(it)
-
-        la = np.array(l, dtype=object)
-        feat_arr_p = la
-
-        # print(la.shape)
-
-        # print("Selected regular")
-        # print(selected['regular'].values())
-
-        # feat_arr_r = np.array(zip(*iteritems(selected['regular'])), dtype=object).T
-        # feat_arr_p = np.array(zip(*iteritems(selected['permutation'])), dtype=object).T
-
-        # print(feat_arr_r[:,0])
-        # print(feat_arr_p)
-
-        # feat_arr_r = np.array(zip(*selected['regular'].items()), dtype=object).T
-        # feat_arr_p = np.array(zip(*selected['permutation'].items()), dtype=object).T
+        feat_arr_r = np.array(list(iteritems(selected['regular'])), dtype=object)
+        feat_arr_p = np.array(list(iteritems(selected['permutation'])), dtype=object)
 
         # sort by name
         feat_arr_r = feat_arr_r[feat_arr_r[:, 0].argsort()]
         feat_arr_p = feat_arr_p[feat_arr_p[:, 0].argsort()]
 
-        # # Save graphical summary
-
+        # Save graphical summary
         plotting.feature_frequencies(
             feat_arr_r, os.path.join(base_folder, analysis_folder),
             threshold=threshold)
