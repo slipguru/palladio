@@ -1,17 +1,9 @@
 """Utilities functions and classes."""
-
-# Author: Salvatore Masecchia <salvatore.masecchia@disi.unige.it>,
-#         Annalisa Barla <annalisa.barla@disi.unige.it>
-# License: new BSD.
-# PALLADIO Refactoring: Samuele Fiorini
-
 import numpy as np
-
 from types import ModuleType
-
 from sklearn.datasets.base import Bunch
-
 from six import iteritems
+
 
 def save_signature(filename, selected, threshold=0.75):
     """Save signature summary."""

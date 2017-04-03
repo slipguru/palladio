@@ -8,6 +8,7 @@ import warnings
 
 from itertools import combinations, product
 from scipy import stats
+from six import iteritems
 
 matplotlib.use('Agg')  # create plots from remote
 matplotlib.rcParams['pdf.fonttype'] = 42  # avoid bitmapped fonts in pdf
@@ -22,7 +23,6 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa
 
 from palladio.colors import COLORS_HEX  # noqa
 
-from six import iteritems
 
 def _multicond(*args):
     """Util function to concatenate multiple selection conditions."""
@@ -89,9 +89,9 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
         warnings.warn(
             "Cannot create {} plot due to some nan values".format(metric))
         return
-    # scaling factor for percentage plot
 
     if is_regression:
+        # scaling factor for percentage plot
         scale = 1
         x_min = np.min(v_regular)
         x_max = np.max(v_regular)
@@ -115,12 +115,11 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
         x_max = 1.0
 
     # plt.close('all')
-
     if ax is None:
         fig, ax = plt.subplots(figsize=(18, 10))
-        single_figure = True
-    else:
-        single_figure = False
+        # single_figure = True
+    # else:
+    #     single_figure = False
 
     kwargs = {
         'norm_hist': False,
@@ -171,7 +170,7 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
 
     ax.set_xlim([x_min * scale, x_max * scale])
     ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='upper right',
-               ncol=2, mode="expand", borderaxespad=0., fontsize="large")
+              ncol=2, mode="expand", borderaxespad=0., fontsize="large")
 
     if rstest is not None:
         fig.text(0.1, 0.005,
@@ -189,8 +188,8 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
     # XXX save to txt; maybe not here?
     if base_folder is not None:
         # Only if base_folder is defined
-        stats_to_file(
-            rstest, r_mean, r_std, p_mean, p_std, metric, base_folder, first_run)
+        stats_to_file(rstest, r_mean, r_std, p_mean, p_std,
+                      metric, base_folder, first_run)
 
 
 def features_manhattan(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
@@ -249,8 +248,11 @@ def features_manhattan(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
     plt.xlabel('Features')
     plt.ylabel('Relative frequencies')
     plt.title("Feature frequencies")
-    plt.savefig(os.path.join(base_folder, 'manhattan_plot.pdf'),
-                bbox_inches='tight', dpi=300)
+    if base_folder is not None:
+        plt.savefig(os.path.join(base_folder, 'manhattan_plot.pdf'),
+                    bbox_inches='tight', dpi=300)
+    else:
+        plt.show()
 
 
 def feature_frequencies(feat_arr, base_folder, threshold=.75):
@@ -272,6 +274,9 @@ def feature_frequencies(feat_arr, base_folder, threshold=.75):
         Selection threshold of the features.
     """
     n_over_threshold = feat_arr[feat_arr[:, 1] >= threshold].shape[0]
+    if n_over_threshold < 1:
+        warnings.warn("No regular features over threshold (%.2f) were found." % threshold)
+        return
 
     # sort by frequencies
     sorted_feat_arr = feat_arr[feat_arr[:, 1].argsort()[::-1]]
@@ -279,7 +284,6 @@ def feature_frequencies(feat_arr, base_folder, threshold=.75):
     plt.close('all')
     sns.set_context('notebook')
     # plt.figure(figsize=(18, 100))
-
     ax = sns.barplot(
         x=sorted_feat_arr[:2 * n_over_threshold, 0],
         y=sorted_feat_arr[:2 * n_over_threshold, 1],
@@ -301,8 +305,11 @@ def feature_frequencies(feat_arr, base_folder, threshold=.75):
     plt.ylim([0, 1.05])
 
     plt.setp(ax.get_xticklabels(), fontsize=2, rotation='vertical')
-    plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'),
-                bbox_inches='tight', dpi=300)
+    if base_folder is not None:
+        plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'),
+                    bbox_inches='tight', dpi=300)
+    else:
+        plt.show()
 
 
 def select_over_threshold(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
@@ -345,7 +352,10 @@ def select_over_threshold(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
     plt.ylabel("Number of selected features", fontsize="large")
     plt.xlim(thresh_axis[-1] * 100, thresh_axis[0] * 100)
 
-    plt.savefig(os.path.join(base_folder, 'selected_over_threshold.pdf'))
+    if base_folder is not None:
+        plt.savefig(os.path.join(base_folder, 'selected_over_threshold.pdf'))
+    else:
+        plt.show()
 
 
 def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
@@ -380,10 +390,8 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
     if indep_var is not None:
         grid = zip(indep_var, [param_grid[x] for x in indep_var])
     else:
-        # grid = sorted(list(
-        #     param_grid.iteritems()), key=lambda item: len(item[1]))[-2:]
-        grid = sorted(list(
-            iteritems(param_grid)), key=lambda item: len(item[1]))[-2:]
+        grid = sorted(
+            list(iteritems(param_grid)), key=lambda item: len(item[1]))[-2:]
         indep_var = [name[0] for name in grid]
 
     if len(grid) < 1:
@@ -525,8 +533,8 @@ def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
         1 - scores.
     """
     if indep_var is None:
-        indep_var = sorted(list(
-            param_grid.iteritems()), key=lambda item: len(item[1]))[-1][0]
+        indep_var = sorted(
+            list(iteritems(param_grid)), key=lambda item: len(item[1]))[-1][0]
 
     if pivoting_var is None:
         pivoting_var = list(set(param_grid.keys()).difference(set([indep_var])))
