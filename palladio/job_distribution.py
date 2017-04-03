@@ -124,26 +124,30 @@ def main(config=None, config_path=None):
     # XXX these depends on regular or permutation
     ma_options.pop('shuffle_y', None)
 
-    external_estimator = ModelAssessment(internal_estimator, **ma_options)
-    external_estimator.fit(data, labels)
+    n_splits_regular = ma_options.pop('n_splits', None)
+    n_splits_regular = int(n_splits_regular) if (
+        n_splits_regular is not None) and isinstance(
+        n_splits_regular, numbers.Number) else None
 
-    ma_regular = external_estimator
+    if n_splits_regular is not None and n_splits_regular > 0:
+        ma_regular = ModelAssessment(
+            internal_estimator, n_splits=n_splits_regular, **ma_options).fit(
+                data, labels)
+    else:
+        ma_regular = None
 
     # Perform "permutation" experiments
     ma_options.pop('n_splits', None)
     n_splits_permutation = int(config.n_splits_permutation) if hasattr(
         config, 'n_splits_permutation') and isinstance(
         config.n_splits_permutation, numbers.Number) else None
-    if n_splits_permutation is not None:
-        external_estimator = ModelAssessment(
+    if n_splits_permutation is not None and n_splits_permutation > 0:
+        ma_permutation = ModelAssessment(
             internal_estimator,
             n_splits=n_splits_permutation,
             shuffle_y=True,
             **ma_options
-        )
-        external_estimator.fit(data, labels)
-
-        ma_permutation = external_estimator
+        ).fit(data, labels)
     else:
         ma_permutation = None
 
