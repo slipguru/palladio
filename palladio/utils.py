@@ -37,7 +37,8 @@ def retrieve_features(best_estimator):
     if hasattr(best_estimator, 'get_support'):
         return np.nonzero(best_estimator.get_support())[0]
     elif hasattr(best_estimator, 'coef_'):
-        if best_estimator.coef_.ndim > 1:
+        # print best_estimator.coef_
+        if best_estimator.coef_.ndim > 2:
             sel_feats = []
             for dim in range(best_estimator.coef_.ndim):
                 sel_feats += np.nonzero(
