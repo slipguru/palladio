@@ -88,21 +88,18 @@ def analyse_results(
     is_regression = learning_task.lower() in ('continuous', 'regression')
     if is_regression:
         # Perform regression analysis
-        performance_regular = performance_metrics(
-            regular_cv_results, labels, target='regression')
-        performance_permutation = {}  # for consistency only
+        target = 'regression'
     elif learning_task.lower() == 'multiclass':
-        performance_regular = performance_metrics(
-            regular_cv_results, labels, target='multiclass')
-        performance_permutation = performance_metrics(
-            permutation_cv_results, labels, target='multiclass')
+        target = 'multiclass'
     else:
         # Perform classification analysis
-        performance_regular = performance_metrics(
-            regular_cv_results, labels, target='classification')
-        performance_permutation = performance_metrics(
-            permutation_cv_results, labels, target='classification')
+        target = 'classification'
 
+    # Support for empty regular or permutation tests
+    performance_regular = performance_metrics(
+        regular_cv_results, labels, target) if len(regular_cv_results) > 0 else {}
+    performance_permutation = performance_metrics(
+        permutation_cv_results, labels, target) if len(permutation_cv_results) > 0 else {}
     if base_folder is not None and analysis_folder is not None:
         analysis_folder = os.path.join(base_folder, analysis_folder)
         if not os.path.exists(analysis_folder):

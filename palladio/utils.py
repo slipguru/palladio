@@ -67,9 +67,7 @@ def get_selected_list(grid_search, vs_analysis=True):
 
 def build_cv_results(dictionary, **results):
     """Function to build final cv_results_ dictionary with partial results."""
-    # for k, v in results.iteritems():
     for k, v in iteritems(results):
-
         if v is not None:
             dictionary.setdefault(k, []).append(v)
 
