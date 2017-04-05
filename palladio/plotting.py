@@ -22,6 +22,7 @@ from matplotlib.patches import Rectangle  # noqa
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 
 from palladio.colors import COLORS_HEX  # noqa
+from palladio.utils import safe_run
 
 
 def _multicond(*args):
@@ -50,6 +51,7 @@ def stats_to_file(rstest, r_mean, r_std, p_mean, p_std, metric, base_folder,
                     "Mean = %.3f, SD = %.3f\n" % (metric, p_mean, p_std))
 
 
+@safe_run
 def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
                   first_run=False, is_regression=False, fig=None, ax=None):
     """Create a plot of the distributions of performance metrics.
@@ -192,6 +194,7 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
                       metric, base_folder, first_run)
 
 
+@safe_run
 def features_manhattan(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
     """Plot selected features with a manhattan plot.
 
@@ -255,6 +258,7 @@ def features_manhattan(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
         plt.show()
 
 
+@safe_run
 def feature_frequencies(feat_arr, base_folder, threshold=.75):
     """Plot a bar chart of the first 2 x M features in a signature.
 
@@ -312,6 +316,7 @@ def feature_frequencies(feat_arr, base_folder, threshold=.75):
         plt.show()
 
 
+@safe_run
 def select_over_threshold(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
     """Plot the selection trend against the selection frequency threshold.
 
@@ -358,6 +363,7 @@ def select_over_threshold(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
         plt.show()
 
 
+@safe_run
 def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                    base_folder=None, logspace=None, plot_errors=False,
                    is_regression=False):
@@ -503,6 +509,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                 plt.show()
 
 
+@safe_run
 def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
                base_folder=None, logspace=None, plot_errors=False,
                is_regression=False):
