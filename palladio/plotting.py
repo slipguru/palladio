@@ -509,7 +509,6 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                 plt.show()
 
 
-@safe_run
 def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
                base_folder=None, logspace=None, plot_errors=False,
                is_regression=False):

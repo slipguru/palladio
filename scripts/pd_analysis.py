@@ -70,7 +70,7 @@ def main():
         config, 'score_surfaces_options') else {}
 
     if len(set(score_surfaces_options.keys()).difference(set([
-            'indep_vars', 'pivot_var', 'logspace', 'plot_errors']))) > 0:
+            'indep_vars', 'pivoting_var', 'logspace', 'plot_errors']))) > 0:
         raise ValueError("Attribute 'score_surfaces_options' contains "
                          "extra attributes. Values allowed are in "
                          "'indep_vars', 'pivot_var', 'logspace', 'plot_errors'")
