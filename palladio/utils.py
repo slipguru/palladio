@@ -30,7 +30,7 @@ def retrieve_features(best_estimator):
         return np.nonzero(best_estimator.get_support())[0]
     elif hasattr(best_estimator, 'coef_'):
         # print best_estimator.coef_
-        if best_estimator.coef_.ndim > 2:
+        if best_estimator.coef_.ndim > 1 and 1 not in best_estimator.coef_.shape:
             sel_feats = []
             for dim in range(best_estimator.coef_.ndim):
                 sel_feats += np.nonzero(
@@ -350,8 +350,20 @@ def sec_to_timestring(seconds):
     h, m = divmod(m, 60)
     return "%02d:%02d:%02d" % (h, m, s)
 
+
+def safe_run(function):
+    """Decorator that tries to run a function and prints an error when fails."""
+    def safe_run_function(*args, **kwargs):
+        try:
+            function(*args, **kwargs)
+        except StandardError as error:
+            print('Function {} failed: plot not '
+            'created. Exception raised: {}'.format(function.__name__, error))
+    return safe_run_function
+
+
 def objectify_config(config_module):
-    """
+    """TODO.
 
     Parameters
     ----------
@@ -359,7 +371,6 @@ def objectify_config(config_module):
     config : module
         The module corresponding to the loaded configuration file
     """
-
     # Retrieve all attributes
     attribute_list = dir(config_module)
 
