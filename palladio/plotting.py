@@ -22,7 +22,7 @@ from matplotlib.patches import Rectangle  # noqa
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 
 from palladio.colors import COLORS_HEX  # noqa
-from palladio.utils import safe_run
+from palladio.utils import safe_run  # noqa
 
 
 def _multicond(*args):

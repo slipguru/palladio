@@ -37,6 +37,9 @@ def performance_metrics(cv_results, labels, target='regression', metric=None):
     performance_metrics : dictionary
         Regression metrics evaluated on the external splits results
     """
+    if len(cv_results) < 1:
+        return {}
+
     metrics_ = dict(regression=__REGRESSION_METRICS__,
                     classification=__CLASSIFICATION_METRICS__,
                     multiclass=__MULTICLASS_CLASSIFICATION_METRICS__)
@@ -97,9 +100,9 @@ def analyse_results(
 
     # Support for empty regular or permutation tests
     performance_regular = performance_metrics(
-        regular_cv_results, labels, target) if len(regular_cv_results) > 0 else {}
+        regular_cv_results, labels, target)
     performance_permutation = performance_metrics(
-        permutation_cv_results, labels, target) if len(permutation_cv_results) > 0 else {}
+        permutation_cv_results, labels, target)
     if base_folder is not None and analysis_folder is not None:
         analysis_folder = os.path.join(base_folder, analysis_folder)
         if not os.path.exists(analysis_folder):
