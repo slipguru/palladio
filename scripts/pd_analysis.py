@@ -3,6 +3,7 @@
 """Palladio script for summaries and plot generation."""
 
 import argparse
+import gzip
 import imp
 import os
 
@@ -40,13 +41,13 @@ def load_results(base_folder):
     # Regular batch
     regular_cv_results = {}  # dictionary of results as in ModelAssessment
     for pkl_file in regular_batch:
-        row = pkl.load(open(os.path.join(experiments_folder, pkl_file), 'rb'))
+        row = pkl.load(gzip.open(os.path.join(experiments_folder, pkl_file), 'rb'))
         build_cv_results(regular_cv_results, **row)
 
     # Regular batch
     permutation_cv_results = {}  # dictionary of results as in ModelAssessment
     for pkl_file in permutation_batch:
-        row = pkl.load(open(os.path.join(experiments_folder, pkl_file), 'rb'))
+        row = pkl.load(gzip.open(os.path.join(experiments_folder, pkl_file), 'rb'))
         build_cv_results(permutation_cv_results, **row)
 
     return regular_cv_results, permutation_cv_results
@@ -58,7 +59,7 @@ def main():
     base_folder = parser.result_folder
 
     # # Load previously dumped configuration object
-    # with open(os.path.join(base_folder, 'config.py'), 'rb') as f:
+    # with gzip.open(os.path.join(base_folder, 'config.py'), 'rb') as f:
     #   config = pkl.load(f)
 
     config = imp.load_source('config', os.path.join(base_folder, 'config.py'))

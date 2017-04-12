@@ -6,6 +6,7 @@ for parallel computing.
 """
 from __future__ import print_function
 
+import gzip
 import logging
 import joblib as jl
 import numbers
@@ -117,7 +118,7 @@ def _worker(estimator_, i, X, y, train, test):
                     '_%d.pkl' % i
 
                 # TODO use gzip?
-                pkl.dump(cv_results_, open(os.path.join(
+                pkl.dump(cv_results_, gzip.open(os.path.join(
                     estimator_.experiments_folder, pkl_name), 'wb'))
 
         except StandardError as error:
