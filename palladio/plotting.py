@@ -607,3 +607,33 @@ def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
                     scoring, id_pivot, indep_var)))
         else:
             plt.show()
+
+
+def validation_curve_plot(train_scores, test_scores, estimator=None,
+                          param_name=None, param_range=None, score=None,
+                          plot_errors=False, base_folder=None):
+    train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    test_scores_std = np.std(test_scores, axis=1)
+
+    f, axarr = plt.subplots(1, 1, figsize=(10, 3))
+    plt.title("Validation Curve with %s" % (type(estimator).__name__))
+    plt.xlabel(param_name)
+    plt.ylabel("Score" + " (%s)" % score.__name__ if score is not None else "")
+    plt.ylim(0.4, 1.1)
+    lw = 2
+    plt.semilogx(param_range, train_scores_mean, label="Training score",
+                 color="darkorange", lw=lw)
+    plt.fill_between(param_range, train_scores_mean - train_scores_std,
+                     train_scores_mean + train_scores_std, alpha=0.2,
+                     color="darkorange", lw=lw)
+    plt.semilogx(param_range, test_scores_mean, label="Cross-validation score",
+                 color="navy", lw=lw)
+    plt.fill_between(param_range, test_scores_mean - test_scores_std,
+                     test_scores_mean + test_scores_std, alpha=0.2,
+                     color="navy", lw=lw)
+    plt.legend(loc="best")
+    if base_folder is None:
+        plt.show()
+    return f
