@@ -24,7 +24,7 @@ try:
     IS_MPI_JOB = COMM.Get_size() > 1
 
 except ImportError:
-    print("mpi4py module not found. PALLADIO cannot run on multiple machines.")
+    # print("mpi4py module not found. PALLADIO cannot run on multiple machines.")
     COMM = None
     RANK = 0
     NAME = 'localhost'
