@@ -5,6 +5,8 @@ import argparse
 import os
 import palladio as pd
 
+from palladio.session import load_from_config
+
 
 def init_main():
     """Start palladio run."""
@@ -36,7 +38,14 @@ def init_main():
         from shutil import copy
         copy(std_config_path, args.configuration_file)
     else:
-        pd.main(config_path=os.path.abspath(args.configuration_file))
+
+        pd_session_object = load_from_config(
+            os.path.abspath(args.configuration_file)
+            )
+
+        # pd.main(config_path=os.path.abspath(args.configuration_file))
+
+        pd.main(pd_session_object)
 
 
 if __name__ == '__main__':
