@@ -31,8 +31,8 @@ class Session(object):
             score_surfaces_options=None,
             feature_names=None,
             session_folder=None,
-            config_path=None
-
+            config_path=None,
+            analysis_folder='analysis'
         ):
 
         # Input data and labels
@@ -73,6 +73,8 @@ class Session(object):
         # The path of the configuration file itself, if needed
         self._config_path = config_path
 
+        self._analysis_folder = analysis_folder
+
 
 def load_from_config(config_path):
     """
@@ -82,6 +84,9 @@ def load_from_config(config_path):
     imp.acquire_lock()
     config = imp.load_source('config', config_path)
     imp.release_lock()
+
+    analysis_folder = config.analysis_folder if hasattr(
+        config, 'analysis_folder') else 'analysis'
 
     return Session(
         config.data,
@@ -97,5 +102,6 @@ def load_from_config(config_path):
         score_surfaces_options=config.score_surfaces_options,
         feature_names=config.feature_names,
         session_folder=config.session_folder,
-        config_path=config_path
+        config_path=config_path,
+        analysis_folder=analysis_folder
     )
