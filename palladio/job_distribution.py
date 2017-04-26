@@ -37,7 +37,7 @@ DO_WORK = 100
 EXIT = 200
 
 
-def main(pd_session_object):
+def main(pd_session_object, base_folder):
     """Main function.
 
     The main function, performs initial tasks such as creating the main session
@@ -86,7 +86,11 @@ def main(pd_session_object):
 
 
     # TODO use properties to access attributes
-    session_folder = pd_session_object._session_folder
+    session_folder = os.path.join(
+        base_folder,
+        pd_session_object._session_folder
+    )
+    # session_folder = pd_session_object._session_folder
 
     experiments_folder_path = os.path.join(session_folder, 'experiments')
 

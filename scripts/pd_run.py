@@ -45,7 +45,7 @@ def init_main():
 
         # pd.main(config_path=os.path.abspath(args.configuration_file))
 
-        pd.main(pd_session_object)
+        pd.main(pd_session_object, os.path.dirname(args.configuration_file))
 
 
 if __name__ == '__main__':
