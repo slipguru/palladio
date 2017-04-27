@@ -1,7 +1,6 @@
 """Utilities functions and classes."""
 import numpy as np
 from types import ModuleType
-from sklearn.datasets.base import Bunch
 from six import iteritems
 
 
@@ -360,29 +359,3 @@ def safe_run(function):
             print('Function {} failed: plot not '
             'created. Exception raised: {}'.format(function.__name__, error))
     return safe_run_function
-
-
-def objectify_config(config_module):
-    """TODO.
-
-    Parameters
-    ----------
-
-    config : module
-        The module corresponding to the loaded configuration file
-    """
-    # Retrieve all attributes
-    attribute_list = dir(config_module)
-
-    config_dict = dict()
-
-    for a in attribute_list:
-
-        # Don't include imported modules
-
-        attr = config_module.__dict__[a]
-
-        if not isinstance(attr, ModuleType):
-            config_dict[a] = attr
-
-    return Bunch(**config_dict)
