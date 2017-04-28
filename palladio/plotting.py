@@ -611,14 +611,16 @@ def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
 
 def validation_curve_plot(train_scores, test_scores, estimator=None,
                           param_name=None, param_range=None, score=None,
-                          plot_errors=False, base_folder=None):
+                          plot_errors=False, base_folder=None,
+                          title_footer=''):
     train_scores_mean = np.mean(train_scores, axis=1)
     train_scores_std = np.std(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)
     test_scores_std = np.std(test_scores, axis=1)
 
     f, axarr = plt.subplots(1, 1, figsize=(10, 3))
-    plt.title("Validation Curve with %s" % (type(estimator).__name__))
+    plt.title(
+        "Validation Curve with %s" % (type(estimator).__name__) + title_footer)
     plt.xlabel(param_name)
     plt.ylabel("Score" + " (%s)" % score.__name__ if score is not None else "")
     plt.ylim(0.4, 1.1)
