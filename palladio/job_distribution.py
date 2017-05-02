@@ -128,13 +128,8 @@ def main(pd_session_object, base_folder):
 
         # Dump session object
         with gzip.open(
-                os.path.join(
-                    session_folder,
-                    'pd_session.pkl.gz'
-                ), 'w'
-            ) as f:
+                os.path.join(session_folder, 'pd_session.pkl.gz'), 'w') as f:
             pkl.dump(pd_session_object, f)
-
 
     if IS_MPI_JOB:
         # Wait for the folder to be created and files to be copied

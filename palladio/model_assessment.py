@@ -117,7 +117,6 @@ def _worker(estimator_, i, X, y, train, test):
                     'permutation' if estimator_.shuffle_y else 'regular') + \
                     '_%d.pkl' % i
 
-                # TODO use gzip?
                 pkl.dump(cv_results_, gzip.open(os.path.join(
                     estimator_.experiments_folder, pkl_name), 'wb'))
 
@@ -429,7 +428,6 @@ class ModelAssessment(BaseEstimator):
 
         except StandardError as exc:
             warnings.warn("Quitting ... TB:", str(exc))
-
 
     def fit(self, X, y):
         """Fit the model to the training data."""
