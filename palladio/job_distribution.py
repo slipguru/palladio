@@ -36,6 +36,18 @@ MAX_RESUBMISSIONS = 2
 DO_WORK = 100
 EXIT = 200
 
+def busy_wait(f):
+    """
+    Wait for the creation of a folder/file
+
+    Workaround for distributed architectures
+    """
+
+    while True:
+        if os.path.exists(f):
+            break
+        else:
+            time.sleep(1)
 
 def main(pd_session_object, base_folder):
     """Main function.
@@ -130,6 +142,12 @@ def main(pd_session_object, base_folder):
         with gzip.open(
                 os.path.join(session_folder, 'pd_session.pkl.gz'), 'w') as f:
             pkl.dump(pd_session_object, f)
+
+    # Busy wait for folder creation
+    # Workaround to cope with filesystem consistency issues on
+    # distributed architectures
+    busy_wait(session_folder)
+    busy_wait(experiments_folder_path)
 
     if IS_MPI_JOB:
         # Wait for the folder to be created and files to be copied
