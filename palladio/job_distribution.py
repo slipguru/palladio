@@ -6,6 +6,7 @@ import numbers
 import shutil
 import time
 import gzip
+import logging
 
 try:
     import cPickle as pkl
@@ -62,6 +63,7 @@ def main(pd_session_object, base_folder):
         A `palladio.session.Session` object, containing all information
         required to run a **PALLADIO** session
     """
+
     if RANK == 0:
         t0 = time.time()
 
@@ -105,21 +107,21 @@ def main(pd_session_object, base_folder):
     # session_folder = pd_session_object._session_folder
 
     experiments_folder_path = os.path.join(session_folder, 'experiments')
+    logs_folder_path = os.path.join(session_folder, 'logs')
 
     # Create base session folder
     # Also copy dataset files inside it
     if RANK == 0:
-        # Create main session folder
-        if os.path.exists(session_folder):  # TODO: why [:-1]?
-            # shutil.move(session_folder, session_folder[:-1] + '_old')
-            # raise Exception("Session folder {} already exists, aborting."
-            #                 .format(session_folder))
-            pass
 
+        # Create main session folder
         os.mkdir(session_folder)
+
         # Create experiments folder (where all experiments sub-folders will
         # be created)
         os.mkdir(experiments_folder_path)
+
+        # Create folder which will contain all logs
+        os.mkdir(logs_folder_path)
 
         # TODO use properties to access attributes
         # If a config file was provided, make a copy in the session folder
@@ -149,6 +151,43 @@ def main(pd_session_object, base_folder):
     busy_wait(session_folder)
     busy_wait(experiments_folder_path)
 
+    # ### Initialize logging object
+    # It will log stuff on the same file for all processes
+    # And an individual copy
+
+    # Create the main logging object
+    logger = logging.getLogger('main')
+    logger.setLevel(logging.DEBUG)
+
+    # create console handler with INFO log level
+    # DEBUG level messages won't be shown here
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+
+
+    # create file handler which logs even debug messages
+    # This logger writes on a shared file
+
+    fh_shared = logging.FileHandler(os.path.join(logs_folder_path, 'pd_session.log'))
+    fh_shared.setLevel(logging.DEBUG)
+
+    # A handler for each individual process
+    fh_single = logging.FileHandler(os.path.join(logs_folder_path, 'worker_{}{}.log'.format(NAME, RANK)))
+    fh_single.setLevel(logging.DEBUG)
+
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    fh_shared.setFormatter(formatter)
+    fh_single.setFormatter(formatter)
+
+    # add the handlers to the logger
+    logger.addHandler(ch)
+    logger.addHandler(fh_shared)
+    logger.addHandler(fh_single)
+
+    logger.debug('Logger initialization completed')
+
     if IS_MPI_JOB:
         # Wait for the folder to be created and files to be copied
         COMM.barrier()
@@ -173,13 +212,14 @@ def main(pd_session_object, base_folder):
 
     n_splits_regular = pd_session_object._n_splits_regular
 
+
+
     if n_splits_regular is not None and n_splits_regular > 0:
-        # ma_regular = ModelAssessment(
-        #     internal_estimator, n_splits=n_splits_regular, **ma_options).fit(
-        #         data, labels)
+        logger.info('Performing regular experiments')
         ma_regular = ModelAssessment(
             internal_estimator, **ma_options).fit(
                 data, labels)
+        logger.info('Regular experiments completed')
     else:
         ma_regular = None
 
@@ -193,12 +233,14 @@ def main(pd_session_object, base_folder):
     n_splits_permutation = pd_session_object._n_splits_permutation
 
     if n_splits_permutation is not None and n_splits_permutation > 0:
+        logger.info('Performing permutation experiments')
         ma_permutation = ModelAssessment(
             internal_estimator,
             n_splits=n_splits_permutation,
             shuffle_y=True,
             **ma_options
         ).fit(data, labels)
+        logger.info('Permutation experiments completed')
     else:
         ma_permutation = None
 
