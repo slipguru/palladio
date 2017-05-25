@@ -31,8 +31,6 @@ from palladio.utils import build_cv_results as _build_cv_results
 
 __all__ = ('ModelAssessment',)
 
-LOG = logging.getLogger(__package__)
-
 try:
     from mpi4py import MPI
     COMM = MPI.COMM_WORLD
@@ -58,11 +56,21 @@ def _worker(estimator_, i, X, y, train, test):
     # custom_name = "{}_p_{}_i_{}".format(
     #     ("permutation" if is_permutation_test else "regular"), RANK, i)
     # tmp_name_base = 'tmp_' + custom_name
+
+    logger = logging.getLogger('main')
+
     experiment_resubmissions = 0
     experiment_completed = False
+
+    logger.info("{}{} executing job {}".format(NAME, RANK, i))
+
     while not experiment_completed and \
             experiment_resubmissions <= MAX_RESUBMISSIONS:
         try:
+
+            if experiment_resubmissions > 0:
+                logger.warning("{}{} resubmitting experiment {}".format(NAME, RANK, i))
+
             # tmp_name = tmp_name_base + '_submission_{}'.format(
             #     experiment_resubmissions + 1)
             # run_experiment(data, labels, None, config,
@@ -82,14 +90,17 @@ def _worker(estimator_, i, X, y, train, test):
             if estimator_.shuffle_y:
                 random_state = check_random_state(estimator_.random_state)
                 y_train = _shuffle(y_train, estimator_.groups, random_state)
-            estimator.fit(X_train, y_train)
 
+            logger.info("{}{} fitting experiment {} - starting".format(NAME, RANK, i))
+            estimator.fit(X_train, y_train)
+            logger.info("{}{} fitting experiment {} - completed".format(NAME, RANK, i))
+
+            logger.debug("{}{} scoring experiment {} - starting".format(NAME, RANK, i))
             yts_pred = estimator.predict(X_test)
             ytr_pred = estimator.predict(X_train)
             lr_score = estimator_.scorer_(estimator, X_train, y_train)
             ts_score = estimator_.scorer_(estimator, X_test, y_test)
-            # lr_score = estimator.score(Xtr, ytr)
-            # ts_score = estimator.score(Xts, yts)
+            logger.debug("{}{} scoring experiment {} - complete".format(NAME, RANK, i))
 
             if hasattr(estimator, 'cv_results_'):
                 # In case in which the estimator is a CV object
@@ -113,6 +124,7 @@ def _worker(estimator_, i, X, y, train, test):
 
             # ### Dump partial results
             if estimator_.experiments_folder is not None:
+                logger.debug("{}{} saving results for experiment {}".format(NAME, RANK, i))
                 pkl_name = (
                     'permutation' if estimator_.shuffle_y else 'regular') + \
                     '_%d.pkl' % i
@@ -136,6 +148,9 @@ def _worker(estimator_, i, X, y, train, test):
         return {}
     else:
         if not IS_MPI_JOB and estimator_.verbose:
+
+            logger.info("{}{} job {} completed".format(NAME, RANK, i))
+
             print("Experiment {} completed [{}]".format(
                 i, ('permutation' if estimator_.shuffle_y else 'regular')))
 
