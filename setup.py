@@ -44,5 +44,5 @@ setup(
               'joblib',
               # 'mpi4py (>=2.0.0)'
               ],
-    scripts=['scripts/pd_run.py','scripts/pd_analysis.py'],
+    scripts=['scripts/pd_run.py','scripts/pd_analysis.py','scripts/pd_merge_sessions.py'],
 )
