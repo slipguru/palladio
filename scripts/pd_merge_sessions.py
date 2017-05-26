@@ -8,17 +8,7 @@ import gzip
 import os
 import shutil
 
-#
 from six.moves import cPickle as pkl
-# from six.moves import filter
-#
-# from palladio.analysis import analyse_results
-# from palladio.utils import build_cv_results
-# from palladio.utils import set_module_defaults
-
-
-
-
 
 def main():
     """Summary and plot generation."""
@@ -136,52 +126,14 @@ def main():
             else:
                 out_cfg.write(line)
 
-
-
-
-
-
-
-
-
-
-
-    # base_folder = parser.result_folder
-    #
-    # # # Load previously dumped configuration object
-    # # with gzip.open(os.path.join(base_folder, 'config.py'), 'rb') as f:
-    # #   config = pkl.load(f)
-    #
-    # # config = imp.load_source('config', os.path.join(base_folder, 'config.py'))
-    #
-    # with gzip.open(os.path.join(base_folder, 'pd_session.pkl.gz'), 'r') as f:
-    #     pd_session_object = pkl.load(f)
-    #
-    #
-    #
-    # # Load results from pkl
-    # regular_cv_results, permutation_cv_results = load_results(base_folder)
-    #
-    # # score_surfaces_options = config.score_surfaces_options if hasattr(
-    # #     config, 'score_surfaces_options') else {}
-    #
-    # # TODO use attributes
-    # score_surfaces_options = pd_session_object._score_surfaces_options
-    #
-    # if len(set(score_surfaces_options.keys()).difference(set([
-    #         'indep_vars', 'pivoting_var', 'logspace', 'plot_errors']))) > 0:
-    #     raise ValueError("Attribute 'score_surfaces_options' contains "
-    #                      "extra attributes. Values allowed are in "
-    #                      "'indep_vars', 'pivot_var', 'logspace', 'plot_errors'")
-
-
 def parse_args():
     """Parse arguments."""
     from palladio import __version__
     parser = argparse.ArgumentParser(
         description='palladio script for merging two sessions.')
 
-    parser.add_argument('session_folders', metavar=('SESSION1_FOLDER', 'SESSION2_FOLDER'), type=str, nargs=2, help='The two session folders')
+    parser.add_argument('session_folders', metavar='SESSION_FOLDER', type=str, nargs='+', help='The session folders')
+
     parser.add_argument('merge_folder', metavar='MERGE_FOLDER', type=str, nargs=1, help='The destination folder where the sessions will be merged')
 
     return parser.parse_args()
