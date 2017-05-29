@@ -236,6 +236,6 @@ See :ref:`analysis` for further details on the output of the analysis.
 
 .. https://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test
 
-.. rubric:: Footnotes
+.. .. rubric:: Footnotes
 
-.. [#f1] A standalone version of the ``L1L2Py`` library is included in the package in order to further speed up the deployment process.
+.. .. [#f1] A standalone version of the ``L1L2Py`` library is included in the package in order to further speed up the deployment process.
