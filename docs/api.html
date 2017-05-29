@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>API &#8212; PALLADIO 2.0 documentation</title>
+    <title>API &#8212; PALLADIO 2.0.3rc1 documentation</title>
     
     <link rel="stylesheet" href="_static/slipGuru.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '2.0',
+        VERSION:     '2.0.3rc1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Quick start tutorial" href="tutorial.html" />
@@ -56,7 +56,7 @@
         <li class="right" >
           <a href="tutorial.html" title="Quick start tutorial"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 2.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 2.0.3rc1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -69,12 +69,191 @@
 <span id="id1"></span><h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
-<div class="section" id="pipeline-utilities">
-<h2>Pipeline utilities<a class="headerlink" href="#pipeline-utilities" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-palladio.model_assessment">
+<span id="pipeline-utilities"></span><h2>Pipeline utilities<a class="headerlink" href="#module-palladio.model_assessment" title="Permalink to this headline">¶</a></h2>
+<p>Nested Cross-Validation for scikit-learn using MPI.</p>
+<p>This package provides nested cross-validation similar to scikit-learn&#8217;s
+GridSearchCV but uses the Message Passing Interface (MPI)
+for parallel computing.</p>
+<dl class="class">
+<dt id="palladio.model_assessment.ModelAssessment">
+<em class="property">class </em><code class="descclassname">palladio.model_assessment.</code><code class="descname">ModelAssessment</code><span class="sig-paren">(</span><em>estimator</em>, <em>cv=None</em>, <em>scoring=None</em>, <em>fit_params=None</em>, <em>multi_output=False</em>, <em>shuffle_y=False</em>, <em>n_jobs=1</em>, <em>n_splits=10</em>, <em>test_size=0.1</em>, <em>train_size=None</em>, <em>random_state=None</em>, <em>groups=None</em>, <em>experiments_folder=None</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/model_assessment.html#ModelAssessment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.model_assessment.ModelAssessment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cross-validation with nested parameter search for each training fold.</p>
+<p>The data is first split into <code class="docutils literal"><span class="pre">cv</span></code> train and test sets. For each training
+set a grid search over the specified set of parameters is performed
+(inner cross-validation). The set of parameters that achieved the highest
+average score across all inner folds is used to re-fit a model on the
+entire training set of the outer cross-validation loop. Finally, results on
+the test set of the outer loop are reported.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>estimator</strong> : object type that implements the &#8220;fit&#8221; and &#8220;predict&#8221; methods</p>
+<blockquote>
+<div><p>A object of that type is instantiated for each grid point.</p>
+</div></blockquote>
+<p><strong>cv</strong> : integer or cross-validation generator, optional, default: 3</p>
+<blockquote>
+<div><p>If an integer is passed, it is the number of folds.
+Specific cross-validation objects can be passed, see
+sklearn.cross_validation module for the list of possible objects</p>
+</div></blockquote>
+<p><strong>scoring</strong> : string, callable or None, optional, default: None</p>
+<blockquote>
+<div><p>A string (see model evaluation documentation) or
+a scorer callable object / function with signature
+<code class="docutils literal"><span class="pre">scorer(estimator,</span> <span class="pre">X,</span> <span class="pre">y)</span></code>.
+See sklearn.metrics.get_scorer for details.</p>
+</div></blockquote>
+<p><strong>fit_params</strong> : dict, optional, default: None</p>
+<blockquote>
+<div><p>Parameters to pass to the fit method.</p>
+</div></blockquote>
+<p><strong>multi_output</strong> : boolean, default: False</p>
+<blockquote>
+<div><p>Allow multi-output y, as for multivariate regression.</p>
+</div></blockquote>
+<p><strong>shuffle_y</strong> : bool, optional, default=False</p>
+<blockquote>
+<div><p>When True, the object is used to perform permutation test.</p>
+</div></blockquote>
+<p><strong>n_jobs</strong> : int, optional, default: 1</p>
+<blockquote>
+<div><blockquote>
+<div><p>The number of jobs to use for the computation. This works by computing
+each of the Monte Carlo runs in parallel.
+If -1 all CPUs are used. If 1 is given, no parallel computing code is
+used at all, which is useful for debugging. Ignored when using MPI.</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>n_splits: int, optional, default: 10</dt>
+<dd><p class="first last">The number of cross-validation splits (folds/iterations).</p>
+</dd>
+</dl>
+</div></blockquote>
+<p><strong>test_size</strong> : float (default 0.1), int, or None</p>
+<blockquote>
+<div><p>If float, should be between 0.0 and 1.0 and represent the
+proportion of the dataset to include in the test split. If
+int, represents the absolute number of test samples. If None,
+the value is automatically set to the complement of the train size.</p>
+</div></blockquote>
+<p><strong>train_size</strong> : float, int, or None (default is None)</p>
+<blockquote>
+<div><blockquote>
+<div><p>If float, should be between 0.0 and 1.0 and represent the
+proportion of the dataset to include in the train split. If
+int, represents the absolute number of train samples. If None,
+the value is automatically set to the complement of the test size.</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>random_state <span class="classifier-delimiter">:</span> <span class="classifier">int or RandomState, optional, default: None</span></dt>
+<dd><p class="first last">Pseudo-random number generator state used for random sampling.</p>
+</dd>
+<dt>groups <span class="classifier-delimiter">:</span> <span class="classifier">array-like, with shape (n_samples,), optional, default: None</span></dt>
+<dd><p class="first last">Group labels for the samples used while splitting the dataset into
+train/test set.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p><strong>experiments_folder</strong> : string, optional, default: None</p>
+<blockquote>
+<div><p>The path to the folder used to save the results.</p>
+</div></blockquote>
+<p><strong>verbose</strong> : bool, optional, default: False</p>
+<blockquote class="last">
+<div><p>Print debug messages.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="12%" />
+<col width="11%" />
+<col width="77%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a href="#id2"><span class="problematic" id="id3">scorer_</span></a></td>
+<td>function</td>
+<td>Scorer function used on the held out data to choose the best
+parameters for the model.</td>
+</tr>
+<tr class="row-even"><td><a href="#id4"><span class="problematic" id="id5">cv_results_</span></a></td>
+<td>dictionary</td>
+<td><p class="first">Result of the fit. The dictionary is pandas.DataFrame-able. Each row is
+the results of an external split.
+Columns are:
+&#8216;split_i&#8217;, &#8216;learn_score&#8217;, &#8216;test_score&#8217;, &#8216;<a href="#id6"><span class="problematic" id="id7">cv_results_</span></a>&#8216;, &#8216;ytr_pred&#8217;,
+&#8216;yts_pred&#8217;, &#8216;test_index&#8217;, &#8216;train_index&#8217;, &#8216;estimator&#8217;</p>
+<p>Example:
+&gt;&gt;&gt; pd.DataFrame(<a href="#id8"><span class="problematic" id="id9">cv_results_</span></a>)
+split_i | learn_score | test_score | <a href="#id10"><span class="problematic" id="id11">cv_results_</span></a>         | ...</p>
+<blockquote class="last">
+<div>0 |       0.987 |      0.876 | {&lt;internal splits&gt;} | ...
+1 |       0.846 |      0.739 | {&lt;internal splits&gt;} | ...
+2 |       0.956 |      0.630 | {&lt;internal splits&gt;} | ...
+3 |       0.964 |      0.835 | {&lt;internal splits&gt;} | ...</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="palladio.model_assessment.ModelAssessment.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/model_assessment.html#ModelAssessment.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.model_assessment.ModelAssessment.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the model to the training data.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="module-palladio.utils">
 <span id="extra-tools"></span><h2>Extra tools<a class="headerlink" href="#module-palladio.utils" title="Permalink to this headline">¶</a></h2>
 <p>Utilities functions and classes.</p>
+<dl class="function">
+<dt id="palladio.utils.save_signature">
+<code class="descclassname">palladio.utils.</code><code class="descname">save_signature</code><span class="sig-paren">(</span><em>filename</em>, <em>selected</em>, <em>threshold=0.75</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#save_signature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.save_signature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save signature summary.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="palladio.utils.retrieve_features">
+<code class="descclassname">palladio.utils.</code><code class="descname">retrieve_features</code><span class="sig-paren">(</span><em>best_estimator</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#retrieve_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.retrieve_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve selected features from any estimator.</p>
+<p>In case it has the &#8216;get_support&#8217; method, use it.
+Else, if it has a &#8216;<a href="#id12"><span class="problematic" id="id13">coef_</span></a>&#8216; attribute, assume it&#8217;s a linear model and the
+features correspond to the indices of the coefficients != 0</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="palladio.utils.get_selected_list">
+<code class="descclassname">palladio.utils.</code><code class="descname">get_selected_list</code><span class="sig-paren">(</span><em>grid_search</em>, <em>vs_analysis=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#get_selected_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.get_selected_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the list of selected features.</p>
+<p>Retrieves the list of selected features automatically identifying the
+type of object</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>index</strong> : nunmpy.array</p>
+<blockquote class="last">
+<div><p>The indices of the selected features</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="palladio.utils.build_cv_results">
+<code class="descclassname">palladio.utils.</code><code class="descname">build_cv_results</code><span class="sig-paren">(</span><em>dictionary</em>, <em>**results</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#build_cv_results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.build_cv_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to build final <a href="#id14"><span class="problematic" id="id15">cv_results_</span></a> dictionary with partial results.</p>
+</dd></dl>
+
 <dl class="function">
 <dt id="palladio.utils.signatures">
 <code class="descclassname">palladio.utils.</code><code class="descname">signatures</code><span class="sig-paren">(</span><em>splits_results</em>, <em>frequency_threshold=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#signatures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.signatures" title="Permalink to this definition">¶</a></dt>
@@ -283,6 +462,12 @@ dictionary with the following structure:</p>
 </table>
 </dd></dl>
 
+<dl class="function">
+<dt id="palladio.utils.safe_run">
+<code class="descclassname">palladio.utils.</code><code class="descname">safe_run</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/utils.html#safe_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.utils.safe_run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator that tries to run a function and prints an error when fails.</p>
+</dd></dl>
+
 </div>
 </div>
 
@@ -300,7 +485,7 @@ dictionary with the following structure:</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">API</a><ul>
-<li><a class="reference internal" href="#pipeline-utilities">Pipeline utilities</a></li>
+<li><a class="reference internal" href="#module-palladio.model_assessment">Pipeline utilities</a></li>
 <li><a class="reference internal" href="#module-palladio.utils">Extra tools</a></li>
 </ul>
 </li>
@@ -353,12 +538,12 @@ dictionary with the following structure:</p>
         <li class="right" >
           <a href="tutorial.html" title="Quick start tutorial"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 2.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">PALLADIO 2.0.3rc1 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
     </div>
   </body>
 </html>

@@ -1,0 +1,42 @@
+\begin{sphinxtheindex}
+\def\bigletter#1{{\Large\sffamily#1}\nopagebreak\vspace{1mm}}
+
+  \bigletter B
+  \item build\_cv\_results() (in module palladio.utils), \hyperpage{14}
+
+  \indexspace
+  \bigletter C
+  \item classification\_measures() (in module palladio.utils), \hyperpage{15}
+  \item confusion\_matrix() (in module palladio.utils), \hyperpage{14}
+
+  \indexspace
+  \bigletter F
+  \item fit() (palladio.model\_assessment.ModelAssessment method), \hyperpage{13}
+
+  \indexspace
+  \bigletter G
+  \item get\_selected\_list() (in module palladio.utils), \hyperpage{13}
+
+  \indexspace
+  \bigletter M
+  \item ModelAssessment (class in palladio.model\_assessment), \hyperpage{11}
+
+  \indexspace
+  \bigletter P
+  \item palladio.model\_assessment (module), \hyperpage{11}
+  \item palladio.utils (module), \hyperpage{13}
+
+  \indexspace
+  \bigletter R
+  \item retrieve\_features() (in module palladio.utils), \hyperpage{13}
+
+  \indexspace
+  \bigletter S
+  \item safe\_run() (in module palladio.utils), \hyperpage{16}
+  \item save\_signature() (in module palladio.utils), \hyperpage{13}
+  \item sec\_to\_timestring() (in module palladio.utils), \hyperpage{16}
+  \item selection\_summary() (in module palladio.utils), \hyperpage{14}
+  \item set\_module\_defaults() (in module palladio.utils), \hyperpage{16}
+  \item signatures() (in module palladio.utils), \hyperpage{14}
+
+\end{sphinxtheindex}

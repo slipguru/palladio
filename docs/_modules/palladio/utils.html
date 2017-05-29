@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>palladio.utils &#8212; PALLADIO 2.0 documentation</title>
+    <title>palladio.utils &#8212; PALLADIO 2.0.3rc1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/slipGuru.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '2.0',
+        VERSION:     '2.0.3rc1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
 <meta name="keywords"
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">PALLADIO 2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">PALLADIO 2.0.3rc1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -64,13 +64,76 @@
             
   <h1>Source code for palladio.utils</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Utilities functions and classes.&quot;&quot;&quot;</span>
-
-<span class="c1"># Author: Salvatore Masecchia &lt;salvatore.masecchia@disi.unige.it&gt;,</span>
-<span class="c1">#         Annalisa Barla &lt;annalisa.barla@disi.unige.it&gt;</span>
-<span class="c1"># License: new BSD.</span>
-<span class="c1"># PALLADIO Refactoring: Samuele Fiorini</span>
-
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="k">import</span> <span class="n">ModuleType</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span>
+
+
+<div class="viewcode-block" id="save_signature"><a class="viewcode-back" href="../../api.html#palladio.utils.save_signature">[docs]</a><span class="k">def</span> <span class="nf">save_signature</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.75</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Save signature summary.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">line_drawn</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span>
+                <span class="n">selected</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">selected</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">line_drawn</span> <span class="ow">and</span> <span class="nb">float</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">:</span>
+                <span class="n">line_drawn</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> : </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">selected</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="mf">100.</span><span class="p">))</span></div>
+            <span class="c1"># f.write(&quot;{}\n&quot;.format(k))</span>
+
+
+<div class="viewcode-block" id="retrieve_features"><a class="viewcode-back" href="../../api.html#palladio.utils.retrieve_features">[docs]</a><span class="k">def</span> <span class="nf">retrieve_features</span><span class="p">(</span><span class="n">best_estimator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieve selected features from any estimator.</span>
+
+<span class="sd">    In case it has the &#39;get_support&#39; method, use it.</span>
+<span class="sd">    Else, if it has a &#39;coef_&#39; attribute, assume it&#39;s a linear model and the</span>
+<span class="sd">    features correspond to the indices of the coefficients != 0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">best_estimator</span><span class="p">,</span> <span class="s1">&#39;get_support&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">best_estimator</span><span class="o">.</span><span class="n">get_support</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">best_estimator</span><span class="p">,</span> <span class="s1">&#39;coef_&#39;</span><span class="p">):</span>
+        <span class="c1"># print best_estimator.coef_</span>
+        <span class="k">if</span> <span class="n">best_estimator</span><span class="o">.</span><span class="n">coef_</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="mi">1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">best_estimator</span><span class="o">.</span><span class="n">coef_</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="n">sel_feats</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">best_estimator</span><span class="o">.</span><span class="n">coef_</span><span class="o">.</span><span class="n">ndim</span><span class="p">):</span>
+                <span class="n">sel_feats</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span>
+                    <span class="n">best_estimator</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="n">dim</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">sel_feats</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">best_estimator</span><span class="o">.</span><span class="n">coef_</span><span class="o">.</span><span class="n">flatten</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Raise an error</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s1">&#39;The best_estimator object does not have &#39;</span>
+                             <span class="s1">&#39;neither the `coef_` attribute nor the &#39;</span>
+                             <span class="s1">&#39;`get_support` method&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_selected_list"><a class="viewcode-back" href="../../api.html#palladio.utils.get_selected_list">[docs]</a><span class="k">def</span> <span class="nf">get_selected_list</span><span class="p">(</span><span class="n">grid_search</span><span class="p">,</span> <span class="n">vs_analysis</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieve the list of selected features.</span>
+
+<span class="sd">    Retrieves the list of selected features automatically identifying the</span>
+<span class="sd">    type of object</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    index : nunmpy.array</span>
+<span class="sd">        The indices of the selected features</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># First, check whether it&#39;s a string, which means the list of features</span>
+    <span class="c1"># must be taken from a step of a Pipeline object</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">vs_analysis</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">selected_features</span> <span class="o">=</span> <span class="n">retrieve_features</span><span class="p">(</span>
+            <span class="n">grid_search</span><span class="o">.</span><span class="n">best_estimator_</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="n">vs_analysis</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">selected_features</span> <span class="o">=</span> <span class="n">retrieve_features</span><span class="p">(</span><span class="n">grid_search</span><span class="o">.</span><span class="n">best_estimator_</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">selected_features</span></div>
+
+
+<div class="viewcode-block" id="build_cv_results"><a class="viewcode-back" href="../../api.html#palladio.utils.build_cv_results">[docs]</a><span class="k">def</span> <span class="nf">build_cv_results</span><span class="p">(</span><span class="n">dictionary</span><span class="p">,</span> <span class="o">**</span><span class="n">results</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Function to build final cv_results_ dictionary with partial results.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dictionary</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="signatures"><a class="viewcode-back" href="../../api.html#palladio.utils.signatures">[docs]</a><span class="k">def</span> <span class="nf">signatures</span><span class="p">(</span><span class="n">splits_results</span><span class="p">,</span> <span class="n">frequency_threshold</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
@@ -190,7 +253,7 @@
     <span class="n">pred_unique_labels</span><span class="p">,</span> <span class="n">pred_C1</span><span class="p">,</span> <span class="n">pred_C2</span> <span class="o">=</span> <span class="n">_check_unique_labels</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">real_unique_labels</span> <span class="o">==</span> <span class="n">pred_unique_labels</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">PDException</span><span class="p">(</span><span class="s1">&#39;real and predicted labels differ.&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;real and predicted labels differ.&#39;</span><span class="p">)</span>
 
     <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">][</span><span class="n">real_unique_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">real_C1</span> <span class="o">&amp;</span> <span class="n">pred_C1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>  <span class="c1"># True C1</span>
     <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">][</span><span class="n">real_unique_labels</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">real_C2</span> <span class="o">&amp;</span> <span class="n">pred_C2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>  <span class="c1"># True C2</span>
@@ -263,7 +326,7 @@
     <span class="k">if</span> <span class="n">positive_label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">P</span> <span class="o">=</span> <span class="n">positive_label</span>
         <span class="k">if</span> <span class="n">P</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">PDException</span><span class="p">(</span><span class="s1">&#39;label </span><span class="si">%s</span><span class="s1"> not found.&#39;</span> <span class="o">%</span> <span class="n">positive_label</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;label </span><span class="si">%s</span><span class="s1"> not found.&#39;</span> <span class="o">%</span> <span class="n">positive_label</span><span class="p">)</span>
 
         <span class="n">N</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">([</span><span class="n">positive_label</span><span class="p">])</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
@@ -311,8 +374,8 @@
     <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">])</span>
     <span class="n">unique_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_labels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">PDException</span><span class="p">(</span><span class="s1">&#39;more than 2 classes in labels.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_labels</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;more than 2 classes in labels.&#39;</span><span class="p">)</span>
 
     <span class="n">unique_labels</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;mergesort&#39;</span><span class="p">)</span>
     <span class="n">class1</span> <span class="o">=</span> <span class="p">(</span><span class="n">labels</span> <span class="o">==</span> <span class="n">unique_labels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -326,7 +389,9 @@
 
 <span class="sd">    Used after the loading of the configuration file to set some defaults.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dictionary</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+    <span class="c1"># for k, v in dictionary.iteritems():</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">dictionary</span><span class="p">):</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -348,6 +413,17 @@
     <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
     <span class="n">h</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
     <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%02d</span><span class="s2">:</span><span class="si">%02d</span><span class="s2">:</span><span class="si">%02d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="safe_run"><a class="viewcode-back" href="../../api.html#palladio.utils.safe_run">[docs]</a><span class="k">def</span> <span class="nf">safe_run</span><span class="p">(</span><span class="n">function</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Decorator that tries to run a function and prints an error when fails.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">safe_run_function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">StandardError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Function </span><span class="si">{}</span><span class="s1"> failed: plot not &#39;</span>
+            <span class="s1">&#39;created. Exception raised: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">function</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">error</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">safe_run_function</span></div>
 </pre></div>
 
           </div>
@@ -360,7 +436,7 @@
             </a></p>
    
       <h3>Download</h3>
-      <p>Current version: <b>2.0</b></p>
+      <p>Current version: <b>2.0.3rc1</b></p>
       <p>Get PALLADIO from the
          <a href="http://pypi.python.org/pypi/PALLADIO">Python Package Index</a>,
          or install it with:
@@ -409,13 +485,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">PALLADIO 2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">PALLADIO 2.0.3rc1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
     </div>
   </body>
 </html>

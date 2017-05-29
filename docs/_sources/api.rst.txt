@@ -11,7 +11,7 @@ API
 Pipeline utilities
 -----------------------------
 
-.. automodule:: palladio._core
+.. automodule:: palladio.model_assessment
    :members:
 
 

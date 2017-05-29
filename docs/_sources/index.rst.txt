@@ -4,11 +4,14 @@
 PALLADIO (ParALleL frAmework for moDel selectIOn)
 =================================================
 
-**PALLADIO** is a machine learning framework whose purpose is to provide robust and reproducible results when dealing with data where the signal to noise ratio is low; it also provides tools to determine whether the dataset being analyzed contains any signal at all.
-**PALLADIO** works by repeating the same experiment many times, each time resampling the training and the test set so that the outcome is reliable as it is not determined by a single partition of the dataset. Besides, using permutation tests, it is possible to provide, to some extent, a measure of how reliable the results produced by an experiments are.
-Since all experiments performed are independent, PALLADIO is designed so that it can exploit a cluster where it is available, in order to greatly reduce the amount of time required for the experiment.
+**PALLADIO** is a machine learning framework whose purpose is to provide robust and reproducible results when dealing with data where the signal to noise ratio is low.
+It also provides tools to determine whether the dataset being analyzed contains any signal at all.
+**PALLADIO** works by repeating the same experiment many times, each time resampling the learning and the test set so that the outcome is reliable as it is not determined by a *single* partition of the dataset. Besides, using permutation tests, it is possible to provide, to some extent, a measure of how reliable the results produced by an experiments are.
+Since all experiments performed are independent, PALLADIO is designed so that it can exploit a cluster where it is available, in order to greatly reduce the amount of time required.
 
-The final output of **PALLADIO** consists of:
+.. The final output of **PALLADIO** consists of:
+
+The final output of **PALLADIO** consists of several plots and text reports. The main ones are:
 
 * A plot showing the absolute frequencies of features for both *regular* experiments and permutation tests. Another plot shows in more detail the selection frequency for the most frequently selected features (i.e., those above the *selection threshold* defined in the configuration file).
 * A plot showing the distribution of accuracies achieved by *regular* experiments and permutation tests.

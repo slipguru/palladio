@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>PALLADIO (ParALleL frAmework for moDel selectIOn) &#8212; PALLADIO 2.0 documentation</title>
+    <title>PALLADIO (ParALleL frAmework for moDel selectIOn) &#8212; PALLADIO 2.0.3rc1 documentation</title>
     
     <link rel="stylesheet" href="_static/slipGuru.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '2.0',
+        VERSION:     '2.0.3rc1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Introduction" href="introduction.html" />
@@ -56,7 +56,7 @@
         <li class="right" >
           <a href="introduction.html" title="Introduction"
              accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">PALLADIO 2.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="#">PALLADIO 2.0.3rc1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -67,10 +67,11 @@
             
   <div class="section" id="palladio-parallel-framework-for-model-selection">
 <h1>PALLADIO (ParALleL frAmework for moDel selectIOn)<a class="headerlink" href="#palladio-parallel-framework-for-model-selection" title="Permalink to this headline">¶</a></h1>
-<p><strong>PALLADIO</strong> is a machine learning framework whose purpose is to provide robust and reproducible results when dealing with data where the signal to noise ratio is low; it also provides tools to determine whether the dataset being analyzed contains any signal at all.
-<strong>PALLADIO</strong> works by repeating the same experiment many times, each time resampling the training and the test set so that the outcome is reliable as it is not determined by a single partition of the dataset. Besides, using permutation tests, it is possible to provide, to some extent, a measure of how reliable the results produced by an experiments are.
-Since all experiments performed are independent, PALLADIO is designed so that it can exploit a cluster where it is available, in order to greatly reduce the amount of time required for the experiment.</p>
-<p>The final output of <strong>PALLADIO</strong> consists of:</p>
+<p><strong>PALLADIO</strong> is a machine learning framework whose purpose is to provide robust and reproducible results when dealing with data where the signal to noise ratio is low.
+It also provides tools to determine whether the dataset being analyzed contains any signal at all.
+<strong>PALLADIO</strong> works by repeating the same experiment many times, each time resampling the learning and the test set so that the outcome is reliable as it is not determined by a <em>single</em> partition of the dataset. Besides, using permutation tests, it is possible to provide, to some extent, a measure of how reliable the results produced by an experiments are.
+Since all experiments performed are independent, PALLADIO is designed so that it can exploit a cluster where it is available, in order to greatly reduce the amount of time required.</p>
+<p>The final output of <strong>PALLADIO</strong> consists of several plots and text reports. The main ones are:</p>
 <ul class="simple">
 <li>A plot showing the absolute frequencies of features for both <em>regular</em> experiments and permutation tests. Another plot shows in more detail the selection frequency for the most frequently selected features (i.e., those above the <em>selection threshold</em> defined in the configuration file).</li>
 <li>A plot showing the distribution of accuracies achieved by <em>regular</em> experiments and permutation tests.</li>
@@ -97,18 +98,17 @@ Since all experiments performed are independent, PALLADIO is designed so that it
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Quick start tutorial</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tutorial.html#installation-from-sources">Installation from sources</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#cluster-setup">Cluster setup</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tutorial.html#quick-deployment">Quick deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#cluster-setup">Cluster setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#configuration-file">Configuration File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#running-the-experiments">Running the experiments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorial.html#running-experiments-on-a-single-machine">Running experiments on a single machine</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#input-data-format">Input data format</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#configuration-file">Configuration File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#running-the-experiments">Running the experiments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial.html#results-analysis">Results analysis</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#pipeline-utilities">Pipeline utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-palladio.model_assessment">Pipeline utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-palladio.utils">Extra tools</a></li>
 </ul>
 </li>
@@ -128,7 +128,7 @@ Since all experiments performed are independent, PALLADIO is designed so that it
             </a></p>
    
       <h3>Download</h3>
-      <p>Current version: <b>2.0</b></p>
+      <p>Current version: <b>2.0.3rc1</b></p>
       <p>Get PALLADIO from the
          <a href="http://pypi.python.org/pypi/PALLADIO">Python Package Index</a>,
          or install it with:
@@ -187,12 +187,12 @@ Since all experiments performed are independent, PALLADIO is designed so that it
         <li class="right" >
           <a href="introduction.html" title="Introduction"
              >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">PALLADIO 2.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="#">PALLADIO 2.0.3rc1 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
     </div>
   </body>
 </html>

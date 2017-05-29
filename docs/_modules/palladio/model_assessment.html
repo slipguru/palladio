@@ -1,0 +1,595 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>palladio.model_assessment &#8212; PALLADIO 2.0.3rc1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/slipGuru.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0.3rc1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<meta name="keywords"
+      content="SlipGuru, 'University of Genoa', statistical learning,
+      computational biology, Python, distributed, computing, parallel" />
+<map id="logosmap" name="logosmap">
+    <area shape="rect" alt="SlipGURU" title="SlipGURU" coords="0,0,89,112"
+          href="http://slipguru.disi.unige.it/" />
+    <area shape="rect" alt="Dipartimento di Informatica e Scienze dell'Informazione"
+          title="Dipartimento di Informatica e Scienze dell'Informazione"
+          coords="95,4,200,34" href="http://www.disi.unige.it/" />
+    <area shape="rect" alt="Università Degli Studi di Genova"
+          title="Università Degli Studi di Genova" coords="124,48,171,107"
+          href="http://www.unige.it/" />
+</map>
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">PALLADIO 2.0.3rc1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for palladio.model_assessment</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Nested Cross-Validation for scikit-learn using MPI.</span>
+
+<span class="sd">This package provides nested cross-validation similar to scikit-learn&#39;s</span>
+<span class="sd">GridSearchCV but uses the Message Passing Interface (MPI)</span>
+<span class="sd">for parallel computing.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">joblib</span> <span class="k">as</span> <span class="nn">jl</span>
+<span class="kn">import</span> <span class="nn">numbers</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="k">import</span> <span class="n">cPickle</span> <span class="k">as</span> <span class="n">pkl</span>
+<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="k">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">clone</span>
+<span class="c1"># from sklearn.model_selection import check_cv as _check_cv</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics.scorer</span> <span class="k">import</span> <span class="n">check_scoring</span>
+<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="k">import</span> <span class="n">is_classifier</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection._split</span> <span class="k">import</span> <span class="n">_CVIterableWrapper</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection._validation</span> <span class="k">import</span> <span class="n">_shuffle</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">StratifiedShuffleSplit</span><span class="p">,</span> <span class="n">ShuffleSplit</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils</span> <span class="k">import</span> <span class="n">check_X_y</span><span class="p">,</span> <span class="n">check_random_state</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.metaestimators</span> <span class="k">import</span> <span class="n">_safe_split</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.multiclass</span> <span class="k">import</span> <span class="n">type_of_target</span>
+
+<span class="kn">from</span> <span class="nn">palladio.utils</span> <span class="k">import</span> <span class="n">build_cv_results</span> <span class="k">as</span> <span class="n">_build_cv_results</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;ModelAssessment&#39;</span><span class="p">,)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">mpi4py</span> <span class="k">import</span> <span class="n">MPI</span>
+    <span class="n">COMM</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+    <span class="n">RANK</span> <span class="o">=</span> <span class="n">COMM</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span>
+    <span class="n">NAME</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">Get_processor_name</span><span class="p">()</span>
+    <span class="n">IS_MPI_JOB</span> <span class="o">=</span> <span class="n">COMM</span><span class="o">.</span><span class="n">Get_size</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span>
+
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="c1"># warnings.warn(&quot;mpi4py module not found. &quot;</span>
+    <span class="c1">#               &quot;PALLADIO cannot run on multiple machines.&quot;)</span>
+    <span class="n">COMM</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">RANK</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">NAME</span> <span class="o">=</span> <span class="s1">&#39;localhost&#39;</span>
+    <span class="n">IS_MPI_JOB</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">MAX_RESUBMISSIONS</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># resubmissions disabled</span>
+<span class="n">DO_WORK</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">EXIT</span> <span class="o">=</span> <span class="mi">200</span>
+
+
+<span class="k">def</span> <span class="nf">_worker</span><span class="p">(</span><span class="n">estimator_</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Implement the worker resubmission in case of errors.&quot;&quot;&quot;</span>
+    <span class="c1"># custom_name = &quot;{}_p_{}_i_{}&quot;.format(</span>
+    <span class="c1">#     (&quot;permutation&quot; if is_permutation_test else &quot;regular&quot;), RANK, i)</span>
+    <span class="c1"># tmp_name_base = &#39;tmp_&#39; + custom_name</span>
+
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;main&#39;</span><span class="p">)</span>
+
+    <span class="n">experiment_resubmissions</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">experiment_completed</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}</span><span class="s2"> executing job </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">experiment_completed</span> <span class="ow">and</span> \
+            <span class="n">experiment_resubmissions</span> <span class="o">&lt;=</span> <span class="n">MAX_RESUBMISSIONS</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="n">experiment_resubmissions</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}</span><span class="s2"> resubmitting experiment </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+            <span class="c1"># tmp_name = tmp_name_base + &#39;_submission_{}&#39;.format(</span>
+            <span class="c1">#     experiment_resubmissions + 1)</span>
+            <span class="c1"># run_experiment(data, labels, None, config,</span>
+            <span class="c1">#                is_permutation_test, experiments_folder_path,</span>
+            <span class="c1">#                tmp_name)</span>
+            <span class="c1"># TODO necessary?</span>
+            <span class="n">estimator</span> <span class="o">=</span> <span class="n">clone</span><span class="p">(</span><span class="n">estimator_</span><span class="o">.</span><span class="n">estimator</span><span class="p">)</span>
+
+            <span class="c1"># need to get the deepest estimator to use _safe_split</span>
+            <span class="n">estimator__</span> <span class="o">=</span> <span class="n">clone</span><span class="p">(</span><span class="n">estimator</span><span class="p">)</span>
+            <span class="k">while</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">estimator__</span><span class="p">,</span> <span class="s1">&#39;estimator&#39;</span><span class="p">):</span>
+                <span class="n">estimator__</span> <span class="o">=</span> <span class="n">clone</span><span class="p">(</span><span class="n">estimator__</span><span class="o">.</span><span class="n">estimator</span><span class="p">)</span>
+
+            <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span> <span class="o">=</span> <span class="n">_safe_split</span><span class="p">(</span><span class="n">estimator__</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">train</span><span class="p">)</span>
+            <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">_safe_split</span><span class="p">(</span><span class="n">estimator__</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">train</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">estimator_</span><span class="o">.</span><span class="n">shuffle_y</span><span class="p">:</span>
+                <span class="n">random_state</span> <span class="o">=</span> <span class="n">check_random_state</span><span class="p">(</span><span class="n">estimator_</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
+                <span class="n">y_train</span> <span class="o">=</span> <span class="n">_shuffle</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">estimator_</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="n">random_state</span><span class="p">)</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}</span><span class="s2"> fitting experiment </span><span class="si">{}</span><span class="s2"> - starting&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+            <span class="n">estimator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}</span><span class="s2"> fitting experiment </span><span class="si">{}</span><span class="s2"> - completed&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}</span><span class="s2"> scoring experiment </span><span class="si">{}</span><span class="s2"> - starting&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+            <span class="n">yts_pred</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+            <span class="n">ytr_pred</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+            <span class="n">lr_score</span> <span class="o">=</span> <span class="n">estimator_</span><span class="o">.</span><span class="n">scorer_</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+            <span class="n">ts_score</span> <span class="o">=</span> <span class="n">estimator_</span><span class="o">.</span><span class="n">scorer_</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}</span><span class="s2"> scoring experiment </span><span class="si">{}</span><span class="s2"> - complete&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="s1">&#39;cv_results_&#39;</span><span class="p">):</span>
+                <span class="c1"># In case in which the estimator is a CV object</span>
+                <span class="n">cv_results</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">cv_results_</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cv_results</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="n">cv_results_</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;split_i&#39;</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>
+                <span class="s1">&#39;learn_score&#39;</span><span class="p">:</span> <span class="n">lr_score</span><span class="p">,</span>
+                <span class="s1">&#39;test_score&#39;</span><span class="p">:</span> <span class="n">ts_score</span><span class="p">,</span>
+                <span class="s1">&#39;cv_results_&#39;</span><span class="p">:</span> <span class="n">cv_results</span><span class="p">,</span>
+                <span class="s1">&#39;ytr_pred&#39;</span><span class="p">:</span> <span class="n">ytr_pred</span><span class="p">,</span>
+                <span class="s1">&#39;yts_pred&#39;</span><span class="p">:</span> <span class="n">yts_pred</span><span class="p">,</span>
+                <span class="s1">&#39;test_index&#39;</span><span class="p">:</span> <span class="n">test</span><span class="p">,</span>
+                <span class="s1">&#39;train_index&#39;</span><span class="p">:</span> <span class="n">train</span><span class="p">,</span>
+                <span class="s1">&#39;estimator&#39;</span><span class="p">:</span> <span class="n">estimator</span>
+            <span class="p">}</span>
+
+            <span class="n">experiment_completed</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="c1"># ### Dump partial results</span>
+            <span class="k">if</span> <span class="n">estimator_</span><span class="o">.</span><span class="n">experiments_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}</span><span class="s2"> saving results for experiment </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+                <span class="n">pkl_name</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s1">&#39;permutation&#39;</span> <span class="k">if</span> <span class="n">estimator_</span><span class="o">.</span><span class="n">shuffle_y</span> <span class="k">else</span> <span class="s1">&#39;regular&#39;</span><span class="p">)</span> <span class="o">+</span> \
+                    <span class="s1">&#39;_</span><span class="si">%d</span><span class="s1">.pkl&#39;</span> <span class="o">%</span> <span class="n">i</span>
+
+                <span class="n">pkl</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">cv_results_</span><span class="p">,</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">estimator_</span><span class="o">.</span><span class="n">experiments_folder</span><span class="p">,</span> <span class="n">pkl_name</span><span class="p">),</span> <span class="s1">&#39;wb&#39;</span><span class="p">))</span>
+
+        <span class="k">except</span> <span class="n">StandardError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="c1"># If somethings out of the ordinary happens,</span>
+            <span class="c1"># resubmit the job</span>
+            <span class="n">experiment_resubmissions</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;[</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">] failed experiment </span><span class="si">{}</span><span class="s2">, resubmission #</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Exception raised: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">experiment_resubmissions</span><span class="p">,</span> <span class="n">error</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">experiment_completed</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;[</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">] failed to complete experiment </span><span class="si">{}</span><span class="s2">, &quot;</span>
+            <span class="s2">&quot;max resubmissions limit reached&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">IS_MPI_JOB</span> <span class="ow">and</span> <span class="n">estimator_</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}</span><span class="s2"> job </span><span class="si">{}</span><span class="s2"> completed&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Experiment </span><span class="si">{}</span><span class="s2"> completed [</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;permutation&#39;</span> <span class="k">if</span> <span class="n">estimator_</span><span class="o">.</span><span class="n">shuffle_y</span> <span class="k">else</span> <span class="s1">&#39;regular&#39;</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="n">cv_results_</span>
+
+
+<span class="k">def</span> <span class="nf">_check_cv</span><span class="p">(</span><span class="n">cv</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">classifier</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Input checker utility for building a cross-validator.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cv : int, cross-validation generator or an iterable, optional</span>
+<span class="sd">        Determines the cross-validation splitting strategy.</span>
+<span class="sd">        Possible inputs for cv are:</span>
+<span class="sd">          - None, to use the default 3-fold cross-validation,</span>
+<span class="sd">          - integer, to specify the number of folds.</span>
+<span class="sd">          - An object to be used as a cross-validation generator.</span>
+<span class="sd">          - An iterable yielding train/test splits.</span>
+
+<span class="sd">        For integer/None inputs, if classifier is True and ``y`` is either</span>
+<span class="sd">        binary or multiclass, :class:`StratifiedKFold` is used. In all other</span>
+<span class="sd">        cases, :class:`KFold` is used.</span>
+
+<span class="sd">        Refer :ref:`User Guide &lt;cross_validation&gt;` for the various</span>
+<span class="sd">        cross-validation strategies that can be used here.</span>
+
+<span class="sd">    y : array-like, optional</span>
+<span class="sd">        The target variable for supervised learning problems.</span>
+
+<span class="sd">    classifier : boolean, optional, default False</span>
+<span class="sd">        Whether the task is a classification task, in which case</span>
+<span class="sd">        stratified KFold will be used.</span>
+
+<span class="sd">    kwargs : dict</span>
+<span class="sd">        Other parameters for StratifiedShuffleSplit or ShuffleSplit.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    checked_cv : a cross-validator instance.</span>
+<span class="sd">        The return value is a cross-validator which generates the train/test</span>
+<span class="sd">        splits via the ``split`` method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">cv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cv</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;n_splits&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">10</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cv</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">classifier</span> <span class="ow">and</span> <span class="p">(</span><span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="p">(</span><span class="n">type_of_target</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;binary&#39;</span><span class="p">,</span> <span class="s1">&#39;multiclass&#39;</span><span class="p">))):</span>
+            <span class="k">return</span> <span class="n">StratifiedShuffleSplit</span><span class="p">(</span><span class="n">cv</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ShuffleSplit</span><span class="p">(</span><span class="n">cv</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cv</span><span class="p">,</span> <span class="s1">&#39;split&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cv</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cv</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cv</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Expected cv as an integer, cross-validation &quot;</span>
+                             <span class="s2">&quot;object (from sklearn.model_selection) &quot;</span>
+                             <span class="s2">&quot;or an iterable. Got </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="n">cv</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_CVIterableWrapper</span><span class="p">(</span><span class="n">cv</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cv</span>  <span class="c1"># New style cv objects are passed without any modification</span>
+
+
+<div class="viewcode-block" id="ModelAssessment"><a class="viewcode-back" href="../../api.html#palladio.model_assessment.ModelAssessment">[docs]</a><span class="k">class</span> <span class="nc">ModelAssessment</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cross-validation with nested parameter search for each training fold.</span>
+
+<span class="sd">    The data is first split into ``cv`` train and test sets. For each training</span>
+<span class="sd">    set a grid search over the specified set of parameters is performed</span>
+<span class="sd">    (inner cross-validation). The set of parameters that achieved the highest</span>
+<span class="sd">    average score across all inner folds is used to re-fit a model on the</span>
+<span class="sd">    entire training set of the outer cross-validation loop. Finally, results on</span>
+<span class="sd">    the test set of the outer loop are reported.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    estimator : object type that implements the &quot;fit&quot; and &quot;predict&quot; methods</span>
+<span class="sd">        A object of that type is instantiated for each grid point.</span>
+
+<span class="sd">    cv : integer or cross-validation generator, optional, default: 3</span>
+<span class="sd">        If an integer is passed, it is the number of folds.</span>
+<span class="sd">        Specific cross-validation objects can be passed, see</span>
+<span class="sd">        sklearn.cross_validation module for the list of possible objects</span>
+
+
+<span class="sd">    scoring : string, callable or None, optional, default: None</span>
+<span class="sd">        A string (see model evaluation documentation) or</span>
+<span class="sd">        a scorer callable object / function with signature</span>
+<span class="sd">        ``scorer(estimator, X, y)``.</span>
+<span class="sd">        See sklearn.metrics.get_scorer for details.</span>
+
+<span class="sd">    fit_params : dict, optional, default: None</span>
+<span class="sd">        Parameters to pass to the fit method.</span>
+
+<span class="sd">    multi_output : boolean, default: False</span>
+<span class="sd">        Allow multi-output y, as for multivariate regression.</span>
+
+<span class="sd">    shuffle_y : bool, optional, default=False</span>
+<span class="sd">        When True, the object is used to perform permutation test.</span>
+
+<span class="sd">    n_jobs : int, optional, default: 1</span>
+<span class="sd">        The number of jobs to use for the computation. This works by computing</span>
+<span class="sd">        each of the Monte Carlo runs in parallel.</span>
+<span class="sd">        If -1 all CPUs are used. If 1 is given, no parallel computing code is</span>
+<span class="sd">        used at all, which is useful for debugging. Ignored when using MPI.</span>
+
+<span class="sd">     n_splits: int, optional, default: 10</span>
+<span class="sd">        The number of cross-validation splits (folds/iterations).</span>
+
+<span class="sd">    test_size : float (default 0.1), int, or None</span>
+<span class="sd">        If float, should be between 0.0 and 1.0 and represent the</span>
+<span class="sd">        proportion of the dataset to include in the test split. If</span>
+<span class="sd">        int, represents the absolute number of test samples. If None,</span>
+<span class="sd">        the value is automatically set to the complement of the train size.</span>
+
+<span class="sd">    train_size : float, int, or None (default is None)</span>
+<span class="sd">        If float, should be between 0.0 and 1.0 and represent the</span>
+<span class="sd">        proportion of the dataset to include in the train split. If</span>
+<span class="sd">        int, represents the absolute number of train samples. If None,</span>
+<span class="sd">        the value is automatically set to the complement of the test size.</span>
+
+<span class="sd">     random_state : int or RandomState, optional, default: None</span>
+<span class="sd">        Pseudo-random number generator state used for random sampling.</span>
+
+<span class="sd">     groups : array-like, with shape (n_samples,), optional, default: None</span>
+<span class="sd">            Group labels for the samples used while splitting the dataset into</span>
+<span class="sd">            train/test set.</span>
+
+<span class="sd">    experiments_folder : string, optional, default: None</span>
+<span class="sd">        The path to the folder used to save the results.</span>
+
+<span class="sd">    verbose : bool, optional, default: False</span>
+<span class="sd">        Print debug messages.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    scorer_ : function</span>
+<span class="sd">        Scorer function used on the held out data to choose the best</span>
+<span class="sd">        parameters for the model.</span>
+
+<span class="sd">    cv_results_ : dictionary</span>
+<span class="sd">        Result of the fit. The dictionary is pandas.DataFrame-able. Each row is</span>
+<span class="sd">        the results of an external split.</span>
+<span class="sd">        Columns are:</span>
+<span class="sd">        &#39;split_i&#39;, &#39;learn_score&#39;, &#39;test_score&#39;, &#39;cv_results_&#39;, &#39;ytr_pred&#39;,</span>
+<span class="sd">        &#39;yts_pred&#39;, &#39;test_index&#39;, &#39;train_index&#39;, &#39;estimator&#39;</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">        &gt;&gt;&gt; pd.DataFrame(cv_results_)</span>
+<span class="sd">        split_i | learn_score | test_score | cv_results_         | ...</span>
+<span class="sd">              0 |       0.987 |      0.876 | {&lt;internal splits&gt;} | ...</span>
+<span class="sd">              1 |       0.846 |      0.739 | {&lt;internal splits&gt;} | ...</span>
+<span class="sd">              2 |       0.956 |      0.630 | {&lt;internal splits&gt;} | ...</span>
+<span class="sd">              3 |       0.964 |      0.835 | {&lt;internal splits&gt;} | ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">estimator</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fit_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">multi_output</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">shuffle_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">n_splits</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">train_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">experiments_folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">estimator</span> <span class="o">=</span> <span class="n">estimator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scoring</span> <span class="o">=</span> <span class="n">scoring</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit_params</span> <span class="o">=</span> <span class="n">fit_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cv</span> <span class="o">=</span> <span class="n">cv</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">multi_output</span> <span class="o">=</span> <span class="n">multi_output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_splits</span> <span class="o">=</span> <span class="n">n_splits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_size</span> <span class="o">=</span> <span class="n">test_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_size</span> <span class="o">=</span> <span class="n">train_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span> <span class="o">=</span> <span class="n">random_state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="n">groups</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">experiments_folder</span> <span class="o">=</span> <span class="n">experiments_folder</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="n">n_jobs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+
+        <span class="c1"># Shuffle training labels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shuffle_y</span> <span class="o">=</span> <span class="n">shuffle_y</span>
+
+    <span class="k">def</span> <span class="nf">_fit_single_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_list</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">cv_results_</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># for i, (train_index, test_index) in job_list:</span>
+        <span class="c1">#     LOG.info(&quot;Training fold %d&quot;, i + 1)</span>
+        <span class="c1">#</span>
+        <span class="c1">#     slave_result_ = self._worker(</span>
+        <span class="c1">#         i, X, y, train_index, test_index)</span>
+        <span class="c1">#</span>
+        <span class="c1">#     _build_cv_results(cv_results_, **slave_result_)</span>
+        <span class="n">slave_results</span> <span class="o">=</span> <span class="n">jl</span><span class="o">.</span><span class="n">Parallel</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">)</span> \
+            <span class="p">(</span><span class="n">jl</span><span class="o">.</span><span class="n">delayed</span><span class="p">(</span><span class="n">_worker</span><span class="p">)(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">train_index</span><span class="p">,</span> <span class="n">test_index</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span>
+                    <span class="n">train_index</span><span class="p">,</span> <span class="n">test_index</span><span class="p">)</span> <span class="ow">in</span> <span class="n">job_list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">slave_result_</span> <span class="ow">in</span> <span class="n">slave_results</span><span class="p">:</span>
+            <span class="n">_build_cv_results</span><span class="p">(</span><span class="n">cv_results_</span><span class="p">,</span> <span class="o">**</span><span class="n">slave_result_</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cv_results_</span> <span class="o">=</span> <span class="n">cv_results_</span>
+
+    <span class="k">def</span> <span class="nf">_fit_master</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">cv</span> <span class="o">=</span> <span class="n">_check_cv</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cv</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">classifier</span><span class="o">=</span><span class="n">is_classifier</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estimator</span><span class="p">),</span>
+            <span class="n">n_splits</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_splits</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">test_size</span><span class="p">,</span>
+            <span class="n">train_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
+
+        <span class="n">job_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">cv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">IS_MPI_JOB</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fit_single_job</span><span class="p">(</span>
+                <span class="n">job_list</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">nprocs</span> <span class="o">=</span> <span class="n">COMM</span><span class="o">.</span><span class="n">Get_size</span><span class="p">()</span>
+        <span class="n">queue</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="n">job_list</span><span class="p">)</span>
+        <span class="n">n_pipes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">queue</span><span class="p">)</span>
+        <span class="n">cv_results_</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># updated by _build_cv_results</span>
+
+        <span class="c1"># seed the slaves by sending work to each processor</span>
+        <span class="k">for</span> <span class="n">rankk</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">nprocs</span><span class="p">,</span> <span class="n">n_pipes</span><span class="p">)):</span>
+            <span class="n">pipe_tuple</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+            <span class="n">COMM</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pipe_tuple</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="n">rankk</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">DO_WORK</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="n">queue</span><span class="p">:</span>
+            <span class="n">pipe_tuple</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+            <span class="c1"># receive result from slave</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">Status</span><span class="p">()</span>
+            <span class="n">slave_result_</span> <span class="o">=</span> <span class="n">COMM</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span>
+                <span class="n">source</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">ANY_SOURCE</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">ANY_TAG</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">)</span>
+
+            <span class="c1"># send to the same slave new work</span>
+            <span class="n">COMM</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pipe_tuple</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">DO_WORK</span><span class="p">)</span>
+
+            <span class="n">_build_cv_results</span><span class="p">(</span><span class="n">cv_results_</span><span class="p">,</span> <span class="o">**</span><span class="n">slave_result_</span><span class="p">)</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># No more work to do, so receive all the results from slaves</span>
+        <span class="k">for</span> <span class="n">rankk</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">nprocs</span><span class="p">,</span> <span class="n">n_pipes</span><span class="p">)):</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">Status</span><span class="p">()</span>
+            <span class="n">slave_result_</span> <span class="o">=</span> <span class="n">COMM</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span>
+                <span class="n">source</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">ANY_SOURCE</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">ANY_TAG</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">)</span>
+
+            <span class="n">_build_cv_results</span><span class="p">(</span><span class="n">cv_results_</span><span class="p">,</span> <span class="o">**</span><span class="n">slave_result_</span><span class="p">)</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># tell all slaves to exit by sending an empty message with the EXIT_TAG</span>
+        <span class="k">for</span> <span class="n">rankk</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nprocs</span><span class="p">):</span>
+            <span class="n">COMM</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="n">rankk</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">EXIT</span><span class="p">)</span>
+
+            <span class="c1"># max_performance = _get_best_parameters(grid_results, param_names)</span>
+            <span class="c1"># LOG.info(&quot;Best performance for fold %d:\n%s&quot;, i + 1,</span>
+            <span class="c1">#          max_performance)</span>
+            <span class="c1"># max_performance[&#39;fold&#39;] = i + 1</span>
+            <span class="c1"># best_parameters.append(max_performance)</span>
+
+        <span class="c1"># best_parameters = pandas.DataFrame(best_parameters)</span>
+        <span class="c1"># best_parameters.set_index(&#39;fold&#39;, inplace=True)</span>
+        <span class="c1"># best_parameters[&#39;score (Test)&#39;] = 0.0</span>
+        <span class="c1"># best_parameters.rename(columns={&#39;score&#39;: &#39;score (Validation)&#39;},</span>
+        <span class="c1">#                        inplace=True)</span>
+
+        <span class="c1"># scores = _fit_and_score_with_parameters(</span>
+        <span class="c1">#     X, y, cv, best_parameters.loc[:, param_names])</span>
+        <span class="c1"># best_parameters[&#39;score (Test)&#39;] = scores</span>
+
+        <span class="c1"># self.best_params_ = best_parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cv_results_</span> <span class="o">=</span> <span class="n">cv_results_</span>
+
+    <span class="k">def</span> <span class="nf">_fit_slave</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Pipeline evaluation.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : array of float, shape : n_samples x n_features, default : ()</span>
+<span class="sd">            The input data matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">status_</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">Status</span><span class="p">()</span>
+                <span class="n">received</span> <span class="o">=</span> <span class="n">COMM</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">ANY_TAG</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">status_</span><span class="p">)</span>
+
+                <span class="c1"># check the tag of the received message</span>
+                <span class="k">if</span> <span class="n">status_</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">EXIT</span><span class="p">:</span>
+                    <span class="k">return</span>
+                <span class="c1"># do the work</span>
+                <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">train_index</span><span class="p">,</span> <span class="n">test_index</span><span class="p">)</span> <span class="o">=</span> <span class="n">received</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[</span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">]: Performing experiment </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+                <span class="n">cv_results_</span> <span class="o">=</span> <span class="n">_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">train_index</span><span class="p">,</span> <span class="n">test_index</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[</span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">]: Experiment </span><span class="si">{}</span><span class="s2"> completed&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">NAME</span><span class="p">,</span> <span class="n">RANK</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+                <span class="n">COMM</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">cv_results_</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="n">StandardError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Quitting ... TB:&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+
+<div class="viewcode-block" id="ModelAssessment.fit"><a class="viewcode-back" href="../../api.html#palladio.model_assessment.ModelAssessment.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fit the model to the training data.&quot;&quot;&quot;</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">check_X_y</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">force_all_finite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">multi_output</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">multi_output</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scorer_</span> <span class="o">=</span> <span class="n">check_scoring</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estimator</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">RANK</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fit_master</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fit_slave</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/palladio_logo_npbg.png" alt="Logo"/>
+            </a></p>
+   
+      <h3>Download</h3>
+      <p>Current version: <b>2.0.3rc1</b></p>
+      <p>Get PALLADIO from the
+         <a href="http://pypi.python.org/pypi/PALLADIO">Python Package Index</a>,
+         or install it with:
+      </p>
+      <pre>pip install --upgrade PALLADIO</pre>
+      <p> or clone it from our <a href="https://github.com/slipguru/PALLADIO">GitHub</a> repository: </p>
+      <pre>git clone https://github.com/slipguru/PALLADIO</pre>
+      <!--or:-->
+      <!--<pre>easy_install -U PALLADIO</pre>-->
+<!--      <p>Latest
+         <a href="https://bitbucket.org/slipguru/palladio/downloads/PALLADIO.pdf">
+            documentation in pdf
+         </a>
+         is also available. -->
+      </p>
+   
+
+   
+   
+
+    
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+    <p class="logo">
+       <img class="logo" src="../../_static/logos.png" alt="Logos" usemap="#logosmap" />
+    </p>
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">PALLADIO 2.0.3rc1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>
