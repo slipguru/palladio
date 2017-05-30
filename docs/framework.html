@@ -89,7 +89,9 @@
 <ul class="simple">
 <li>The location of <strong>data</strong> and <strong>labels</strong> files.</li>
 <li>Experiment design parameters, such as the total number of experiments and the ratio of samples to be used for testing in each experiment.</li>
-<li>Parameters specific to the chosen machine learning algorithm: for instance, for the <span class="math">\(\ell_1 \ell_2\)</span> regularized algorithm, the values for the <span class="math">\(\tau\)</span> and <span class="math">\(\lambda\)</span> parameters.</li>
+</ul>
+<ul class="simple">
+<li>Parameters specific to the chosen machine learning algorithm: for instance, for the Elastic Net algorithm, the values for the <span class="math">\(\alpha\)</span> and <span class="math">\(\ell_1\)</span> <code class="docutils literal"><span class="pre">ratio</span></code> parameters.</li>
 </ul>
 <p>A <em>session folder</em> is created within the folder containing the configuration file, in order to keep everything as contained as possible; data and labels file, together with the configuration file itself, are copied inside this folder. Then, experiments are distributed among the machines of the cluster; each machine will be assigned roughly the same number of jobs in order to balance the load.</p>
 <div class="section" id="experiments">

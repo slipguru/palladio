@@ -28,7 +28,8 @@ Once the main script has been launched, the configuration file is read in order 
 
 * The location of **data** and **labels** files.
 * Experiment design parameters, such as the total number of experiments and the ratio of samples to be used for testing in each experiment.
-* Parameters specific to the chosen machine learning algorithm: for instance, for the :math:`\ell_1 \ell_2` regularized algorithm, the values for the :math:`\tau` and :math:`\lambda` parameters.
+.. * Parameters specific to the chosen machine learning algorithm: for instance, for the :math:`\ell_1 \ell_2` regularized algorithm, the values for the :math:`\tau` and :math:`\lambda` parameters.
+* Parameters specific to the chosen machine learning algorithm: for instance, for the Elastic Net algorithm, the values for the :math:`\alpha` and :math:`\ell_1` ``ratio`` parameters.
 
 A *session folder* is created within the folder containing the configuration file, in order to keep everything as contained as possible; data and labels file, together with the configuration file itself, are copied inside this folder. Then, experiments are distributed among the machines of the cluster; each machine will be assigned roughly the same number of jobs in order to balance the load.
 

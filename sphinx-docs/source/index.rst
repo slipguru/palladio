@@ -25,16 +25,17 @@ See :ref:`tutorial` for instructions on how to setup and launch a **PALLADIO** s
 
 User documentation
 ==================
+
 .. toctree::
-   :maxdepth: 2
+  :maxdepth: 2
 
- introduction.rst
+  introduction.rst
 
- framework.rst
+  framework.rst
 
- tutorial.rst
+  tutorial.rst
 
- api.rst
+  api.rst
 
 
 .. Indices and tables

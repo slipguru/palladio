@@ -37,9 +37,7 @@ Plotting functions
 
 .. autofunction:: palladio.plotting.score_plot
 
-.. autofunction:: palladio.plotting.features_manhattan
-
-
+.. .. autofunction:: palladio.plotting.features_manhattan
 
 
 .. Extra tools
