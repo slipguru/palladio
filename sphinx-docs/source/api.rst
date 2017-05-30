@@ -22,9 +22,6 @@ Extra tools
    :members:
 
 
-.. .. automodule:: adenine.core.analyze_results
-   :members:
-
 .. Input Data
 .. -----------------------------
 
@@ -32,11 +29,17 @@ Extra tools
    :members:
 
 
-.. Plotting functions
-.. -----------------------------
+Plotting functions
+-----------------------------
 
-.. .. automodule:: adenine.core.plotting
-   :members:
+.. .. automodule:: palladio.plotting
+..    :members:
+
+.. autofunction:: palladio.plotting.score_plot
+
+.. autofunction:: palladio.plotting.features_manhattan
+
+
 
 
 .. Extra tools

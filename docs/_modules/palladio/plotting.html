@@ -1,0 +1,777 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>palladio.plotting &#8212; PALLADIO 2.0.3rc1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/slipGuru.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.0.3rc1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+<meta name="keywords"
+      content="SlipGuru, 'University of Genoa', statistical learning,
+      computational biology, Python, distributed, computing, parallel" />
+<map id="logosmap" name="logosmap">
+    <area shape="rect" alt="SlipGURU" title="SlipGURU" coords="0,0,89,112"
+          href="http://slipguru.disi.unige.it/" />
+    <area shape="rect" alt="Dipartimento di Informatica e Scienze dell'Informazione"
+          title="Dipartimento di Informatica e Scienze dell'Informazione"
+          coords="95,4,200,34" href="http://www.disi.unige.it/" />
+    <area shape="rect" alt="Università Degli Studi di Genova"
+          title="Università Degli Studi di Genova" coords="124,48,171,107"
+          href="http://www.unige.it/" />
+</map>
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">PALLADIO 2.0.3rc1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for palladio.plotting</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: UTF-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;Plotting functions for PALLADIO.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">combinations</span><span class="p">,</span> <span class="n">product</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">stats</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span>
+
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;Agg&#39;</span><span class="p">)</span>  <span class="c1"># create plots from remote</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;pdf.fonttype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">42</span>  <span class="c1"># avoid bitmapped fonts in pdf</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;ps.fonttype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">42</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>  <span class="c1"># noqa</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>  <span class="c1"># noqa</span>
+
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">cm</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">matplotlib.patches</span> <span class="k">import</span> <span class="n">Rectangle</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="k">import</span> <span class="n">Axes3D</span>  <span class="c1"># noqa</span>
+
+<span class="kn">from</span> <span class="nn">palladio.colors</span> <span class="k">import</span> <span class="n">COLORS_HEX</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">palladio.utils</span> <span class="k">import</span> <span class="n">safe_run</span>  <span class="c1"># noqa</span>
+
+
+<span class="k">def</span> <span class="nf">_multicond</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Util function to concatenate multiple selection conditions.&quot;&quot;&quot;</span>
+    <span class="n">cond</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">cond</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cond</span>
+
+
+<span class="k">def</span> <span class="nf">stats_to_file</span><span class="p">(</span><span class="n">rstest</span><span class="p">,</span> <span class="n">r_mean</span><span class="p">,</span> <span class="n">r_std</span><span class="p">,</span> <span class="n">p_mean</span><span class="p">,</span> <span class="n">p_std</span><span class="p">,</span> <span class="n">metric</span><span class="p">,</span> <span class="n">base_folder</span><span class="p">,</span>
+                  <span class="n">first_run</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Save stats to file.&quot;&quot;&quot;</span>
+    <span class="n">filemode</span> <span class="o">=</span> <span class="s1">&#39;w&#39;</span> <span class="k">if</span> <span class="n">first_run</span> <span class="k">else</span> <span class="s1">&#39;a&#39;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_folder</span><span class="p">,</span> <span class="s1">&#39;stats.txt&#39;</span><span class="p">),</span> <span class="n">filemode</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">------------------------------------------</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Metric : </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">metric</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rstest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Two sample Kolmogorov-Smirnov test p-value: </span><span class="si">%.3e</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">rstest</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="c1"># f.write(&quot;Wilcoxon Signed-rank test p-value: %.3e\n&quot; % rstest[1])</span>
+
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Regular batch, </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Mean = </span><span class="si">%.3f</span><span class="s2">, SD = </span><span class="si">%.3f</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="n">r_mean</span><span class="p">,</span> <span class="n">r_std</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">rstest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Permutation batch, </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;Mean = </span><span class="si">%.3f</span><span class="s2">, SD = </span><span class="si">%.3f</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="n">p_mean</span><span class="p">,</span> <span class="n">p_std</span><span class="p">))</span>
+
+
+<span class="nd">@safe_run</span>
+<span class="k">def</span> <span class="nf">distributions</span><span class="p">(</span><span class="n">v_regular</span><span class="p">,</span> <span class="n">v_permutation</span><span class="p">,</span> <span class="n">base_folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;nd&#39;</span><span class="p">,</span>
+                  <span class="n">first_run</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_regression</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a plot of the distributions of performance metrics.</span>
+
+<span class="sd">    Plots are created for both &quot;regular&quot; experiments and permutation tests.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    v_{regular, permutation}, : numpy.array</span>
+<span class="sd">        The metric values for all {regular, permutation} experiments.</span>
+
+<span class="sd">    base_folder : str, optional, default &#39;&#39;</span>
+<span class="sd">        The folder where the plot and summary will be saved.</span>
+
+<span class="sd">    metric : str, optional, default &#39;nd&#39;</span>
+<span class="sd">        Metric used to evaluate v_regular and v_permutation.</span>
+<span class="sd">        Usually this should be one of [&#39;Accuracy&#39;, &#39;Balanced Accuracy&#39;,</span>
+<span class="sd">        &#39;MCC&#39;, &#39;Precision&#39;, &#39;Recall&#39;, &#39;F1&#39;].</span>
+<span class="sd">        It is going to be used to set the title and the xlabel.</span>
+
+<span class="sd">    first_run : bool, optional, default False</span>
+<span class="sd">        If not first_run, append the logs to a single file. Otherwise append</span>
+<span class="sd">        logs to a cleared file.</span>
+
+<span class="sd">    is_regression : bool, optional, default False</span>
+<span class="sd">        If True and plot_errors is True, do errors = -scores instead of</span>
+<span class="sd">        1 - scores.</span>
+
+<span class="sd">    fig : matplotlib fig, optional, default None</span>
+<span class="sd">        Used to plot the distribution on a pre-existing figure</span>
+
+<span class="sd">    ax : matplotlib axis, optional, default None</span>
+<span class="sd">        Used to plot the distribution on a pre-existing axis</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">v_regular</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="ow">or</span> \
+            <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">v_permutation</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;Cannot create </span><span class="si">{}</span><span class="s2"> plot due to some nan values&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metric</span><span class="p">))</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="n">is_regression</span><span class="p">:</span>
+        <span class="c1"># scaling factor for percentage plot</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">x_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">v_regular</span><span class="p">)</span>
+        <span class="n">x_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">v_regular</span><span class="p">)</span>
+        <span class="n">_bins</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="n">kde</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">color_regular</span> <span class="o">=</span> <span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightBlue&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">kde</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">color_regular</span> <span class="o">=</span> <span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightBlue&#39;</span><span class="p">]</span>
+        <span class="n">color_permutation</span> <span class="o">=</span> <span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightRed&#39;</span><span class="p">]</span>
+
+        <span class="c1"># XXX do we need to separate mcc from the rest?</span>
+        <span class="k">if</span> <span class="n">metric</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;matthews_corrcoef&#39;</span><span class="p">:</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+            <span class="n">x_min</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="mi">100</span>
+            <span class="n">_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">105</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+            <span class="n">x_min</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">x_max</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="c1"># plt.close(&#39;all&#39;)</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="c1"># single_figure = True</span>
+    <span class="c1"># else:</span>
+    <span class="c1">#     single_figure = False</span>
+
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;norm_hist&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s1">&#39;kde&#39;</span><span class="p">:</span> <span class="n">kde</span><span class="p">,</span>
+        <span class="s1">&#39;bins&#39;</span><span class="p">:</span> <span class="n">_bins</span><span class="p">,</span>
+        <span class="s1">&#39;hist_kws&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;alpha&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">},</span>
+        <span class="s1">&#39;kde_kws&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;darkBlue&#39;</span><span class="p">]}</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Compute mean and standard deviation for both batches</span>
+    <span class="n">v_regular</span><span class="p">,</span> <span class="n">v_permutation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v_regular</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v_permutation</span><span class="p">)</span>
+    <span class="n">r_mean</span><span class="p">,</span> <span class="n">r_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">v_regular</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">v_regular</span><span class="p">)</span>
+    <span class="n">p_mean</span><span class="p">,</span> <span class="n">p_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">v_permutation</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">v_permutation</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v_permutation</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">sns</span><span class="o">.</span><span class="n">distplot</span><span class="p">(</span><span class="n">v_permutation</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">v_permutation</span><span class="p">)]</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span>
+                     <span class="c1"># label=&quot;Permutation batch\nMean = {0:.2f}, STD = {1:.2f}&quot;</span>
+                     <span class="c1"># .format(perm_mean, perm_std),</span>
+                     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Permutation batch</span><span class="se">\n</span><span class="s2">Mean = </span><span class="si">{0:2.1f}</span><span class="s2">, SD = </span><span class="si">{1:2.1f}</span><span class="s2">&quot;</span>
+                           <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p_mean</span><span class="p">,</span> <span class="n">p_std</span><span class="p">),</span>
+                     <span class="n">color</span><span class="o">=</span><span class="n">color_permutation</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">sns</span><span class="o">.</span><span class="n">distplot</span><span class="p">(</span><span class="n">v_regular</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">v_regular</span><span class="p">)]</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span>
+                 <span class="c1"># label=&quot;Regular batch \nMean = {0:.2f}, STD = {1:.2f}&quot;</span>
+                 <span class="c1">#        .format(reg_mean, reg_std),</span>
+                 <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Regular batch </span><span class="se">\n</span><span class="s2">Mean = </span><span class="si">{0:2.1f}</span><span class="s2">, SD = </span><span class="si">{1:2.1f}</span><span class="s2">&quot;</span>
+                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r_mean</span><span class="p">,</span> <span class="n">r_std</span><span class="p">),</span>
+                 <span class="n">color</span><span class="o">=</span><span class="n">color_regular</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v_permutation</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># rstest = stats.wilcoxon(v_regular, v_permutation)</span>
+        <span class="c1"># print(&quot;[{}] Wilcoxon Signed-rank test: {}&quot;.format(metric, rstest))</span>
+        <span class="c1"># rstest = stats.ranksums(v_regular, v_permutation)</span>
+        <span class="c1"># print(&quot;[{}] Wilcoxon Rank-Sum test: {}&quot;.format(metric, rstest))</span>
+        <span class="n">rstest</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">ks_2samp</span><span class="p">(</span><span class="n">v_regular</span><span class="p">,</span> <span class="n">v_permutation</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[</span><span class="si">{}</span><span class="s2">] Two sample Kolmogorov-Smirnov test: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="n">rstest</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rstest</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;large&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Absolute Frequency&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;large&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Distribution of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">metric</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+    <span class="c1"># ## Determine limits for the x axis</span>
+    <span class="c1"># x_min = v_permutation.min() - v_permutation.mean()/10</span>
+    <span class="c1"># x_max = v_regular.max() + v_regular.mean()/10</span>
+    <span class="c1"># see above</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="n">x_min</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">x_max</span> <span class="o">*</span> <span class="n">scale</span><span class="p">])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.02</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="o">.</span><span class="mi">102</span><span class="p">),</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper right&#39;</span><span class="p">,</span>
+              <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;expand&quot;</span><span class="p">,</span> <span class="n">borderaxespad</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;large&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">rstest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.005</span><span class="p">,</span>
+                 <span class="s2">&quot;Two sample Kolmogorov-Smirnov test p-value: </span><span class="si">{0:.3e}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rstest</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">base_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">base_folder</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_distribution.png&#39;</span> <span class="o">%</span> <span class="n">metric</span><span class="p">),</span>
+                    <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+        <span class="c1"># plt.show()</span>
+
+    <span class="c1"># XXX save to txt; maybe not here?</span>
+    <span class="k">if</span> <span class="n">base_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Only if base_folder is defined</span>
+        <span class="n">stats_to_file</span><span class="p">(</span><span class="n">rstest</span><span class="p">,</span> <span class="n">r_mean</span><span class="p">,</span> <span class="n">r_std</span><span class="p">,</span> <span class="n">p_mean</span><span class="p">,</span> <span class="n">p_std</span><span class="p">,</span>
+                      <span class="n">metric</span><span class="p">,</span> <span class="n">base_folder</span><span class="p">,</span> <span class="n">first_run</span><span class="p">)</span>
+
+
+<span class="nd">@safe_run</span>
+<span class="k">def</span> <span class="nf">features_manhattan</span><span class="p">(</span><span class="n">feat_arr_r</span><span class="p">,</span> <span class="n">feat_arr_p</span><span class="p">,</span> <span class="n">base_folder</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=.</span><span class="mi">75</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plot selected features with a manhattan plot.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    feat_arr_{r, p} : array-like, 2-dimensional</span>
+<span class="sd">        Array of feature names (first column) and frequencies (second col)</span>
+<span class="sd">        for regular and permutation batches.</span>
+<span class="sd">        They are like:</span>
+<span class="sd">        &gt;&gt;&gt; array([[&#39;f1&#39;, 0.5],</span>
+<span class="sd">                   [&#39;f2&#39;, 0.8],</span>
+<span class="sd">                   [&#39;f3&#39;, 0.1]], dtype=object)</span>
+<span class="sd">    base_folder : string</span>
+<span class="sd">        Path to the folder where to save results.</span>
+<span class="sd">    threshold : float, optional, default 0.75</span>
+<span class="sd">        Selection threshold of the features.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># sort by frequencies of regular</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">feat_arr_r</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">s_feat_arr_r</span> <span class="o">=</span> <span class="n">feat_arr_r</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">s_feat_arr_p</span> <span class="o">=</span> <span class="n">feat_arr_p</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+
+    <span class="n">xaxis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">feat_arr_r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">s_t</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">xaxis</span><span class="p">,</span> <span class="n">s_feat_arr_r</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                      <span class="n">color</span><span class="o">=</span><span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightBlue&#39;</span><span class="p">])</span>
+    <span class="n">s_p</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">xaxis</span><span class="p">,</span> <span class="n">s_feat_arr_p</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                      <span class="n">color</span><span class="o">=</span><span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightRed&#39;</span><span class="p">])</span>
+    <span class="n">threshold_line</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="n">feat_arr_r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">5</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.05</span><span class="p">])</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span>
+        <span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span>          <span class="c1"># changes apply to the x-axis</span>
+        <span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span>      <span class="c1"># both major and minor ticks are affected</span>
+        <span class="n">bottom</span><span class="o">=</span><span class="s1">&#39;off&#39;</span><span class="p">,</span>      <span class="c1"># ticks along the bottom edge are off</span>
+        <span class="n">top</span><span class="o">=</span><span class="s1">&#39;off&#39;</span><span class="p">,</span>         <span class="c1"># ticks along the top edge are off</span>
+        <span class="n">labelbottom</span><span class="o">=</span><span class="s1">&#39;off&#39;</span>  <span class="c1"># labels along the bottom edge are off</span>
+    <span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">s_t</span><span class="p">,</span> <span class="n">s_p</span><span class="p">,</span> <span class="n">threshold_line</span><span class="p">),</span>
+        <span class="c1"># (&#39;Real signature&#39;, &#39;Permutation signature&#39;, &#39;Threshold&#39;),</span>
+        <span class="p">(</span><span class="s1">&#39;Regular batch&#39;</span><span class="p">,</span> <span class="s1">&#39;Permutation batch&#39;</span><span class="p">,</span> <span class="s1">&#39;Threshold&#39;</span><span class="p">),</span>
+        <span class="n">scatterpoints</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper right&#39;</span><span class="p">,</span>
+        <span class="n">ncol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span>
+    <span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Features&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Relative frequencies&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Feature frequencies&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">base_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_folder</span><span class="p">,</span> <span class="s1">&#39;manhattan_plot.png&#39;</span><span class="p">),</span>
+                    <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+
+<span class="nd">@safe_run</span>
+<span class="k">def</span> <span class="nf">feature_frequencies</span><span class="p">(</span><span class="n">feat_arr</span><span class="p">,</span> <span class="n">base_folder</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=.</span><span class="mi">75</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plot a bar chart of the first 2 x M features in a signature.</span>
+
+<span class="sd">    M is the number of features whose frequencies is over a given threshold.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    feat_arr : array-like, 2-dimensional:</span>
+<span class="sd">        Array of feature names (first column) and frequencies (second col).</span>
+<span class="sd">        It is like:</span>
+<span class="sd">        &gt;&gt;&gt; array([[&#39;f1&#39;, 0.5],</span>
+<span class="sd">                   [&#39;f2&#39;, 0.8],</span>
+<span class="sd">                   [&#39;f3&#39;, 0.1]], dtype=object)</span>
+<span class="sd">    base_folder : string</span>
+<span class="sd">        Path to the folder where to save results.</span>
+<span class="sd">    threshold : float, optional, default 0.75</span>
+<span class="sd">        Selection threshold of the features.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_over_threshold</span> <span class="o">=</span> <span class="n">feat_arr</span><span class="p">[</span><span class="n">feat_arr</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">n_over_threshold</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;No regular features over threshold (</span><span class="si">%.2f</span><span class="s2">) were found.&quot;</span> <span class="o">%</span> <span class="n">threshold</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="c1"># sort by frequencies</span>
+    <span class="n">sorted_feat_arr</span> <span class="o">=</span> <span class="n">feat_arr</span><span class="p">[</span><span class="n">feat_arr</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+    <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s1">&#39;notebook&#39;</span><span class="p">)</span>
+    <span class="c1"># plt.figure(figsize=(18, 100))</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">sns</span><span class="o">.</span><span class="n">barplot</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">sorted_feat_arr</span><span class="p">[:</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n_over_threshold</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">sorted_feat_arr</span><span class="p">[:</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n_over_threshold</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+        <span class="n">color</span><span class="o">=</span><span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightBlue&#39;</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+
+    <span class="c1"># plot a horizontal line at the height of the selected threshold</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Threshold&#39;</span><span class="p">)</span>
+    <span class="c1"># plt.legend((threshold_line, ), (&#39;Threshold&#39;,), scatterpoints=1,</span>
+    <span class="c1">#            loc=&#39;upper right&#39;, ncol=1, fontsize=12)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper right&#39;</span><span class="p">)</span>
+
+    <span class="c1"># vertical line to separate selected and not selected features</span>
+    <span class="n">mid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_xbound</span><span class="p">())</span> <span class="o">/</span> <span class="mf">2.</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">mid</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightRed&#39;</span><span class="p">])</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Manhattan plot - top features detail&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Feature names&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;large&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Relative frequency&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;large&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.05</span><span class="p">])</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">(),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="s1">&#39;vertical&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">base_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_folder</span><span class="p">,</span> <span class="s1">&#39;signature_frequencies.png&#39;</span><span class="p">),</span>
+                    <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+
+<span class="nd">@safe_run</span>
+<span class="k">def</span> <span class="nf">select_over_threshold</span><span class="p">(</span><span class="n">feat_arr_r</span><span class="p">,</span> <span class="n">feat_arr_p</span><span class="p">,</span> <span class="n">base_folder</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=.</span><span class="mi">75</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plot the selection trend against the selection frequency threshold.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    feat_arr_{r, p} : array-like, 2-dimensional</span>
+<span class="sd">        Array of feature names (first column) and frequencies (second col)</span>
+<span class="sd">        for regular and permutation batches.</span>
+<span class="sd">        They are like:</span>
+<span class="sd">        &gt;&gt;&gt; array([[&#39;f1&#39;, 0.5],</span>
+<span class="sd">                   [&#39;f2&#39;, 0.8],</span>
+<span class="sd">                   [&#39;f3&#39;, 0.1]], dtype=object)</span>
+<span class="sd">    base_folder : string</span>
+<span class="sd">        Path to the folder where to save results.</span>
+<span class="sd">    threshold : float, optional, default 0.75</span>
+<span class="sd">        Selection threshold of the features.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># horizontal axis REVERSED</span>
+    <span class="n">thresh_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">21</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># iterate over the horiz axis (i.e. the selection freq thresh)</span>
+    <span class="n">sel_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">thresh_axis</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">sel_perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">thresh_axis</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">thr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">thresh_axis</span><span class="p">):</span>
+        <span class="n">sel_true</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">feat_arr_r</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">thr</span><span class="p">)</span>
+        <span class="n">sel_perm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">feat_arr_p</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">thr</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="n">thresh_axis</span><span class="p">,</span> <span class="n">sel_true</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+             <span class="n">color</span><span class="o">=</span><span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightBlue&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Regular batch&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="n">thresh_axis</span><span class="p">,</span> <span class="n">sel_perm</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+             <span class="n">color</span><span class="o">=</span><span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightRed&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Permutation batch&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">threshold</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="n">feat_arr_r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span>
+                <span class="n">lw</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Threshold&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Selection frequency %&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;large&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Number of selected features&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;large&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">thresh_axis</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">thresh_axis</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">base_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_folder</span><span class="p">,</span> <span class="s1">&#39;selected_over_threshold.png&#39;</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+
+<span class="nd">@safe_run</span>
+<span class="k">def</span> <span class="nf">score_surfaces</span><span class="p">(</span><span class="n">param_grid</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">indep_var</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pivoting_var</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">base_folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">logspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot_errors</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">is_regression</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plot error surfaces.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    param_grid : dict</span>
+<span class="sd">        Dictionary of grid parameters for GridSearch.</span>
+<span class="sd">    results : dict</span>
+<span class="sd">        Instance of an equivalent of cv_results_, as given by ModelAssessment.</span>
+<span class="sd">    indep_var : array-like, optional, default None</span>
+<span class="sd">        List of independent variables on which plots are based. If more that 2,</span>
+<span class="sd">        a plot for each combination is made. If None, the 2 longest parameters</span>
+<span class="sd">        in param_grid are selected.</span>
+<span class="sd">    pivoting_var : array-like, optional, default None</span>
+<span class="sd">        List of pivoting variables. For each of them, a plot is made.</span>
+<span class="sd">        If unspecified, get the unspecified independent variable with the best</span>
+<span class="sd">        model values.</span>
+<span class="sd">    base_folder : str or None, optional, default None</span>
+<span class="sd">        Folder where to save the plots.</span>
+<span class="sd">    logspace : array-like or None, optional, default None</span>
+<span class="sd">        List to specify which variable to visualise in logspace.</span>
+<span class="sd">    plot_errors : bool, optional, default False</span>
+<span class="sd">        If True, plot errors instead of scores.</span>
+<span class="sd">    is_regression : bool, optional, default False</span>
+<span class="sd">        If True and plot_errors is True, do errors = -scores instead of</span>
+<span class="sd">        1 - scores.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">indep_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">indep_var</span><span class="p">,</span> <span class="p">[</span><span class="n">param_grid</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">indep_var</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">iteritems</span><span class="p">(</span><span class="n">param_grid</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]))[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="n">indep_var</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">grid</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;No grid parameters, cannot create validation plot&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1"># warnings.warn(&quot;Only one grid parameter, cannot create 3D plot&quot;)</span>
+        <span class="n">score_plot</span><span class="p">(</span><span class="n">param_grid</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">indep_var</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pivoting_var</span><span class="p">,</span>
+                   <span class="n">base_folder</span><span class="o">=</span><span class="n">base_folder</span><span class="p">,</span> <span class="n">logspace</span><span class="o">=</span><span class="n">logspace</span><span class="p">,</span>
+                   <span class="n">plot_errors</span><span class="o">=</span><span class="n">plot_errors</span><span class="p">,</span> <span class="n">is_regression</span><span class="o">=</span><span class="n">is_regression</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">comb</span> <span class="o">=</span> <span class="n">combinations</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pivoting_var</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pivoting_var</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">param_grid</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">indep_var</span><span class="p">)))</span>
+
+        <span class="n">ordered_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+            <span class="s1">&#39;test_score&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;cv_results_&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+                <span class="s1">&#39;mean_test_score&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># use best model, one pivot</span>
+        <span class="n">pivots</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">ordered_df</span><span class="p">[</span><span class="s1">&#39;param_&#39;</span> <span class="o">+</span> <span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pivoting_var</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pivots</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">param_grid</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pivoting_var</span><span class="p">]))</span>
+
+    <span class="n">pivot_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="p">[[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pivoting_var</span><span class="p">]))</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">pivots</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+    <span class="n">scoring</span> <span class="o">=</span> <span class="s1">&#39;error&#39;</span> <span class="k">if</span> <span class="n">plot_errors</span> <span class="k">else</span> <span class="s1">&#39;score&#39;</span>
+    <span class="n">legend_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;Train &#39;</span><span class="p">,</span> <span class="s1">&#39;Validation &#39;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span> <span class="o">+</span> <span class="n">scoring</span>
+    <span class="k">for</span> <span class="n">id_pivot</span><span class="p">,</span> <span class="p">(</span><span class="n">pivot</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">pivot_names</span><span class="p">,</span> <span class="n">pivots</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">id_param</span><span class="p">,</span> <span class="p">(</span><span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">comb</span><span class="p">):</span>
+            <span class="n">param_names</span> <span class="o">=</span> <span class="s1">&#39;param_&#39;</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">param1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">param2</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+
+            <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">)</span>
+            <span class="n">legend_handles</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">dff</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;cv_results_&#39;</span><span class="p">])</span>
+
+            <span class="c1"># get parameter grid from the first row, since they should be equal</span>
+            <span class="c1"># but pivoting</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pivot</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># no pivoting</span>
+                <span class="n">cond</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+                    <span class="n">dff</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">param_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cond</span> <span class="o">=</span> <span class="n">_multicond</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">dff</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;param_&#39;</span> <span class="o">+</span> <span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">v</span>
+                                    <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">pivot</span><span class="p">,</span> <span class="n">value</span><span class="p">)])</span>
+            <span class="n">xx</span> <span class="o">=</span> <span class="n">dff</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">param_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">yy</span> <span class="o">=</span> <span class="n">dff</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">param_names</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">log10_x</span><span class="p">,</span> <span class="n">log10_y</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">if</span> <span class="n">logspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">param1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">logspace</span><span class="p">:</span>
+                    <span class="n">xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">xx</span><span class="p">)</span>
+                    <span class="n">log10_x</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;$log_</span><span class="si">{10}</span><span class="s1">$ &#39;</span>
+                <span class="k">if</span> <span class="n">param2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">logspace</span><span class="p">:</span>
+                    <span class="n">yy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">yy</span><span class="p">)</span>
+                    <span class="n">log10_y</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;$log_</span><span class="si">{10}</span><span class="s1">$ &#39;</span>
+
+            <span class="n">param_grid_xx_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">param2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">param_grid_yy_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">param1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">xx</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">param_grid_xx_size</span><span class="p">,</span> <span class="n">param_grid_yy_size</span><span class="p">)</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="n">yy</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">param_grid_xx_size</span><span class="p">,</span> <span class="n">param_grid_yy_size</span><span class="p">)</span>
+            <span class="c1"># XX, YY = np.meshgrid(np.array(param2[1]), np.array(param1[1]))</span>
+            <span class="k">if</span> <span class="n">plot_errors</span><span class="p">:</span>
+                <span class="n">colors</span> <span class="o">=</span> <span class="p">(</span><span class="n">cm</span><span class="o">.</span><span class="n">Oranges_r</span><span class="p">,</span> <span class="n">cm</span><span class="o">.</span><span class="n">Blues_r</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">colors</span> <span class="o">=</span> <span class="p">(</span><span class="n">cm</span><span class="o">.</span><span class="n">Oranges</span><span class="p">,</span> <span class="n">cm</span><span class="o">.</span><span class="n">Blues</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="s1">&#39;test&#39;</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightOrange&#39;</span><span class="p">],</span> <span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightBlue&#39;</span><span class="p">]),</span>
+                    <span class="n">colors</span><span class="p">):</span>
+
+                <span class="c1"># The score is the mean of each external split</span>
+                <span class="n">zz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span>
+                    <span class="n">dff</span><span class="p">[</span><span class="s1">&#39;mean_</span><span class="si">%s</span><span class="s1">_score&#39;</span> <span class="o">%</span> <span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="n">cond</span><span class="p">]</span>
+                <span class="n">Z</span> <span class="o">=</span> <span class="n">zz</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">param_grid_xx_size</span><span class="p">,</span> <span class="n">param_grid_yy_size</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">plot_errors</span><span class="p">:</span>
+                    <span class="n">Z</span> <span class="o">=</span> <span class="o">-</span><span class="n">Z</span> <span class="k">if</span> <span class="n">is_regression</span> <span class="k">else</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">Z</span>
+
+                <span class="c1"># plt.close(&#39;all&#39;)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">plot_surface</span><span class="p">(</span>
+                    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">rstride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cstride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">antialiased</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+                <span class="n">legend_handles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Rectangle</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="n">h</span><span class="p">))</span>
+
+            <span class="c1"># plot max</span>
+            <span class="n">func_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span> <span class="k">if</span> <span class="n">plot_errors</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span>
+            <span class="n">pos_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Z</span> <span class="o">==</span> <span class="n">func_max</span><span class="p">(</span><span class="n">Z</span><span class="p">))</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">pos_max</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">pos_max</span><span class="p">],</span> <span class="n">Z</span><span class="p">[</span><span class="n">pos_max</span><span class="p">],</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span>
+                    <span class="n">c</span><span class="o">=</span><span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;darkRed&#39;</span><span class="p">])</span>
+
+            <span class="c1"># fig.colorbar()</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">legend_handles</span><span class="p">,</span> <span class="n">legend_labels</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">legend_handles</span><span class="p">)],</span>
+                      <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;average KCV </span><span class="si">%s</span><span class="s1">, pivot </span><span class="si">%s</span><span class="s1"> = </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">scoring</span><span class="p">,</span> <span class="n">pivot</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">log10_x</span> <span class="o">+</span> <span class="n">param_names</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">6</span><span class="p">:])</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">log10_y</span> <span class="o">+</span> <span class="n">param_names</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">6</span><span class="p">:])</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="s2">&quot;avg kcv </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">scoring</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">base_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">base_folder</span><span class="p">,</span> <span class="s1">&#39;kcv_</span><span class="si">%s</span><span class="s1">_piv</span><span class="si">%d</span><span class="s1">_comb</span><span class="si">%d</span><span class="s1">.png&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                        <span class="n">scoring</span><span class="p">,</span> <span class="n">id_pivot</span><span class="p">,</span> <span class="n">id_param</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="score_plot"><a class="viewcode-back" href="../../api.html#palladio.plotting.score_plot">[docs]</a><span class="k">def</span> <span class="nf">score_plot</span><span class="p">(</span><span class="n">param_grid</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">indep_var</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pivoting_var</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">base_folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">logspace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot_errors</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+               <span class="n">is_regression</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plot error 2d plot.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    param_grid : dict</span>
+<span class="sd">        Dictionary of grid parameters for GridSearch.</span>
+<span class="sd">    results : dict</span>
+<span class="sd">        Instance of an equivalent of cv_results_, as given by ModelAssessment.</span>
+<span class="sd">    indep_var : array-like, optional, default None</span>
+<span class="sd">        List of independent variables on which plots are based. If more that 2,</span>
+<span class="sd">        a plot for each combination is made. If None, the 2 longest parameters</span>
+<span class="sd">        in param_grid are selected.</span>
+<span class="sd">    pivoting_var : array-like, optional, default None</span>
+<span class="sd">        List of pivoting variables. For each of them, a plot is made.</span>
+<span class="sd">        If unspecified, get the unspecified independent variable with the best</span>
+<span class="sd">        model values.</span>
+<span class="sd">    base_folder : str or None, optional, default None</span>
+<span class="sd">        Folder where to save the plots.</span>
+<span class="sd">    logspace : array-like or None, optional, default None</span>
+<span class="sd">        List to specify which variable to visualise in logspace.</span>
+<span class="sd">    plot_errors : bool, optional, default False</span>
+<span class="sd">        If True, plot errors instead of scores.</span>
+<span class="sd">    is_regression : bool, optional, default False</span>
+<span class="sd">        If True and plot_errors is True, do errors = -scores instead of</span>
+<span class="sd">        1 - scores.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">indep_var</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">indep_var</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">iteritems</span><span class="p">(</span><span class="n">param_grid</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]))[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">pivoting_var</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pivoting_var</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">param_grid</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">indep_var</span><span class="p">])))</span>
+
+        <span class="n">ordered_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+            <span class="s1">&#39;test_score&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;cv_results_&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+                <span class="s1">&#39;mean_test_score&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># use best model, one pivot</span>
+        <span class="n">pivots</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">ordered_df</span><span class="p">[</span><span class="s1">&#39;param_&#39;</span> <span class="o">+</span> <span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pivoting_var</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pivots</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">param_grid</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pivoting_var</span><span class="p">]))</span>
+
+    <span class="n">pivot_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="p">[[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pivoting_var</span><span class="p">]))</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">pivots</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+    <span class="n">scoring</span> <span class="o">=</span> <span class="s1">&#39;error&#39;</span> <span class="k">if</span> <span class="n">plot_errors</span> <span class="k">else</span> <span class="s1">&#39;score&#39;</span>
+    <span class="n">legend_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;Train &#39;</span><span class="p">,</span> <span class="s1">&#39;Validation &#39;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span> <span class="o">+</span> <span class="n">scoring</span>
+    <span class="k">for</span> <span class="n">id_pivot</span><span class="p">,</span> <span class="p">(</span><span class="n">pivot</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">pivot_names</span><span class="p">,</span> <span class="n">pivots</span><span class="p">)):</span>
+        <span class="n">param_name</span> <span class="o">=</span> <span class="s1">&#39;param_&#39;</span> <span class="o">+</span> <span class="n">indep_var</span>
+
+        <span class="n">f</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">dff</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;cv_results_&#39;</span><span class="p">])</span>
+
+        <span class="c1"># get parameter grid from the first row, since they should be equal</span>
+        <span class="c1"># but pivoting</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pivot</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># no pivoting</span>
+            <span class="n">cond</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+                <span class="n">dff</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">param_name</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cond</span> <span class="o">=</span> <span class="n">_multicond</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">dff</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;param_&#39;</span> <span class="o">+</span> <span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">v</span>
+                                <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">pivot</span><span class="p">,</span> <span class="n">value</span><span class="p">)])</span>
+        <span class="n">param_range</span> <span class="o">=</span> <span class="n">dff</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">param_name</span><span class="p">][</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">logspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">plot</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">semilogx</span> <span class="k">if</span> <span class="n">indep_var</span> <span class="ow">in</span> <span class="n">logspace</span> <span class="k">else</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span>
+
+        <span class="k">for</span> <span class="n">string</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                <span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="s1">&#39;test&#39;</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightOrange&#39;</span><span class="p">],</span> <span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;lightBlue&#39;</span><span class="p">]),</span>
+                <span class="n">legend_labels</span><span class="p">):</span>
+            <span class="c1"># The score is the mean of each external split</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span>
+                <span class="n">dff</span><span class="p">[</span><span class="s1">&#39;mean_</span><span class="si">%s</span><span class="s1">_score&#39;</span> <span class="o">%</span> <span class="n">string</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="n">cond</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">plot_errors</span><span class="p">:</span>
+                <span class="n">score</span> <span class="o">=</span> <span class="o">-</span><span class="n">score</span> <span class="k">if</span> <span class="n">is_regression</span> <span class="k">else</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">score</span>
+
+            <span class="c1"># plt.close(&#39;all&#39;)</span>
+            <span class="n">plot</span><span class="p">(</span><span class="n">param_range</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+
+        <span class="c1"># plot max</span>
+        <span class="n">func_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span> <span class="k">if</span> <span class="n">plot_errors</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span>
+        <span class="n">pos_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">score</span> <span class="o">==</span> <span class="n">func_max</span><span class="p">(</span><span class="n">score</span><span class="p">))</span>
+        <span class="n">plot</span><span class="p">(</span><span class="n">param_range</span><span class="p">[</span><span class="n">pos_max</span><span class="p">],</span> <span class="n">score</span><span class="p">[</span><span class="n">pos_max</span><span class="p">],</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">COLORS_HEX</span><span class="p">[</span><span class="s1">&#39;darkRed&#39;</span><span class="p">])</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;average KCV </span><span class="si">%s</span><span class="s1">, pivot </span><span class="si">%s</span><span class="s1"> = </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">scoring</span><span class="p">,</span> <span class="n">pivot</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">indep_var</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;avg kcv </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">scoring</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">base_folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">base_folder</span><span class="p">,</span> <span class="s1">&#39;kcv_</span><span class="si">%s</span><span class="s1">_piv</span><span class="si">%d</span><span class="s1">_param_</span><span class="si">%s</span><span class="s1">.png&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">scoring</span><span class="p">,</span> <span class="n">id_pivot</span><span class="p">,</span> <span class="n">indep_var</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+
+<span class="k">def</span> <span class="nf">validation_curve_plot</span><span class="p">(</span><span class="n">train_scores</span><span class="p">,</span> <span class="n">test_scores</span><span class="p">,</span> <span class="n">estimator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">param_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">param_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">score</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">plot_errors</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">base_folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">title_footer</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+    <span class="n">train_scores_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">train_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">train_scores_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">train_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">test_scores_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">test_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">test_scores_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">test_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">f</span><span class="p">,</span> <span class="n">axarr</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span>
+        <span class="s2">&quot;Validation Curve with </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">estimator</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span> <span class="o">+</span> <span class="n">title_footer</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="n">param_name</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Score&quot;</span> <span class="o">+</span> <span class="s2">&quot; (</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="n">score</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">if</span> <span class="n">score</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">)</span>
+    <span class="n">lw</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">param_range</span><span class="p">,</span> <span class="n">train_scores_mean</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Training score&quot;</span><span class="p">,</span>
+                 <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkorange&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="n">lw</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">param_range</span><span class="p">,</span> <span class="n">train_scores_mean</span> <span class="o">-</span> <span class="n">train_scores_std</span><span class="p">,</span>
+                     <span class="n">train_scores_mean</span> <span class="o">+</span> <span class="n">train_scores_std</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+                     <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkorange&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="n">lw</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">param_range</span><span class="p">,</span> <span class="n">test_scores_mean</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Cross-validation score&quot;</span><span class="p">,</span>
+                 <span class="n">color</span><span class="o">=</span><span class="s2">&quot;navy&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="n">lw</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">param_range</span><span class="p">,</span> <span class="n">test_scores_mean</span> <span class="o">-</span> <span class="n">test_scores_std</span><span class="p">,</span>
+                     <span class="n">test_scores_mean</span> <span class="o">+</span> <span class="n">test_scores_std</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+                     <span class="n">color</span><span class="o">=</span><span class="s2">&quot;navy&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="n">lw</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">base_folder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">f</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/palladio_logo_npbg.png" alt="Logo"/>
+            </a></p>
+   
+      <h3>Download</h3>
+      <p>Current version: <b>2.0.3rc1</b></p>
+      <p>Get PALLADIO from the
+         <a href="http://pypi.python.org/pypi/PALLADIO">Python Package Index</a>,
+         or install it with:
+      </p>
+      <pre>pip install --upgrade PALLADIO</pre>
+      <p> or clone it from our <a href="https://github.com/slipguru/PALLADIO">GitHub</a> repository: </p>
+      <pre>git clone https://github.com/slipguru/PALLADIO</pre>
+      <!--or:-->
+      <!--<pre>easy_install -U PALLADIO</pre>-->
+<!--      <p>Latest
+         <a href="https://bitbucket.org/slipguru/palladio/downloads/PALLADIO.pdf">
+            documentation in pdf
+         </a>
+         is also available. -->
+      </p>
+   
+
+   
+   
+
+    
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+    <p class="logo">
+       <img class="logo" src="../../_static/logos.png" alt="Logos" usemap="#logosmap" />
+    </p>
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">PALLADIO 2.0.3rc1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Matteo Barbieri - Samuele Fiorini - Federico Tomasi - Annalisa Barla.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

@@ -469,6 +469,65 @@ dictionary with the following structure:</p>
 </dd></dl>
 
 </div>
+<div class="section" id="plotting-functions">
+<h2>Plotting functions<a class="headerlink" href="#plotting-functions" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="palladio.plotting.score_plot">
+<code class="descclassname">palladio.plotting.</code><code class="descname">score_plot</code><span class="sig-paren">(</span><em>param_grid</em>, <em>results</em>, <em>indep_var=None</em>, <em>pivoting_var=None</em>, <em>base_folder=None</em>, <em>logspace=None</em>, <em>plot_errors=False</em>, <em>is_regression=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/palladio/plotting.html#score_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#palladio.plotting.score_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot error 2d plot.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>param_grid</strong> : dict</p>
+<blockquote>
+<div><p>Dictionary of grid parameters for GridSearch.</p>
+</div></blockquote>
+<p><strong>results</strong> : dict</p>
+<blockquote>
+<div><p>Instance of an equivalent of <a href="#id16"><span class="problematic" id="id17">cv_results_</span></a>, as given by ModelAssessment.</p>
+</div></blockquote>
+<p><strong>indep_var</strong> : array-like, optional, default None</p>
+<blockquote>
+<div><p>List of independent variables on which plots are based. If more that 2,
+a plot for each combination is made. If None, the 2 longest parameters
+in param_grid are selected.</p>
+</div></blockquote>
+<p><strong>pivoting_var</strong> : array-like, optional, default None</p>
+<blockquote>
+<div><p>List of pivoting variables. For each of them, a plot is made.
+If unspecified, get the unspecified independent variable with the best
+model values.</p>
+</div></blockquote>
+<p><strong>base_folder</strong> : str or None, optional, default None</p>
+<blockquote>
+<div><p>Folder where to save the plots.</p>
+</div></blockquote>
+<p><strong>logspace</strong> : array-like or None, optional, default None</p>
+<blockquote>
+<div><p>List to specify which variable to visualise in logspace.</p>
+</div></blockquote>
+<p><strong>plot_errors</strong> : bool, optional, default False</p>
+<blockquote>
+<div><p>If True, plot errors instead of scores.</p>
+</div></blockquote>
+<p><strong>is_regression</strong> : bool, optional, default False</p>
+<blockquote class="last">
+<div><p>If True and plot_errors is True, do errors = -scores instead of
+1 - scores.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="palladio.plotting.features_manhattan">
+<code class="descclassname">palladio.plotting.</code><code class="descname">features_manhattan</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#palladio.plotting.features_manhattan" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
 </div>
 
 
@@ -487,6 +546,7 @@ dictionary with the following structure:</p>
 <li><a class="reference internal" href="#">API</a><ul>
 <li><a class="reference internal" href="#module-palladio.model_assessment">Pipeline utilities</a></li>
 <li><a class="reference internal" href="#module-palladio.utils">Extra tools</a></li>
+<li><a class="reference internal" href="#plotting-functions">Plotting functions</a></li>
 </ul>
 </li>
 </ul>

@@ -3,6 +3,13 @@
 The framework
 =============
 
+Runs in **PALLADIO** are called *sessions*; a session consists of the execution of all experiments followed by the analysis of the results.
+
+For details on how to perform the experiments and analyze the results, please refer to the :ref:`tutorial`.
+
+Dataset format
+----------------
+
 A dataset consists of two things:
 
 * An input matrix :math:`X \in \mathbb{R}^{n \times p}` representing :math:`n` samples each one described by :math:`p` features; in the case of gene expression microarrays for instance each feature represents
@@ -30,7 +37,7 @@ Experiments
 
 Each experiment is divided in several stages, as shown in :numref:`experiment-stages`:
 
-.. figure:: experiment_stages.pdf
+.. figure:: experiment_stages.*
    :scale: 80 %
    :align: center
    :alt: broken link
@@ -58,7 +65,7 @@ At the end of each experiment, results are stored in a ``.pkl`` file inside a su
 .. _analysis:
 
 Analysis
------------------
+^^^^^^^^^^^^
 
 The analysis script simply reads the partial results in all experiment folders, consisting of
 
@@ -69,7 +76,7 @@ With these it computes the accuracy achieved and then uses these elaborated resu
 
 :numref:`manhattan-plot` shows the absolute feature selection frequency in both *regular* experiments and permutation tests; each tick on the horizontal axis represents a different feature, whose position on the vertical axis is the number of times it was selected in an experiment. Features are sorted based on the selection frequency relative to *regular* experiments; green dots are frequencies for *regular* experiments, red ones for permutation tests.
 
-.. figure:: manhattan_plot.pdf
+.. figure:: manhattan_plot.*
    :scale: 80 %
    :align: center
    :alt: broken link
@@ -79,7 +86,7 @@ With these it computes the accuracy achieved and then uses these elaborated resu
 
 :numref:`signature-frequencies` shows a detail of the frequeny of the top :math:`2 \times p_{\rm rel}` selected features, where :math:`p_{\rm rel}` is the number of features identified as *relevant* by the framework, i.e. those which have been selected enough times according to the selection threshold defined in the configuration file. Seeing the selection frequency of *relevant* features with respect to the selection frequency of those which have been rejected may help better interpret the obtained results.
 
-.. figure:: signature_frequencies.pdf
+.. figure:: signature_frequencies.*
   :scale: 80 %
   :align: center
   :alt: broken link
@@ -87,17 +94,17 @@ With these it computes the accuracy achieved and then uses these elaborated resu
 
   A detail of the manhattan plot.
 
-Finally, :numref:`permutation-acc-distribution` shows the distribution of prediction accuracies (corrected for class imbalance) for *regular* experiments and permutation tests; this plot answer the questions:
+Finally, :numref:`acc-distribution` shows the distribution of prediction accuracies (corrected for class imbalance) for *regular* experiments and permutation tests; this plot answer the questions:
 
 * Is there any signal in the data being analyzed?
 * If yes, how much the model can describe it?
 
 In the example figure, the two distributions are clearly different, and the green one (showing the accuracies of *regular* experiments) has a mean which is significantly higher than chance (50 \%). A p-value obtained with the Wilcoxon rank sum test is also present in this plot, indicating whether there is a significant difference between the two distributions.
 
-.. figure:: permutation_acc_distribution.pdf
+.. figure:: balanced_accuracy_distribution.*
   :scale: 80 %
   :align: center
   :alt: broken link
-  :name: permutation-acc-distribution
+  :name: acc-distribution
 
   The distributions of accuracies for both *regular* experiments and permutation tests.

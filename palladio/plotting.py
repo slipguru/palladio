@@ -181,7 +181,7 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
 
     if base_folder is not None:
         plt.savefig(os.path.join(
-                    base_folder, '%s_distribution.pdf' % metric),
+                    base_folder, '%s_distribution.png' % metric),
                     bbox_inches='tight', dpi=300)
     else:
         pass
@@ -252,7 +252,7 @@ def features_manhattan(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
     plt.ylabel('Relative frequencies')
     plt.title("Feature frequencies")
     if base_folder is not None:
-        plt.savefig(os.path.join(base_folder, 'manhattan_plot.pdf'),
+        plt.savefig(os.path.join(base_folder, 'manhattan_plot.png'),
                     bbox_inches='tight', dpi=300)
     else:
         plt.show()
@@ -310,7 +310,7 @@ def feature_frequencies(feat_arr, base_folder, threshold=.75):
 
     plt.setp(ax.get_xticklabels(), fontsize=2, rotation='vertical')
     if base_folder is not None:
-        plt.savefig(os.path.join(base_folder, 'signature_frequencies.pdf'),
+        plt.savefig(os.path.join(base_folder, 'signature_frequencies.png'),
                     bbox_inches='tight', dpi=300)
     else:
         plt.show()
@@ -358,7 +358,7 @@ def select_over_threshold(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
     plt.xlim(thresh_axis[-1] * 100, thresh_axis[0] * 100)
 
     if base_folder is not None:
-        plt.savefig(os.path.join(base_folder, 'selected_over_threshold.pdf'))
+        plt.savefig(os.path.join(base_folder, 'selected_over_threshold.png'))
     else:
         plt.show()
 
@@ -503,7 +503,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
 
             if base_folder is not None:
                 plt.savefig(os.path.join(
-                    base_folder, 'kcv_%s_piv%d_comb%d.pdf' % (
+                    base_folder, 'kcv_%s_piv%d_comb%d.png' % (
                         scoring, id_pivot, id_param)))
             else:
                 plt.show()
@@ -603,7 +603,7 @@ def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
 
         if base_folder is not None:
             plt.savefig(os.path.join(
-                base_folder, 'kcv_%s_piv%d_param_%s.pdf' % (
+                base_folder, 'kcv_%s_piv%d_param_%s.png' % (
                     scoring, id_pivot, indep_var)))
         else:
             plt.show()

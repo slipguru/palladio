@@ -71,6 +71,10 @@
             
   <div class="section" id="the-framework">
 <span id="framework"></span><h1>The framework<a class="headerlink" href="#the-framework" title="Permalink to this headline">¶</a></h1>
+<p>Runs in <strong>PALLADIO</strong> are called <em>sessions</em>; a session consists of the execution of all experiments followed by the analysis of the results.</p>
+<p>For details on how to perform the experiments and analyze the results, please refer to the <a class="reference internal" href="tutorial.html#tutorial"><span class="std std-ref">Quick start tutorial</span></a>.</p>
+<div class="section" id="dataset-format">
+<h2>Dataset format<a class="headerlink" href="#dataset-format" title="Permalink to this headline">¶</a></h2>
 <p>A dataset consists of two things:</p>
 <ul class="simple">
 <li>An input matrix <span class="math">\(X \in \mathbb{R}^{n \times p}\)</span> representing <span class="math">\(n\)</span> samples each one described by <span class="math">\(p\)</span> features; in the case of gene expression microarrays for instance each feature represents</li>
@@ -78,6 +82,7 @@
 </ul>
 <p>For the time being, we will only consider a specific instance of the latter case, where the number of classes is two: this is commonly referred to as <em>binary classification</em> scenario.</p>
 <p>As previously explained, the core idea behind <strong>PALLADIO</strong> is to return, together with a list of significant features, not just a single value as an estimate for the prediction accuracy which can be achieved, but a distribution, so that it can be compared with the distribution obtained from experiments when the function is learned from data where the labels have been randomly shuffled (see <a class="reference internal" href="introduction.html#introduction"><span class="std std-ref">Introduction</span></a>).</p>
+</div>
 <div class="section" id="pipeline">
 <span id="id1"></span><h2>Pipeline<a class="headerlink" href="#pipeline" title="Permalink to this headline">¶</a></h2>
 <p>Once the main script has been launched, the configuration file is read in order to retrieve all required information to run all the experiments of a <strong>PALLADIO</strong> <em>session</em>. These include:</p>
@@ -91,7 +96,7 @@
 <h3>Experiments<a class="headerlink" href="#experiments" title="Permalink to this headline">¶</a></h3>
 <p>Each experiment is divided in several stages, as shown in <a class="reference internal" href="#experiment-stages"><span class="std std-numref">Fig. 1</span></a>:</p>
 <div class="figure align-center" id="experiment-stages">
-<a class="reference internal image-reference" href="_images/experiment_stages.pdf"><img alt="broken link" src="_images/experiment_stages.pdf" /></a>
+<a class="reference internal image-reference" href="_images/experiment_stages.png"><img alt="broken link" src="_images/experiment_stages.png" style="width: 820.8px; height: 378.4px;" /></a>
 <p class="caption"><span class="caption-number">Fig. 1 </span><span class="caption-text">The stages each experiment goes through.</span></p>
 </div>
 <div class="section" id="dataset-split-and-preprocessing">
@@ -108,9 +113,8 @@
 <p>At the end of each experiment, results are stored in a <code class="docutils literal"><span class="pre">.pkl</span></code> file inside a subfolder whose name will be of the form <code class="docutils literal"><span class="pre">regular_p_P_i_I</span></code> for regular experiments and <code class="docutils literal"><span class="pre">permutation_p_P_i_I</span></code> for experiments where the training labels have been randomly shuffled, where <code class="docutils literal"><span class="pre">P</span></code> and <code class="docutils literal"><span class="pre">I</span></code> the process number and within that process a counter which is incremented by one after each experiment.</p>
 </div>
 </div>
-</div>
 <div class="section" id="analysis">
-<span id="id2"></span><h2>Analysis<a class="headerlink" href="#analysis" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h3>Analysis<a class="headerlink" href="#analysis" title="Permalink to this headline">¶</a></h3>
 <p>The analysis script simply reads the partial results in all experiment folders, consisting of</p>
 <ul class="simple">
 <li>A list of features</li>
@@ -119,23 +123,24 @@
 <p>With these it computes the accuracy achieved and then uses these elaborated results to produce a number of plots:</p>
 <p><a class="reference internal" href="#manhattan-plot"><span class="std std-numref">Fig. 2</span></a> shows the absolute feature selection frequency in both <em>regular</em> experiments and permutation tests; each tick on the horizontal axis represents a different feature, whose position on the vertical axis is the number of times it was selected in an experiment. Features are sorted based on the selection frequency relative to <em>regular</em> experiments; green dots are frequencies for <em>regular</em> experiments, red ones for permutation tests.</p>
 <div class="figure align-center" id="manhattan-plot">
-<a class="reference internal image-reference" href="_images/manhattan_plot.pdf"><img alt="broken link" src="_images/manhattan_plot.pdf" /></a>
+<a class="reference internal image-reference" href="_images/manhattan_plot.png"><img alt="broken link" src="_images/manhattan_plot.png" style="width: 496.0px; height: 348.8px;" /></a>
 <p class="caption"><span class="caption-number">Fig. 2 </span><span class="caption-text">A manhattan plot showing the distribution of frequencies for both <em>regular</em> experiments and permutation tests.</span></p>
 </div>
 <p><a class="reference internal" href="#signature-frequencies"><span class="std std-numref">Fig. 3</span></a> shows a detail of the frequeny of the top <span class="math">\(2 \times p_{\rm rel}\)</span> selected features, where <span class="math">\(p_{\rm rel}\)</span> is the number of features identified as <em>relevant</em> by the framework, i.e. those which have been selected enough times according to the selection threshold defined in the configuration file. Seeing the selection frequency of <em>relevant</em> features with respect to the selection frequency of those which have been rejected may help better interpret the obtained results.</p>
 <div class="figure align-center" id="signature-frequencies">
-<a class="reference internal image-reference" href="_images/signature_frequencies.pdf"><img alt="broken link" src="_images/signature_frequencies.pdf" /></a>
+<a class="reference internal image-reference" href="_images/signature_frequencies.png"><img alt="broken link" src="_images/signature_frequencies.png" style="width: 498.4px; height: 391.2px;" /></a>
 <p class="caption"><span class="caption-number">Fig. 3 </span><span class="caption-text">A detail of the manhattan plot.</span></p>
 </div>
-<p>Finally, <a class="reference internal" href="#permutation-acc-distribution"><span class="std std-numref">Fig. 4</span></a> shows the distribution of prediction accuracies (corrected for class imbalance) for <em>regular</em> experiments and permutation tests; this plot answer the questions:</p>
+<p>Finally, <a class="reference internal" href="#acc-distribution"><span class="std std-numref">Fig. 4</span></a> shows the distribution of prediction accuracies (corrected for class imbalance) for <em>regular</em> experiments and permutation tests; this plot answer the questions:</p>
 <ul class="simple">
 <li>Is there any signal in the data being analyzed?</li>
 <li>If yes, how much the model can describe it?</li>
 </ul>
 <p>In the example figure, the two distributions are clearly different, and the green one (showing the accuracies of <em>regular</em> experiments) has a mean which is significantly higher than chance (50 %). A p-value obtained with the Wilcoxon rank sum test is also present in this plot, indicating whether there is a significant difference between the two distributions.</p>
-<div class="figure align-center" id="permutation-acc-distribution">
-<a class="reference internal image-reference" href="_images/permutation_acc_distribution.pdf"><img alt="broken link" src="_images/permutation_acc_distribution.pdf" /></a>
+<div class="figure align-center" id="acc-distribution">
+<a class="reference internal image-reference" href="_images/balanced_accuracy_distribution.png"><img alt="broken link" src="_images/balanced_accuracy_distribution.png" style="width: 535.2px; height: 357.6px;" /></a>
 <p class="caption"><span class="caption-number">Fig. 4 </span><span class="caption-text">The distributions of accuracies for both <em>regular</em> experiments and permutation tests.</span></p>
+</div>
 </div>
 </div>
 </div>
@@ -154,6 +159,7 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">The framework</a><ul>
+<li><a class="reference internal" href="#dataset-format">Dataset format</a></li>
 <li><a class="reference internal" href="#pipeline">Pipeline</a><ul>
 <li><a class="reference internal" href="#experiments">Experiments</a><ul>
 <li><a class="reference internal" href="#dataset-split-and-preprocessing">Dataset split and preprocessing</a></li>
@@ -161,9 +167,9 @@
 <li><a class="reference internal" href="#model-assessment">Model assessment</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#analysis">Analysis</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#analysis">Analysis</a></li>
 </ul>
 </li>
 </ul>

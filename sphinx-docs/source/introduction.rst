@@ -11,10 +11,12 @@ Machine Learning (ML) techniques work by *learning* such function using only *pa
 This is referred to in ML literature as *binary classification scenario*.
 
 In the aforementioned scenario, having only few samples available means that the learned function may be highly dependent on how the dataset was split; a common solution to this issue is to perform *K-fold cross validation* (KCV) which means splitting the dataset in :math:`K` chunks and performing the experiment :math:`K` times, each time leaving out a different chunk to be used as test set; this reduces the risk that the results are dependent on a particular split. The :math:`K` parameter usually is chosen between 3 and 10, depending on the dataset.
+The outcome of this procedure consists of a *signature*, that is a list of relevant features, as well as a measure of *prediction accuracy*, that is the ratio of correctly classified samples in the test set, averaged over all splits.
+The final signature is produced by choosing only those features which have been selected with a frequency higher than a fixed threshold. This reflects the idea that the most significant features will be selected more often than not, unlike non-significant features.
 
-This is the idea behind `L1L2Signature <http://slipguru.disi.unige.it/Software/L1L2Signature/>`_ , a framework specifically designed with this issue in mind.
-``L1L2Signature`` performs *feature selection* while learning the function, that is it tries to identify which ones among the available features are actually *relevant* for the problem, that is *which are actually used* in the learned function.
-The output of ``L1L2Signature`` consists of a *signature*, that is a list of relevant features, as well as a measure of *prediction accuracy*, that is the ratio of correctly classified samples in the test set, averaged over all splits.
+.. This is the idea behind `L1L2Signature <http://slipguru.disi.unige.it/Software/L1L2Signature/>`_ , a framework specifically designed with this issue in mind.
+.. ``L1L2Signature`` performs *feature selection* while learning the function, that is it tries to identify which ones among the available features are actually *relevant* for the problem, that is *which are actually used* in the learned function.
+.. The output of ``L1L2Signature`` consists of a *signature*, that is a list of relevant features, as well as a measure of *prediction accuracy*, that is the ratio of correctly classified samples in the test set, averaged over all splits.
 
 There are however cases where it is hard to tell whether this procedure actually yielded a meaningful result: for instance, the fact that the accuracy measure is only *slightly* higher than chance can indicate two very different things:
 
@@ -25,3 +27,5 @@ In order to tackle this issue, **PALLADIO** repeats the experiment many times (:
 The experiment is also repeated the same number of times in a similar setting with a difference: in training sets, the labels are randomly shuffled, therefore destroying any connection between features and output class.
 
 The output of this procedure is not a single value, possibly averaged, for the accuracy, but instead *two distributions of values* (one for each of the two settings described above) which, in case of datasets where the relationship between features and output class is at most faint, allows users to distinguish between the two scenarios mentioned above: in facts, if the available features are somehow connected with the outcome class, even weakly, then the two distributions will be  different enough to be distinguished; if on the other hand features and class are not related in any way, the two distributions will be indistinguishable, and it will be safe to draw that conclusion.
+
+Since all experiments are independent from one another, **PALLADIO** has been designed to take advantage of parallel architectures such as clusters or multicore processors, if they are available.
