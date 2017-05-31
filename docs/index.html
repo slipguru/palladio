@@ -67,7 +67,7 @@
             
   <div class="section" id="palladio-parallel-framework-for-model-selection">
 <h1>PALLADIO (ParALleL frAmework for moDel selectIOn)<a class="headerlink" href="#palladio-parallel-framework-for-model-selection" title="Permalink to this headline">¶</a></h1>
-<p><strong>PALLADIO</strong> is a machine learning framework whose purpose is to provide robust and reproducible results when dealing with data where the signal to noise ratio is low.
+<p><strong>PALLADIO</strong> <a class="footnote-reference" href="#id2" id="id1">[1]</a> is a machine learning framework whose purpose is to provide robust and reproducible results when dealing with data where the signal to noise ratio is low.
 It also provides tools to determine whether the dataset being analyzed contains any signal at all.
 <strong>PALLADIO</strong> works by repeating the same experiment many times, each time resampling the learning and the test set so that the outcome is reliable as it is not determined by a <em>single</em> partition of the dataset. Besides, using permutation tests, it is possible to provide, to some extent, a measure of how reliable the results produced by an experiments are.
 Since all experiments performed are independent, PALLADIO is designed so that it can exploit a cluster where it is available, in order to greatly reduce the amount of time required.</p>
@@ -87,9 +87,11 @@ Since all experiments performed are independent, PALLADIO is designed so that it
 <li class="toctree-l1"><a class="reference internal" href="framework.html">The framework</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="framework.html#dataset-format">Dataset format</a></li>
 <li class="toctree-l2"><a class="reference internal" href="framework.html#pipeline">Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="framework.html#results-interpretation">Results interpretation</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Quick start tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#installation-using-pip">Installation using pip</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial.html#installation-from-sources">Installation from sources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial.html#cluster-setup">Cluster setup</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial.html#configuration-file">Configuration File</a></li>
@@ -104,6 +106,15 @@ Since all experiments performed are independent, PALLADIO is designed so that it
 </ul>
 </li>
 </ul>
+</div>
+<div class="section" id="reference">
+<h3>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h3>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Barbieri, M., Fiorini, S., Tomasi, F. and Barla, A. &#8220;PALLADIO: A Parallel Framework for Robust Variable Selection in High-dimensional Data.&#8221; <em>Proceedings of the 6th Workshop on Python for High-Performance and Scientific Computing</em> (2016): 19-26.</td></tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>

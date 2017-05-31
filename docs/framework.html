@@ -91,7 +91,7 @@
 <li>Experiment design parameters, such as the total number of experiments and the ratio of samples to be used for testing in each experiment.</li>
 </ul>
 <ul class="simple">
-<li>Parameters specific to the chosen machine learning algorithm: for instance, for the Elastic Net algorithm, the values for the <span class="math">\(\alpha\)</span> and <span class="math">\(\ell_1\)</span> <code class="docutils literal"><span class="pre">ratio</span></code> parameters.</li>
+<li>Parameters specific to the chosen machine learning algorithm: for instance, for the Elastic Net algorithm, the values for the <code class="docutils literal"><span class="pre">alpha</span></code> and <code class="docutils literal"><span class="pre">l1_ratio</span></code> parameters.</li>
 </ul>
 <p>A <em>session folder</em> is created within the folder containing the configuration file, in order to keep everything as contained as possible; data and labels file, together with the configuration file itself, are copied inside this folder. Then, experiments are distributed among the machines of the cluster; each machine will be assigned roughly the same number of jobs in order to balance the load.</p>
 <div class="section" id="experiments">
@@ -138,11 +138,25 @@
 <li>Is there any signal in the data being analyzed?</li>
 <li>If yes, how much the model can describe it?</li>
 </ul>
-<p>In the example figure, the two distributions are clearly different, and the green one (showing the accuracies of <em>regular</em> experiments) has a mean which is significantly higher than chance (50 %). A p-value obtained with the Wilcoxon rank sum test is also present in this plot, indicating whether there is a significant difference between the two distributions.</p>
+<p>In the example figure, the two distributions are clearly different, and the green one (showing the accuracies of <em>regular</em> experiments) has a mean which is significantly higher than chance (50 %). A p-value obtained with the <a class="reference external" href="https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test#Two-sample_Kolmogorov.E2.80.93Smirnov_test">Two-sample Kolmogorov&#8211;Smirnov test</a> is also present in this plot, indicating whether there is a significant difference between the two distributions.</p>
 <div class="figure align-center" id="acc-distribution">
 <a class="reference internal image-reference" href="_images/balanced_accuracy_distribution.png"><img alt="broken link" src="_images/balanced_accuracy_distribution.png" style="width: 535.2px; height: 357.6px;" /></a>
 <p class="caption"><span class="caption-number">Fig. 4 </span><span class="caption-text">The distributions of accuracies for both <em>regular</em> experiments and permutation tests.</span></p>
 </div>
+</div>
+</div>
+<div class="section" id="results-interpretation">
+<h2>Results interpretation<a class="headerlink" href="#results-interpretation" title="Permalink to this headline">¶</a></h2>
+<p>Once the analysis has been performed, it is possible to draw conclusions from the results of the experiment.</p>
+<p>Ideally, in a dataset where there is a significant correlation between input and output, the two distributions of accuracy values will be visibly different, such as those shown in <a class="reference internal" href="#acc-distribution"><span class="std std-numref">Fig. 4</span></a>.
+As a consequenence, the p-value for the Two-sample Kolmogorov&#8211;Smirnov test will be very low (see below for more details on the choice of the significance level <span class="math">\(\alpha\)</span>).</p>
+<p>The purpose of testing if the two distributions are different is to determine if the feature signature is reliable or not: in facts, if one obtains a poor result in terms of prediction accuracy, there is no point in looking at the list of selected variables, as those would refer to models which were not able to fit the available data.</p>
+<div class="section" id="significance-level">
+<span id="siglev"></span><h3>Significance level<a class="headerlink" href="#significance-level" title="Permalink to this headline">¶</a></h3>
+<p>When using statistical tests such as the T-test to compare two distributions the p-value is compared with a given threshold or <em>significance level</em> <span class="math">\(\alpha\)</span>, which is usually set to 0.05 or 0.01.</p>
+<p>However we noticed that, on experiments performed on datasets with no correlation between input and output with the purpose of determining the behaviour of the framework in these cases, the two distributions of accuracy values, albeit being almost identical, yielded a p-value in the order of <span class="math">\(10^{-5}-10^{-4}\)</span>.
+Notice that, being experiments performed on synthetic datasets, we knew in advance that there was no correlation whatsoever and therefore the two distributions had to be indistinguishable.</p>
+<p>The suggested significance level when performing 100 experiments per batch (a total of 200) is <span class="math">\(10^{-10}\)</span>.</p>
 </div>
 </div>
 </div>
@@ -170,6 +184,10 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#analysis">Analysis</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#results-interpretation">Results interpretation</a><ul>
+<li><a class="reference internal" href="#significance-level">Significance level</a></li>
 </ul>
 </li>
 </ul>

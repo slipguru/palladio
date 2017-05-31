@@ -2,6 +2,11 @@
 
 Quick start tutorial
 ====================
+
+Installation using pip
+-------------------------
+
+
 **PALLADIO** may be installed using standard Python tools (with
 administrative or sudo permissions on GNU-Linux platforms)::
 
@@ -102,7 +107,7 @@ It is fairly easy to prepare the cluster for the experiments: assuming a standar
 
 Configuration File
 ------------------
-**PALLADIO** configuration file is a standard Python script. It is
+A configuration file in **PALLADIO** is a standard Python script. It is
 imported as a module, then all the code is executed. In this file the user defines all the parameters required to run a *session*, that is to perform all the experiments required to produce the final plots and reports.
 
 In folder ``palladio/config_templates`` you will find an example of a typical configuration file.
@@ -193,6 +198,8 @@ Then we use a ``GridSearchCV`` (`<http://scikit-learn.org/stable/modules/generat
 The dictionary ``ma_options`` define some more configuration options for the :py:class:`~palladio.model_assessment.ModelAssessment` object, which is the one responsible for the outer iterations (the ones where the dataset is resampled);
 the ``test_size`` key for instance determins the portion of data left aside for testing.
 
+The only constraint for the ``estimator`` object is that it has to implement the standard methods of an ``sklearn`` estimator object, that is methods ``fit`` and ``predict``. Using any classification algorithm provided by the `scikit-learn <http://scikit-learn.org/stable/>`_ library automatically satisfies this requirement.
+
 
 .. _running-experiments:
 
@@ -232,10 +239,3 @@ See :ref:`analysis` for further details on the output of the analysis.
 .. Reference
 .. ----------------
 .. .. [1] Weinstein, John N., et al. "The cancer genome atlas pan-cancer analysis project." Nature genetics 45.10 (2013): 1113-1120.
-
-
-.. https://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test
-
-.. .. rubric:: Footnotes
-
-.. .. [#f1] A standalone version of the ``L1L2Py`` library is included in the package in order to further speed up the deployment process.

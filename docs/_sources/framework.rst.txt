@@ -29,7 +29,7 @@ Once the main script has been launched, the configuration file is read in order 
 * The location of **data** and **labels** files.
 * Experiment design parameters, such as the total number of experiments and the ratio of samples to be used for testing in each experiment.
 .. * Parameters specific to the chosen machine learning algorithm: for instance, for the :math:`\ell_1 \ell_2` regularized algorithm, the values for the :math:`\tau` and :math:`\lambda` parameters.
-* Parameters specific to the chosen machine learning algorithm: for instance, for the Elastic Net algorithm, the values for the :math:`\alpha` and :math:`\ell_1` ``ratio`` parameters.
+* Parameters specific to the chosen machine learning algorithm: for instance, for the Elastic Net algorithm, the values for the ``alpha`` and ``l1_ratio`` parameters.
 
 A *session folder* is created within the folder containing the configuration file, in order to keep everything as contained as possible; data and labels file, together with the configuration file itself, are copied inside this folder. Then, experiments are distributed among the machines of the cluster; each machine will be assigned roughly the same number of jobs in order to balance the load.
 
@@ -100,7 +100,7 @@ Finally, :numref:`acc-distribution` shows the distribution of prediction accurac
 * Is there any signal in the data being analyzed?
 * If yes, how much the model can describe it?
 
-In the example figure, the two distributions are clearly different, and the green one (showing the accuracies of *regular* experiments) has a mean which is significantly higher than chance (50 \%). A p-value obtained with the Wilcoxon rank sum test is also present in this plot, indicating whether there is a significant difference between the two distributions.
+In the example figure, the two distributions are clearly different, and the green one (showing the accuracies of *regular* experiments) has a mean which is significantly higher than chance (50 \%). A p-value obtained with the `Two-sample Kolmogorov--Smirnov test <https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test#Two-sample_Kolmogorov.E2.80.93Smirnov_test>`_ is also present in this plot, indicating whether there is a significant difference between the two distributions.
 
 .. figure:: balanced_accuracy_distribution.*
   :scale: 80 %
@@ -109,3 +109,31 @@ In the example figure, the two distributions are clearly different, and the gree
   :name: acc-distribution
 
   The distributions of accuracies for both *regular* experiments and permutation tests.
+
+Results interpretation
+----------------------
+
+Once the analysis has been performed, it is possible to draw conclusions from the results of the experiment.
+
+Ideally, in a dataset where there is a significant correlation between input and output, the two distributions of accuracy values will be visibly different, such as those shown in :numref:`acc-distribution`.
+As a consequenence, the p-value for the Two-sample Kolmogorov--Smirnov test will be very low (see below for more details on the choice of the significance level :math:`\alpha`).
+
+The purpose of testing if the two distributions are different is to determine if the feature signature is reliable or not: in facts, if one obtains a poor result in terms of prediction accuracy, there is no point in looking at the list of selected variables, as those would refer to models which were not able to fit the available data.
+
+.. _siglev:
+
+Significance level
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+When using statistical tests such as the T-test to compare two distributions the p-value is compared with a given threshold or *significance level* :math:`\alpha`, which is usually set to 0.05 or 0.01.
+
+However we noticed that, on experiments performed on datasets with no correlation between input and output with the purpose of determining the behaviour of the framework in these cases, the two distributions of accuracy values, albeit being almost identical, yielded a p-value in the order of :math:`10^{-5}-10^{-4}`.
+Notice that, being experiments performed on synthetic datasets, we knew in advance that there was no correlation whatsoever and therefore the two distributions had to be indistinguishable.
+
+The suggested significance level when performing 100 experiments per batch (a total of 200) is :math:`10^{-10}`.
+
+.. Reference
+.. ----------------
+.. .. [2] Barbieri, M., Fiorini, S., Tomasi, F. and Barla, A. "PALLADIO: A Parallel Framework for Robust Variable Selection in High-dimensional Data." *Proceedings of the 6th Workshop on Python for High-Performance and Scientific Computing* (2016): 19-26.
+..
+..

@@ -71,6 +71,8 @@
             
   <div class="section" id="quick-start-tutorial">
 <span id="tutorial"></span><h1>Quick start tutorial<a class="headerlink" href="#quick-start-tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="installation-using-pip">
+<h2>Installation using pip<a class="headerlink" href="#installation-using-pip" title="Permalink to this headline">¶</a></h2>
 <p><strong>PALLADIO</strong> may be installed using standard Python tools (with
 administrative or sudo permissions on GNU-Linux platforms):</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>$ pip install palladio
@@ -81,6 +83,7 @@ $ easy_install palladio
 </pre></div>
 </div>
 <p>We strongly suggest to use <a class="reference external" href="https://www.continuum.io/downloads">Anaconda</a> and create an environment for your experiments.</p>
+</div>
 <div class="section" id="installation-from-sources">
 <h2>Installation from sources<a class="headerlink" href="#installation-from-sources" title="Permalink to this headline">¶</a></h2>
 <p>If you like to manually install <strong>PALLADIO</strong>, download the .zip or .tar.gz archive
@@ -126,7 +129,7 @@ It is fairly easy to prepare the cluster for the experiments: assuming a standar
 </div>
 <div class="section" id="configuration-file">
 <span id="configuration"></span><h2>Configuration File<a class="headerlink" href="#configuration-file" title="Permalink to this headline">¶</a></h2>
-<p><strong>PALLADIO</strong> configuration file is a standard Python script. It is
+<p>A configuration file in <strong>PALLADIO</strong> is a standard Python script. It is
 imported as a module, then all the code is executed. In this file the user defines all the parameters required to run a <em>session</em>, that is to perform all the experiments required to produce the final plots and reports.</p>
 <p>In folder <code class="docutils literal"><span class="pre">palladio/config_templates</span></code> you will find an example of a typical configuration file.
 Every configuration file has several sections which control different aspects of the procedure.</p>
@@ -203,6 +206,7 @@ Because of the way <strong>PALLADIO</strong> is designed, for all repetitions of
 Then we use a <code class="docutils literal"><span class="pre">GridSearchCV</span></code> (<a class="reference external" href="http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html">http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html</a>) object to wrap the RFE object, because we want to optimize the parameters for the RFE object itself, which are defined just above the declaration of the <code class="docutils literal"><span class="pre">estimator</span></code> variable.</p>
 <p>The dictionary <code class="docutils literal"><span class="pre">ma_options</span></code> define some more configuration options for the <a class="reference internal" href="api.html#palladio.model_assessment.ModelAssessment" title="palladio.model_assessment.ModelAssessment"><code class="xref py py-class docutils literal"><span class="pre">ModelAssessment</span></code></a> object, which is the one responsible for the outer iterations (the ones where the dataset is resampled);
 the <code class="docutils literal"><span class="pre">test_size</span></code> key for instance determins the portion of data left aside for testing.</p>
+<p>The only constraint for the <code class="docutils literal"><span class="pre">estimator</span></code> object is that it has to implement the standard methods of an <code class="docutils literal"><span class="pre">sklearn</span></code> estimator object, that is methods <code class="docutils literal"><span class="pre">fit</span></code> and <code class="docutils literal"><span class="pre">predict</span></code>. Using any classification algorithm provided by the <a class="reference external" href="http://scikit-learn.org/stable/">scikit-learn</a> library automatically satisfies this requirement.</p>
 </div>
 <div class="section" id="running-the-experiments">
 <span id="running-experiments"></span><h2>Running the experiments<a class="headerlink" href="#running-the-experiments" title="Permalink to this headline">¶</a></h2>
@@ -248,6 +252,7 @@ the <code class="docutils literal"><span class="pre">test_size</span></code> key
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Quick start tutorial</a><ul>
+<li><a class="reference internal" href="#installation-using-pip">Installation using pip</a></li>
 <li><a class="reference internal" href="#installation-from-sources">Installation from sources</a></li>
 <li><a class="reference internal" href="#cluster-setup">Cluster setup</a></li>
 <li><a class="reference internal" href="#configuration-file">Configuration File</a></li>
