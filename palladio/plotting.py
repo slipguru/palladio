@@ -180,9 +180,10 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
                  .format(rstest[1]), fontsize=18)
 
     if base_folder is not None:
-        plt.savefig(os.path.join(
-                    base_folder, '%s_distribution.png' % metric),
-                    bbox_inches='tight', dpi=300)
+        for img_type in ('pdf', 'png'):
+            plt.savefig(os.path.join(
+                        base_folder, 'figures_{}'.format(img_type),  '{}_distribution.{}'.format(metric, img_type)),
+                        bbox_inches='tight', dpi=300)
     else:
         pass
         # plt.show()
@@ -252,8 +253,14 @@ def features_manhattan(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
     plt.ylabel('Relative frequencies')
     plt.title("Feature frequencies")
     if base_folder is not None:
-        plt.savefig(os.path.join(base_folder, 'manhattan_plot.png'),
-                    bbox_inches='tight', dpi=300)
+
+        for img_type in ('pdf', 'png'):
+            plt.savefig(os.path.join(
+                        base_folder, 'figures_{}'.format(img_type),  'manhattan_plot.{}'.format(img_type)),
+                        bbox_inches='tight', dpi=300)
+
+        # plt.savefig(os.path.join(base_folder, 'manhattan_plot.png'),
+                    # bbox_inches='tight', dpi=300)
     else:
         plt.show()
 
@@ -310,8 +317,14 @@ def feature_frequencies(feat_arr, base_folder, threshold=.75):
 
     plt.setp(ax.get_xticklabels(), fontsize=2, rotation='vertical')
     if base_folder is not None:
-        plt.savefig(os.path.join(base_folder, 'signature_frequencies.png'),
-                    bbox_inches='tight', dpi=300)
+
+        for img_type in ('pdf', 'png'):
+            plt.savefig(os.path.join(
+                        base_folder, 'figures_{}'.format(img_type),  'signature_frequencies.{}'.format(img_type)),
+                        bbox_inches='tight', dpi=300)
+
+        # plt.savefig(os.path.join(base_folder, 'signature_frequencies.png'),
+        #             bbox_inches='tight', dpi=300)
     else:
         plt.show()
 
@@ -358,7 +371,12 @@ def select_over_threshold(feat_arr_r, feat_arr_p, base_folder, threshold=.75):
     plt.xlim(thresh_axis[-1] * 100, thresh_axis[0] * 100)
 
     if base_folder is not None:
-        plt.savefig(os.path.join(base_folder, 'selected_over_threshold.png'))
+        for img_type in ('pdf', 'png'):
+            plt.savefig(os.path.join(
+                        base_folder, 'figures_{}'.format(img_type),  'selected_over_threshold.{}'.format(img_type)),
+                        bbox_inches='tight', dpi=300)
+
+        # plt.savefig(os.path.join(base_folder, 'selected_over_threshold.png'))
     else:
         plt.show()
 
@@ -502,9 +520,11 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             ax.set_zlabel("avg kcv %s" % scoring)
 
             if base_folder is not None:
-                plt.savefig(os.path.join(
-                    base_folder, 'kcv_%s_piv%d_comb%d.png' % (
-                        scoring, id_pivot, id_param)))
+
+                for img_type in ('pdf', 'png'):
+                    plt.savefig(os.path.join(
+                    base_folder, 'kcv_{}_piv{}_comb{}.{}'.format(
+                        scoring, id_pivot, id_param, img_type)))
             else:
                 plt.show()
 
@@ -602,9 +622,13 @@ def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
         ax.set_ylabel("avg kcv %s" % scoring)
 
         if base_folder is not None:
-            plt.savefig(os.path.join(
-                base_folder, 'kcv_%s_piv%d_param_%s.png' % (
-                    scoring, id_pivot, indep_var)))
+            for img_type in ('pdf', 'png'):
+                plt.savefig(os.path.join(
+                base_folder, 'kcv_{}_piv{}_comb{}.{}'.format(
+                    scoring, id_pivot, id_param, img_type)))
+            # plt.savefig(os.path.join(
+            #     base_folder, 'kcv_%s_piv%d_param_%s.png' % (
+            #         scoring, id_pivot, indep_var)))
         else:
             plt.show()
 
