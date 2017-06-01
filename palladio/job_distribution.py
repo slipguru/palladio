@@ -135,11 +135,6 @@ def main(pd_session_object, base_folder):
         pd_session_object._config_path = None
         pd_session_object._session_folder = None
 
-        # CREATE HARD LINK IN SESSION FOLDER
-        # if hasattr(config, 'data_path') and hasattr(config, 'target_path'):
-        #     copy_files(config.data_path, config.target_path,
-        #                config_dir, session_folder)
-
         # Dump session object
         with gzip.open(
                 os.path.join(session_folder, 'pd_session.pkl.gz'), 'w') as f:
@@ -151,13 +146,31 @@ def main(pd_session_object, base_folder):
     busy_wait(session_folder)
     busy_wait(experiments_folder_path)
 
-    # ### Initialize logging object
-    # It will log stuff on the same file for all processes
-    # And an individual copy
+    # create formatter for loggers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    if RANK == 0:
+        # ### Initialize master logger
+        master_logger = logging.getLogger('master')
+        master_logger.setLevel(logging.DEBUG)
+
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+
+        fh = logging.FileHandler(os.path.join(logs_folder_path, 'master_{}.log'.format(NAME)))
+        fh.setLevel(logging.DEBUG)
+
+        ch.setFormatter(formatter)
+        fh.setFormatter(formatter)
+
+        # add the handlers to the logger
+        master_logger.addHandler(ch)
+        # logger.addHandler(fh_shared)
+        master_logger.addHandler(fh)
 
     # Create the main logging object
-    logger = logging.getLogger('main')
-    logger.setLevel(logging.DEBUG)
+    worker_logger = logging.getLogger('worker')
+    worker_logger.setLevel(logging.DEBUG)
 
     # create console handler with INFO log level
     # DEBUG level messages won't be shown here
@@ -168,33 +181,33 @@ def main(pd_session_object, base_folder):
     # create file handler which logs even debug messages
     # This logger writes on a shared file
 
-    fh_shared = logging.FileHandler(os.path.join(logs_folder_path, 'pd_session.log'))
-    fh_shared.setLevel(logging.DEBUG)
+    # fh_shared = logging.FileHandler(os.path.join(logs_folder_path, 'pd_session.log'))
+    # fh_shared.setLevel(logging.DEBUG)
 
     # A handler for each individual process
     fh_single = logging.FileHandler(os.path.join(logs_folder_path, 'worker_{}{}.log'.format(NAME, RANK)))
     fh_single.setLevel(logging.DEBUG)
 
-    # create formatter and add it to the handlers
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # Assigning formatter to handlers
     ch.setFormatter(formatter)
-    fh_shared.setFormatter(formatter)
+    # fh_shared.setFormatter(formatter)
     fh_single.setFormatter(formatter)
 
     # add the handlers to the logger
-    logger.addHandler(ch)
-    logger.addHandler(fh_shared)
-    logger.addHandler(fh_single)
+    worker_logger.addHandler(ch)
+    # logger.addHandler(fh_shared)
+    worker_logger.addHandler(fh_single)
 
-    logger.debug('Logger initialization completed')
+    if RANK == 0:
+
+        master_logger.debug('Logger initialization completed')
+
+        master_logger.info('Data shape: {}'.format(data.shape))
+        master_logger.info('Labels shape: {}'.format(labels.shape))
 
     if IS_MPI_JOB:
         # Wait for the folder to be created and files to be copied
         COMM.barrier()
-
-    if RANK == 0:
-        print('  * Data shape:', data.shape)
-        print('  * Labels shape:', labels.shape)
 
     internal_estimator = pd_session_object._estimator
 
@@ -215,11 +228,11 @@ def main(pd_session_object, base_folder):
 
 
     if n_splits_regular is not None and n_splits_regular > 0:
-        logger.info('Performing regular experiments')
+        worker_logger.info('Performing regular experiments')
         ma_regular = ModelAssessment(
             internal_estimator, **ma_options).fit(
                 data, labels)
-        logger.info('Regular experiments completed')
+        worker_logger.info('Regular experiments completed')
     else:
         ma_regular = None
 
@@ -233,14 +246,14 @@ def main(pd_session_object, base_folder):
     n_splits_permutation = pd_session_object._n_splits_permutation
 
     if n_splits_permutation is not None and n_splits_permutation > 0:
-        logger.info('Performing permutation experiments')
+        worker_logger.info('Performing permutation experiments')
         ma_permutation = ModelAssessment(
             internal_estimator,
             n_splits=n_splits_permutation,
             shuffle_y=True,
             **ma_options
         ).fit(data, labels)
-        logger.info('Permutation experiments completed')
+        worker_logger.info('Permutation experiments completed')
     else:
         ma_permutation = None
 
@@ -249,9 +262,9 @@ def main(pd_session_object, base_folder):
         COMM.barrier()
 
     if RANK == 0:
+
         t100 = time.time()
-        with open(os.path.join(session_folder, 'report.txt'), 'w') as rf:
-            rf.write("Total elapsed time: {}".format(
-                sec_to_timestring(t100 - t0)))
+
+        master_logger.info('Session complete, elapsed time: {}'.format(sec_to_timestring(t100 - t0)))
 
     return ma_regular, ma_permutation

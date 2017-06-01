@@ -57,19 +57,19 @@ def _worker(estimator_, i, X, y, train, test):
     #     ("permutation" if is_permutation_test else "regular"), RANK, i)
     # tmp_name_base = 'tmp_' + custom_name
 
-    logger = logging.getLogger('main')
+    worker_logger = logging.getLogger('worker')
 
     experiment_resubmissions = 0
     experiment_completed = False
 
-    logger.info("{}{} executing job {}".format(NAME, RANK, i))
+    worker_logger.info("{}{} executing job {}".format(NAME, RANK, i))
 
     while not experiment_completed and \
             experiment_resubmissions <= MAX_RESUBMISSIONS:
         try:
 
             if experiment_resubmissions > 0:
-                logger.warning("{}{} resubmitting experiment {}".format(NAME, RANK, i))
+                worker_logger.warning("{}{} resubmitting experiment {}".format(NAME, RANK, i))
 
             # tmp_name = tmp_name_base + '_submission_{}'.format(
             #     experiment_resubmissions + 1)
@@ -91,16 +91,16 @@ def _worker(estimator_, i, X, y, train, test):
                 random_state = check_random_state(estimator_.random_state)
                 y_train = _shuffle(y_train, estimator_.groups, random_state)
 
-            logger.info("{}{} fitting experiment {} - starting".format(NAME, RANK, i))
+            worker_logger.info("{}{} fitting experiment {} - starting".format(NAME, RANK, i))
             estimator.fit(X_train, y_train)
-            logger.info("{}{} fitting experiment {} - completed".format(NAME, RANK, i))
+            worker_logger.info("{}{} fitting experiment {} - completed".format(NAME, RANK, i))
 
-            logger.debug("{}{} scoring experiment {} - starting".format(NAME, RANK, i))
+            worker_logger.debug("{}{} scoring experiment {} - starting".format(NAME, RANK, i))
             yts_pred = estimator.predict(X_test)
             ytr_pred = estimator.predict(X_train)
             lr_score = estimator_.scorer_(estimator, X_train, y_train)
             ts_score = estimator_.scorer_(estimator, X_test, y_test)
-            logger.debug("{}{} scoring experiment {} - complete".format(NAME, RANK, i))
+            worker_logger.debug("{}{} scoring experiment {} - complete".format(NAME, RANK, i))
 
             if hasattr(estimator, 'cv_results_'):
                 # In case in which the estimator is a CV object
@@ -124,7 +124,7 @@ def _worker(estimator_, i, X, y, train, test):
 
             # ### Dump partial results
             if estimator_.experiments_folder is not None:
-                logger.debug("{}{} saving results for experiment {}".format(NAME, RANK, i))
+                worker_logger.debug("{}{} saving results for experiment {}".format(NAME, RANK, i))
                 pkl_name = (
                     'permutation' if estimator_.shuffle_y else 'regular') + \
                     '_%d.pkl' % i
@@ -149,10 +149,7 @@ def _worker(estimator_, i, X, y, train, test):
     else:
         if not IS_MPI_JOB and estimator_.verbose:
 
-            logger.info("{}{} job {} completed".format(NAME, RANK, i))
-
-            print("Experiment {} completed [{}]".format(
-                i, ('permutation' if estimator_.shuffle_y else 'regular')))
+            worker_logger.info("[{}{}]: {} job {} completed".format(NAME, RANK, ('permutation' if estimator_.shuffle_y else 'regular'), i))
 
         return cv_results_
 
@@ -346,6 +343,9 @@ class ModelAssessment(BaseEstimator):
         self.cv_results_ = cv_results_
 
     def _fit_master(self, X, y):
+
+        master_logger = logging.getLogger('master')
+
         cv = _check_cv(
             self.cv, y, classifier=is_classifier(self.estimator),
             n_splits=self.n_splits, test_size=self.test_size,
@@ -366,6 +366,7 @@ class ModelAssessment(BaseEstimator):
         # seed the slaves by sending work to each processor
         for rankk in range(1, min(nprocs, n_pipes)):
             pipe_tuple = queue.popleft()
+            master_logger.debug("Submitting job to process #{}".format(rankk))
             COMM.send(pipe_tuple, dest=rankk, tag=DO_WORK)
 
         while queue:
@@ -374,6 +375,7 @@ class ModelAssessment(BaseEstimator):
             status = MPI.Status()
             slave_result_ = COMM.recv(
                 source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+            master_logger.debug("Received results from process #{}, submitting another".format(status.source))
 
             # send to the same slave new work
             COMM.send(pipe_tuple, dest=status.source, tag=DO_WORK)
@@ -386,6 +388,8 @@ class ModelAssessment(BaseEstimator):
             status = MPI.Status()
             slave_result_ = COMM.recv(
                 source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+
+            master_logger.debug("Received results from process #{}".format(status.source))
 
             _build_cv_results(cv_results_, **slave_result_)
             count += 1
@@ -431,14 +435,14 @@ class ModelAssessment(BaseEstimator):
                     return
                 # do the work
                 i, (train_index, test_index) = received
-                if self.verbose:
-                    print("[{} {}]: Performing experiment {}".format(
-                        NAME, RANK, i))
+                # if self.verbose:
+                #     print("[{} {}]: Performing experiment {}".format(
+                #         NAME, RANK, i))
 
                 cv_results_ = _worker(self, i, X, y, train_index, test_index)
-                if self.verbose:
-                    print("[{} {}]: Experiment {} completed".format(
-                        NAME, RANK, i))
+                # if self.verbose:
+                #     print("[{} {}]: Experiment {} completed".format(
+                #         NAME, RANK, i))
                 COMM.send(cv_results_, dest=0, tag=0)
 
         except StandardError as exc:
