@@ -85,10 +85,7 @@ ALLOWED_VARS = ['n_splits_regular', 'frequency_threshold', 'labels',
 
 
 def load_from_config(config_path):
-    """
-    Creates a PALLADIO session object starting from a configuration file
-    """
-
+    """Create a PALLADIO session object starting from a configuration file."""
     imp.acquire_lock()
     config = imp.load_source('config', config_path)
     imp.release_lock()
@@ -104,13 +101,13 @@ def load_from_config(config_path):
     #     config.n_splits_regular,
     #     config.n_splits_permutation,
     #     config.estimator,
-    #     param_grid=config.param_grid if hasattr(config, "param_grid") else None,
+    #     param_grid=config.param_grid
     #     ma_options=config.ma_options,
     #     learning_task=config.learning_task,
     #     vs_analysis=config.vs_analysis,
     #     frequency_threshold=config.frequency_threshold,
     #     score_surfaces_options=config.score_surfaces_options,
-    #     feature_names=config.feature_names if hasattr(config, "feature_names") else None,
+    #     feature_names=config.feature_names
     #     session_folder=config.session_folder,
     #     config_path=config_path,
     #     analysis_folder=analysis_folder
