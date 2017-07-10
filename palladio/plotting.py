@@ -452,7 +452,14 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                 [param1[0], param2[0]], dtype=object)
 
             fig = plt.figure()
-            ax = fig.gca(projection='3d')
+            ax = fig.gca(projection='3d',axisbg='gray')
+            plt.gca().patch.set_facecolor('white')
+            # ax.w_xaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
+            # ax.w_yaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
+            # ax.w_zaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
+            ax.w_xaxis.gridlines.set_lw(3.0)
+            ax.w_yaxis.gridlines.set_lw(3.0)
+            ax.w_zaxis.gridlines.set_lw(3.0)
             legend_handles = []
             dff = pd.DataFrame(results['cv_results_'])
 
@@ -518,6 +525,8 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             ax.set_xlabel(log10_x + param_names[0][6:])
             ax.set_ylabel(log10_y + param_names[1][6:])
             ax.set_zlabel("avg kcv %s" % scoring)
+            ax.set_zlim([0., 1])
+            plt.tight_layout()
 
             if base_folder is not None:
 
@@ -636,30 +645,31 @@ def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
 def validation_curve_plot(train_scores, test_scores, estimator=None,
                           param_name=None, param_range=None, score=None,
                           plot_errors=False, base_folder=None,
-                          title_footer=''):
+                          title_footer='', title=None, ax=None):
     train_scores_mean = np.mean(train_scores, axis=1)
     train_scores_std = np.std(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)
     test_scores_std = np.std(test_scores, axis=1)
 
-    f, axarr = plt.subplots(1, 1, figsize=(10, 3))
-    plt.title(
-        "Validation Curve with %s" % (type(estimator).__name__) + title_footer)
-    plt.xlabel(param_name)
-    plt.ylabel("Score" + " (%s)" % score.__name__ if score is not None else "")
-    plt.ylim(0.4, 1.1)
+    if ax is None:
+        f, ax = plt.subplots(1, 1, figsize=(10, 3))
+
+    if title is None:
+        title = "Validation Curve with %s" % (type(estimator).__name__)
+    ax.set_title(title + title_footer)
+    ax.set_xlabel(param_name)
+    ax.set_ylabel("Score" + " (%s)" % score.__name__ if score is not None else "")
+    ax.set_ylim(0.4, 1.1)
     lw = 2
-    plt.semilogx(param_range, train_scores_mean, label="Training score",
-                 color="darkorange", lw=lw)
-    plt.fill_between(param_range, train_scores_mean - train_scores_std,
-                     train_scores_mean + train_scores_std, alpha=0.2,
-                     color="darkorange", lw=lw)
-    plt.semilogx(param_range, test_scores_mean, label="Cross-validation score",
+    ax.semilogx(param_range, train_scores_mean, label="Training score",
+                color="darkorange", lw=lw)
+    ax.fill_between(param_range, train_scores_mean - train_scores_std,
+                    train_scores_mean + train_scores_std, alpha=0.2,
+                    color="darkorange", lw=lw)
+    ax.semilogx(param_range, test_scores_mean, label="Cross-validation score",
                  color="navy", lw=lw)
-    plt.fill_between(param_range, test_scores_mean - test_scores_std,
+    ax.fill_between(param_range, test_scores_mean - test_scores_std,
                      test_scores_mean + test_scores_std, alpha=0.2,
                      color="navy", lw=lw)
-    plt.legend(loc="best")
-    if base_folder is None:
-        plt.show()
-    return f
+    ax.legend(loc="best")
+    return ax

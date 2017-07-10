@@ -6,6 +6,7 @@ for parallel computing.
 """
 from __future__ import print_function
 
+import errno
 import gzip
 import logging
 import joblib as jl
@@ -49,6 +50,15 @@ except ImportError:
 MAX_RESUBMISSIONS = 0  # resubmissions disabled
 DO_WORK = 100
 EXIT = 200
+
+
+def assert_path(filename):
+    if not os.path.exists(os.path.dirname(filename)):
+        try:
+            os.makedirs(os.path.dirname(filename))
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
 
 
 def _worker(estimator_, i, X, y, train, test):
@@ -456,6 +466,9 @@ class ModelAssessment(BaseEstimator):
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
         if RANK == 0:
+            if self.experiments_folder is not None:
+                assert_path(self.experiments_folder)
+
             self._fit_master(X, y)
         else:
             self._fit_slave(X, y)
