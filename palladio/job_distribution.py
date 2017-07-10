@@ -16,7 +16,7 @@ except:
 from palladio.utils import sec_to_timestring
 from palladio.model_assessment import ModelAssessment
 from palladio.datasets import copy_files
-from palladio.session import Session
+# from palladio.session import Session
 
 try:
     from mpi4py import MPI
@@ -86,9 +86,7 @@ def main(pd_session_object, base_folder):
     # data, labels = config.data, config.labels
 
     # TODO use properties to access attributes
-    data, labels = pd_session_object._data, pd_session_object._labels
-
-
+    data, labels = pd_session_object.data, pd_session_object.labels
 
     # # Session folder
     # # Depends whether the configuration path is specified
@@ -98,13 +96,12 @@ def main(pd_session_object, base_folder):
     # else:
     #     session_folder = config.session_folder
 
-
     # TODO use properties to access attributes
     session_folder = os.path.join(
         base_folder,
-        pd_session_object._session_folder
+        pd_session_object.session_folder
     )
-    # session_folder = pd_session_object._session_folder
+    # session_folder = pd_session_object.session_folder
 
     experiments_folder_path = os.path.join(session_folder, 'experiments')
     logs_folder_path = os.path.join(session_folder, 'logs')
@@ -125,15 +122,15 @@ def main(pd_session_object, base_folder):
 
         # TODO use properties to access attributes
         # If a config file was provided, make a copy in the session folder
-        if pd_session_object._config_path is not None:
+        if pd_session_object.config_path is not None:
             shutil.copy(
-                pd_session_object._config_path,
+                pd_session_object.config_path,
                 os.path.join(session_folder, 'config.py')
             )
 
         # Then delete it before dumping TODO explain why
-        pd_session_object._config_path = None
-        pd_session_object._session_folder = None
+        pd_session_object.config_path = None
+        pd_session_object.session_folder = None
 
         # Dump session object
         with gzip.open(
@@ -157,7 +154,8 @@ def main(pd_session_object, base_folder):
         ch = logging.StreamHandler()
         ch.setLevel(logging.INFO)
 
-        fh = logging.FileHandler(os.path.join(logs_folder_path, 'master_{}.log'.format(NAME)))
+        fh = logging.FileHandler(os.path.join(
+            logs_folder_path, 'master_{}.log'.format(NAME)))
         fh.setLevel(logging.DEBUG)
 
         ch.setFormatter(formatter)
@@ -177,7 +175,6 @@ def main(pd_session_object, base_folder):
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
 
-
     # create file handler which logs even debug messages
     # This logger writes on a shared file
 
@@ -185,7 +182,8 @@ def main(pd_session_object, base_folder):
     # fh_shared.setLevel(logging.DEBUG)
 
     # A handler for each individual process
-    fh_single = logging.FileHandler(os.path.join(logs_folder_path, 'worker_{}{}.log'.format(NAME, RANK)))
+    fh_single = logging.FileHandler(os.path.join(
+        logs_folder_path, 'worker_{}{}.log'.format(NAME, RANK)))
     fh_single.setLevel(logging.DEBUG)
 
     # Assigning formatter to handlers
@@ -209,41 +207,50 @@ def main(pd_session_object, base_folder):
         # Wait for the folder to be created and files to be copied
         COMM.barrier()
 
-    internal_estimator = pd_session_object._estimator
+    internal_estimator = pd_session_object.estimator
 
-    # ma_options = config.ma_options if hasattr(config, 'ma_options') else {}
-    ma_options = pd_session_object._ma_options
+    ma_options = pd_session_object.ma_options if hasattr(
+        pd_session_object, 'ma_options') else {}
+    # ma_options = pd_session_object.ma_options
     ma_options['experiments_folder'] = experiments_folder_path
 
     # TODO XXX these depends on regular or permutation
     ma_options.pop('shuffle_y', None)
 
-    # n_splits_regular = ma_options.pop('n_splits', None)
-    # n_splits_regular = int(n_splits_regular) if (
-    #     n_splits_regular is not None) and isinstance(
-    #     n_splits_regular, numbers.Number) else None
+    n_splits_regular = ma_options.pop('n_splits', None)
+    if n_splits_regular is None and hasattr(
+            pd_session_object, 'n_splits_regular'):
+        n_splits_regular = int(pd_session_object.n_splits_regular) if \
+            pd_session_object.n_splits_regular is not None else None
 
-    n_splits_regular = pd_session_object._n_splits_regular
+    # if n_splits_regular is not specified and is not in ma_options
+    # n_splits_regular is None
+    # then get the default of ModelAssessment
+    n_splits_regular = int(n_splits_regular) if (
+        n_splits_regular is not None) and isinstance(
+        n_splits_regular, numbers.Number) else 10
 
-
+    # n_splits_regular = pd_session_object.n_splits_regular
 
     if n_splits_regular is not None and n_splits_regular > 0:
         worker_logger.info('Performing regular experiments')
         ma_regular = ModelAssessment(
-            internal_estimator, **ma_options).fit(
+            internal_estimator,
+            n_splits=n_splits_regular,
+            **ma_options).fit(
                 data, labels)
         worker_logger.info('Regular experiments completed')
     else:
         ma_regular = None
 
     # Perform "permutation" experiments
-    ma_options.pop('n_splits', None)
+    # ma_options.pop('n_splits', None)
 
-    # n_splits_permutation = int(config.n_splits_permutation) if hasattr(
-    #     config, 'n_splits_permutation') and isinstance(
-    #     config.n_splits_permutation, numbers.Number) else None
+    n_splits_permutation = int(pd_session_object.n_splits_permutation) if hasattr(
+        pd_session_object, 'n_splits_permutation') and isinstance(
+        pd_session_object.n_splits_permutation, numbers.Number) else None
 
-    n_splits_permutation = pd_session_object._n_splits_permutation
+    # n_splits_permutation = pd_session_object.n_splits_permutation
 
     if n_splits_permutation is not None and n_splits_permutation > 0:
         worker_logger.info('Performing permutation experiments')
@@ -262,9 +269,8 @@ def main(pd_session_object, base_folder):
         COMM.barrier()
 
     if RANK == 0:
-
         t100 = time.time()
-
-        master_logger.info('Session complete, elapsed time: {}'.format(sec_to_timestring(t100 - t0)))
+        master_logger.info('Session complete, elapsed time: {}'.format(
+            sec_to_timestring(t100 - t0)))
 
     return ma_regular, ma_permutation

@@ -5,6 +5,7 @@
 import argparse
 import gzip
 import imp
+import numpy as np
 import os
 
 from six.moves import cPickle as pkl
@@ -67,8 +68,6 @@ def main():
     with gzip.open(os.path.join(base_folder, 'pd_session.pkl.gz'), 'r') as f:
         pd_session_object = pkl.load(f)
 
-
-
     # Load results from pkl
     regular_cv_results, permutation_cv_results = load_results(base_folder)
 
@@ -76,7 +75,7 @@ def main():
     #     config, 'score_surfaces_options') else {}
 
     # TODO use attributes
-    score_surfaces_options = pd_session_object._score_surfaces_options
+    score_surfaces_options = pd_session_object.score_surfaces_options
 
     if len(set(score_surfaces_options.keys()).difference(set([
             'indep_vars', 'pivoting_var', 'logspace', 'plot_errors']))) > 0:
@@ -94,13 +93,17 @@ def main():
     # })
 
     analyse_results(
-        regular_cv_results, permutation_cv_results, pd_session_object._labels,
-        pd_session_object._estimator,
+        regular_cv_results, permutation_cv_results,
+        pd_session_object.labels,
+        pd_session_object.estimator,
         base_folder=base_folder,
-        feature_names=pd_session_object._feature_names, learning_task=pd_session_object._learning_task,
-        vs_analysis=pd_session_object._vs_analysis, threshold=pd_session_object._frequency_threshold,
-        model_assessment_options=pd_session_object._ma_options,
-        analysis_folder=pd_session_object._analysis_folder,
+        feature_names=pd_session_object.get('feature_names', 'feat_' + np.arange(
+            pd_session_object.data.shape[1]).astype(str).astype(object)),
+        learning_task=pd_session_object.get('learning_task'),
+        vs_analysis=pd_session_object.get('vs_analysis'),
+        threshold=pd_session_object.get('frequency_threshold', .75),
+        model_assessment_options=pd_session_object.get('ma_options'),
+        analysis_folder=pd_session_object.get('analysis_folder', 'analysis'),
         score_surfaces_options=score_surfaces_options)
 
 
