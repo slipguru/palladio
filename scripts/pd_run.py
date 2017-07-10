@@ -40,11 +40,9 @@ def init_main():
     else:
 
         pd_session_object = load_from_config(
-            os.path.abspath(args.configuration_file)
-            )
+            os.path.abspath(args.configuration_file))
 
         # pd.main(config_path=os.path.abspath(args.configuration_file))
-
         pd.main(pd_session_object, os.path.dirname(args.configuration_file))
 
 

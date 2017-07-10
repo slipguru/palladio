@@ -1,7 +1,8 @@
 """Utilities functions and classes."""
 import numpy as np
-from types import ModuleType
+
 from six import iteritems
+from sklearn.model_selection._search import BaseSearchCV
 
 
 def save_signature(filename, selected, threshold=0.75):
@@ -43,7 +44,7 @@ def retrieve_features(best_estimator):
                              '`get_support` method')
 
 
-def get_selected_list(grid_search, vs_analysis=True):
+def get_selected_list(estimator, vs_analysis=True):
     """Retrieve the list of selected features.
 
     Retrieves the list of selected features automatically identifying the
@@ -56,11 +57,13 @@ def get_selected_list(grid_search, vs_analysis=True):
     """
     # First, check whether it's a string, which means the list of features
     # must be taken from a step of a Pipeline object
+    if isinstance(estimator, BaseSearchCV):
+        estimator = estimator.best_estimator_
     if type(vs_analysis) == str:
         selected_features = retrieve_features(
-            grid_search.best_estimator_.named_steps[vs_analysis])
+            estimator.named_steps[vs_analysis])
     else:
-        selected_features = retrieve_features(grid_search.best_estimator_)
+        selected_features = retrieve_features(estimator)
     return selected_features
 
 
