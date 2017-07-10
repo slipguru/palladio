@@ -109,13 +109,13 @@ def analyse_results(
             os.makedirs(analysis_folder)
 
         # ### Create two separate folders for figures in different formats
-        os.mkdir(os.path.join(analysis_folder, 'figures_pdf'))
-        os.mkdir(os.path.join(analysis_folder, 'figures_png'))
+        try:
+            os.mkdir(os.path.join(analysis_folder, 'figures_pdf'))
+            os.mkdir(os.path.join(analysis_folder, 'figures_png'))
+        except OSError:
+            pass  # if folder already exists, ignore it
     else:
         analysis_folder = None
-
-
-
 
     if model_assessment_options is None:
         model_assessment_options = {}
