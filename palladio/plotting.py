@@ -562,16 +562,17 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
                              if isinstance(v[0], np.float)])
         vv = sorted(list(iteritems(float_values)), key=lambda item: len(item[1]))[-2:]
         indep_vars = [name[0] for name in vv]
+    else:
+        vv = zip(indep_vars, [param_grid[x] for x in indep_vars])
 
     if len(indep_vars) < 1:
         warnings.warn("No grid parameters, cannot create validation plot")
         return
     elif len(indep_vars) < 2:
-        # warnings.warn("Only one grid parameter, cannot create 3D plot")
-        score_plot(param_grid, results, indep_vars[0], pivot,
-                   base_folder=base_folder, logspace=logspace,
-                   plot_errors=plot_errors, is_regression=is_regression)
-        return
+        return score_plot_gridsearch(
+            grid, param_grid, indep_vars[0], pivot,
+            base_folder=base_folder, logspace=logspace,
+            plot_errors=plot_errors, is_regression=is_regression)
 
     comb = combinations(vv, 2)
 
@@ -674,6 +675,91 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
                             scoring, j, i, img_type)))
             else:
                 plt.show()
+
+
+def score_plot_gridsearch(grid, param_grid, indep_var=None, pivot=None,
+                              base_folder=None, logspace=None,
+                              plot_errors=False, is_regression=False):
+    try:
+        # if grid is a ModelAssessment object, then get the first GridSearch
+        grid = pd.DataFrame(grid).sort_values(
+            'test_score', ascending=False).iloc[0]
+
+        ordered_df = pd.DataFrame(grid.cv_results_).sort_values(
+            "mean_test_score", ascending=False)
+        dd = dict(ordered_df.loc[:,ordered_df.columns.str.startswith("param_")].iloc[0])
+        best_params_ = {k[6:]: dd[k] for k in dd}
+
+    except:
+        best_params_ = grid.best_params_
+
+    df_result = pd.DataFrame(grid.cv_results_)
+    if not indep_var:
+        float_values = dict([(k, v) for k, v in iteritems(param_grid)
+                             if isinstance(v[0], np.float)])
+        indep_var = sorted(list(iteritems(float_values)), key=lambda item: len(item[1]))[-1][0]
+
+    if pivot is None:
+        pivot = []
+    possible_pivot = list(set(param_grid.keys()).difference(set([indep_var])))
+    fixed_pivot = list(set(possible_pivot).difference(set(pivot)))
+    fixed_conditions = _multicond(*[
+        df_result['param_' + p] == best_params_[p] for p in fixed_pivot])
+    cond_pivots = []
+    for p in pivot:
+        cond_pivots.append([
+            df_result['param_' + p] == i for i in
+            df_result['param_' + p].unique()])
+
+    conditions = [_multicond(fixed_conditions, *i) for i in list(product(*cond_pivots))]
+
+    plt.close('all')
+    scoring = 'error' if plot_errors else 'score'
+    legend_labels = np.array(['Train ', 'Validation '], dtype=object) + scoring
+    for j, condition in enumerate(conditions):
+        df_small = df_result[condition]
+        fixed_pivot_dict = dict(df_small.loc[:, df_result.columns.isin([
+            'param_' + x for x in pivot + fixed_pivot])].iloc[0])
+
+        x = df_small["param_" + indep_var].values.astype(float)
+
+        f, ax = plt.subplots(1)
+        if logspace is not None:
+            plot = ax.semilogx if indep_var in logspace else ax.plot
+
+        colors = ('darkorange', 'navy')
+        for s, c, label in zip(('train', 'test'), colors, legend_labels):
+            # The score is the mean of each external split
+            mean_score = df_small['mean_%s_score' % s].values
+            std_score = df_small['std_%s_score' % s].values
+            if plot_errors:
+                mean_score = -mean_score if is_regression else 1 - mean_score
+
+            plot(x, mean_score, c=c, label=label, lw=2)
+            ax.fill_between(x, mean_score - std_score,
+                            mean_score + std_score, alpha=0.2,
+                            color=c, lw=2)
+
+        # plot max
+        func_max = np.min if plot_errors else np.max
+        pos_max = np.where(mean_score == func_max(mean_score))[0]
+        plot(x[pos_max], mean_score[pos_max], 'o', c='darkred')
+
+        # fig.colorbar()
+        ax.legend()
+        ax.set_title('average KCV %s' % (scoring))
+        f.text(0.1, 0.005, fixed_pivot_dict, fontsize=10)
+        ax.set_xlabel(indep_var)
+        ax.set_ylabel("avg kcv %s" % scoring)
+        plt.tight_layout()
+
+        if base_folder is not None:
+            for img_type in ('pdf', 'png'):
+                plt.savefig(os.path.join(
+                    base_folder, 'kcv_{}_piv{}_comb{}.{}'.format(
+                        scoring, j, i, img_type)))
+        else:
+            plt.show()
 
 
 
