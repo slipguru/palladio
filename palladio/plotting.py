@@ -27,6 +27,8 @@ from palladio.utils import safe_run  # noqa
 
 def _multicond(*args):
     """Util function to concatenate multiple selection conditions."""
+    if len(args) < 1:
+        return True
     cond = args[0]
     for arg in args[1:]:
         cond = np.logical_and(cond, arg)
@@ -452,7 +454,7 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                 [param1[0], param2[0]], dtype=object)
 
             fig = plt.figure()
-            ax = fig.gca(projection='3d',axisbg='gray')
+            ax = fig.gca(projection='3d', axisbg='gray')
             plt.gca().patch.set_facecolor('white')
             # ax.w_xaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
             # ax.w_yaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
@@ -536,6 +538,143 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                         scoring, id_pivot, id_param, img_type)))
             else:
                 plt.show()
+
+
+def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
+                              base_folder=None, logspace=None,
+                              plot_errors=False, is_regression=False):
+    try:
+        # if grid is a ModelAssessment object, then get the first GridSearch
+        grid = pd.DataFrame(grid).sort_values(
+            'test_score', ascending=False).iloc[0]
+
+        ordered_df = pd.DataFrame(grid.cv_results_).sort_values(
+            "mean_test_score", ascending=False)
+        dd = dict(ordered_df.loc[:,ordered_df.columns.str.startswith("param_")].iloc[0])
+        best_params_ = {k[6:]: dd[k] for k in dd}
+
+    except:
+        best_params_ = grid.best_params_
+
+    df_result = pd.DataFrame(grid.cv_results_)
+    if not indep_vars:
+        float_values = dict([(k, v) for k, v in iteritems(param_grid)
+                             if isinstance(v[0], np.float)])
+        vv = sorted(list(iteritems(float_values)), key=lambda item: len(item[1]))[-2:]
+        indep_vars = [name[0] for name in vv]
+
+    if len(indep_vars) < 1:
+        warnings.warn("No grid parameters, cannot create validation plot")
+        return
+    elif len(indep_vars) < 2:
+        # warnings.warn("Only one grid parameter, cannot create 3D plot")
+        score_plot(param_grid, results, indep_vars[0], pivot,
+                   base_folder=base_folder, logspace=logspace,
+                   plot_errors=plot_errors, is_regression=is_regression)
+        return
+
+    comb = combinations(vv, 2)
+
+    if pivot is None:
+        pivot = []
+    possible_pivot = list(set(param_grid.keys()).difference(set(indep_vars)))
+    fixed_pivot = list(set(possible_pivot).difference(set(pivot)))
+    fixed_conditions = _multicond(*[
+        df_result['param_' + p] == best_params_[p] for p in fixed_pivot])
+    cond_pivots = []
+    for p in pivot:
+        cond_pivots.append([
+            df_result['param_' + p] == i for i in
+            df_result['param_' + p].unique()])
+
+    conditions = [_multicond(fixed_conditions, *i) for i in list(product(*cond_pivots))]
+
+    plt.close('all')
+    scoring = 'error' if plot_errors else 'score'
+    legend_labels = np.array(['Train ', 'Validation '], dtype=object) + scoring
+    for i, variables in enumerate(comb):
+        for j, condition in enumerate(conditions):
+            df_small = df_result[condition]
+            fixed_pivot_dict = dict(df_small.loc[:, df_result.columns.isin([
+                'param_' + x for x in pivot + fixed_pivot])].iloc[0])
+
+            x = df_small["param_" + variables[0][0]]
+            y = df_small["param_" + variables[1][0]]
+
+            log10_x, log10_y = '', ''
+            if logspace is not None:
+                if variables[0][0] in logspace:
+                    x = np.log10(x.astype(float))
+                    log10_x = r'$log_{10}$ '
+                if variables[1][0] in logspace:
+                    y = np.log10(y.astype(float))
+                    log10_y = r'$log_{10}$ '
+
+            fst_val = x if (x.values == sorted(x.values)).all() else y
+            snd_val = y if (x.values == sorted(x.values)).all() else x
+
+            X = x.values.reshape(np.unique(fst_val).size, np.unique(snd_val).size)
+            Y = y.values.reshape(np.unique(fst_val).size, np.unique(snd_val).size)
+
+            if plot_errors:
+                colors = (cm.Oranges_r, cm.Blues_r)
+            else:
+                colors = (cm.Oranges, cm.Blues)
+
+            fig = plt.figure()
+            ax = fig.gca(projection='3d', axisbg='gray')
+            plt.gca().patch.set_facecolor('white')
+            # ax.w_xaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
+            # ax.w_yaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
+            # ax.w_zaxis.set_pane_color((0.8, 0.8, 0.8, 1.0))
+            ax.w_xaxis.gridlines.set_lw(3.0)
+            ax.w_yaxis.gridlines.set_lw(3.0)
+            ax.w_zaxis.gridlines.set_lw(3.0)
+            legend_handles = [
+                Rectangle((0, 0), 1, 1, fc=h) for h in
+                (COLORS_HEX['lightOrange'], COLORS_HEX['lightBlue'])]
+            for s, c in zip(('train', 'test'), colors):
+                # The score is the mean of each external split
+                z = df_small['mean_%s_score' % s].values
+
+                Z = z.reshape(np.unique(fst_val).size, np.unique(snd_val).size)
+                if plot_errors:
+                    Z = -Z if is_regression else 1 - Z
+
+                # plt.close('all')
+                ax.plot_surface(
+                    X, Y, Z, cmap=c, rstride=1, cstride=1, lw=0,
+                    antialiased=False)
+
+                legend_handles.append(Rectangle((0, 0), 1, 1, fc=h))
+
+            # plot max
+            func_max = np.min if plot_errors else np.max
+            pos_max = np.where(Z == func_max(Z))
+            ax.plot(X[pos_max], Y[pos_max], Z[pos_max], 'o',
+                    c=COLORS_HEX['darkRed'])
+
+            # fig.colorbar()
+            ax.legend(legend_handles, legend_labels[:len(legend_handles)],
+                      loc='best')
+            ax.set_title('average KCV %s' % (
+                scoring))
+            fig.text(0.1, 0.005,
+                     fixed_pivot_dict, fontsize=10)
+            ax.set_xlabel(log10_x + variables[0][0])
+            ax.set_ylabel(log10_y + variables[1][0])
+            ax.set_zlabel("avg kcv %s" % scoring)
+            ax.set_zlim([0., 1])
+            plt.tight_layout()
+
+            if base_folder is not None:
+                for img_type in ('pdf', 'png'):
+                    plt.savefig(os.path.join(
+                        base_folder, 'kcv_{}_piv{}_comb{}.{}'.format(
+                            scoring, j, i, img_type)))
+            else:
+                plt.show()
+
 
 
 def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
