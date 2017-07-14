@@ -632,8 +632,7 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
             ax.w_yaxis.gridlines.set_lw(3.0)
             ax.w_zaxis.gridlines.set_lw(3.0)
             legend_handles = [
-                Rectangle((0, 0), 1, 1, fc=h) for h in
-                (COLORS_HEX['lightOrange'], COLORS_HEX['lightBlue'])]
+                Rectangle((0, 0), 1, 1, fc=h) for h in ('darkorange', 'navy')]
             for s, c in zip(('train', 'test'), colors):
                 # The score is the mean of each external split
                 z = df_small['mean_%s_score' % s].values
@@ -642,12 +641,9 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
                 if plot_errors:
                     Z = -Z if is_regression else 1 - Z
 
-                # plt.close('all')
                 ax.plot_surface(
                     X, Y, Z, cmap=c, rstride=1, cstride=1, lw=0,
                     antialiased=False)
-
-                legend_handles.append(Rectangle((0, 0), 1, 1, fc=h))
 
             # plot max
             func_max = np.min if plot_errors else np.max
@@ -658,10 +654,8 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
             # fig.colorbar()
             ax.legend(legend_handles, legend_labels[:len(legend_handles)],
                       loc='best')
-            ax.set_title('average KCV %s' % (
-                scoring))
-            fig.text(0.1, 0.005,
-                     fixed_pivot_dict, fontsize=10)
+            ax.set_title('average KCV %s' % scoring)
+            fig.text(0.1, 0.005, fixed_pivot_dict, fontsize=10)
             ax.set_xlabel(log10_x + variables[0][0])
             ax.set_ylabel(log10_y + variables[1][0])
             ax.set_zlabel("avg kcv %s" % scoring)
