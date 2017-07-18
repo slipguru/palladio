@@ -595,7 +595,9 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
     legend_labels = np.array(['Train ', 'Validation '], dtype=object) + scoring
     for i, variables in enumerate(comb):
         for j, condition in enumerate(conditions):
-            df_small = df_result[condition]
+            if condition is True:
+                condition = slice(0,None)
+            df_small = df_result.loc[condition, :]
             fixed_pivot_dict = dict(df_small.loc[:, df_result.columns.isin([
                 'param_' + x for x in pivot + fixed_pivot])].iloc[0])
 
