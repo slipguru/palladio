@@ -542,7 +542,8 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
 
 def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
                               base_folder=None, logspace=None,
-                              plot_errors=False, is_regression=False):
+                              plot_errors=False, is_regression=False,
+                              filename=None):
     try:
         # if grid is a ModelAssessment object, then get the first GridSearch
         grid = pd.DataFrame(grid).sort_values(
@@ -664,11 +665,12 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
             ax.set_zlim([0., 1])
             plt.tight_layout()
 
+            if filename is None:
+                filename = 'kcv_{}_piv{}_comb{}'.format(scoring, j, i)
             if base_folder is not None:
                 for img_type in ('pdf', 'png'):
                     plt.savefig(os.path.join(
-                        base_folder, 'kcv_{}_piv{}_comb{}.{}'.format(
-                            scoring, j, i, img_type)))
+                        base_folder, '.'.join((filename, img_type))))
             else:
                 plt.show()
 
