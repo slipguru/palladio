@@ -531,11 +531,10 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
             plt.tight_layout()
 
             if base_folder is not None:
-
                 for img_type in ('pdf', 'png'):
                     plt.savefig(os.path.join(
-                    base_folder, 'kcv_{}_piv{}_comb{}.{}'.format(
-                        scoring, id_pivot, id_param, img_type)))
+                        base_folder, 'kcv_{}_piv{}_comb{}.{}'.format(
+                            scoring, id_pivot, id_param, img_type)))
             else:
                 plt.show()
 
@@ -551,7 +550,7 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
 
         ordered_df = pd.DataFrame(grid.cv_results_).sort_values(
             "mean_test_score", ascending=False)
-        dd = dict(ordered_df.loc[:,ordered_df.columns.str.startswith("param_")].iloc[0])
+        dd = dict(ordered_df.loc[:, ordered_df.columns.str.startswith("param_")].iloc[0])
         best_params_ = {k[6:]: dd[k] for k in dd}
 
     except:
@@ -573,7 +572,8 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
         return score_plot_gridsearch(
             grid, param_grid, indep_vars[0], pivot,
             base_folder=base_folder, logspace=logspace,
-            plot_errors=plot_errors, is_regression=is_regression)
+            plot_errors=plot_errors, is_regression=is_regression,
+            filename=filename)
 
     comb = combinations(vv, 2)
 
@@ -677,7 +677,8 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
 
 def score_plot_gridsearch(grid, param_grid, indep_var=None, pivot=None,
                               base_folder=None, logspace=None,
-                              plot_errors=False, is_regression=False):
+                              plot_errors=False, is_regression=False,
+                              filename=None):
     try:
         # if grid is a ModelAssessment object, then get the first GridSearch
         grid = pd.DataFrame(grid).sort_values(
@@ -751,13 +752,15 @@ def score_plot_gridsearch(grid, param_grid, indep_var=None, pivot=None,
         ax.set_ylabel("avg kcv %s" % scoring)
         plt.tight_layout()
 
+        if filename is None:
+            filename = 'kcv_{}_piv{}_comb{}'.format(scoring, j, i)
         if base_folder is not None:
             for img_type in ('pdf', 'png'):
                 plt.savefig(os.path.join(
-                    base_folder, 'kcv_{}_piv{}_comb{}.{}'.format(
-                        scoring, j, i, img_type)))
+                    base_folder, '.'.join((filename, img_type))))
         else:
             plt.show()
+
 
 
 
