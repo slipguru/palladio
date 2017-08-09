@@ -544,14 +544,14 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
 def _get_best_params(obj):
     # if obj is a ModelAssessment, then get the first GridSearch
     if isinstance(obj, ModelAssessment):
-        grid = pd.DataFrame(obj.cv_results_).sort_values(
+        obj = pd.DataFrame(obj.cv_results_).sort_values(
             'test_score', ascending=False).iloc[0].estimator
     elif not isinstance(obj, GridSearchCV):
         raise NotImplementedError("This can only work with a ModelAssessment "
                                   "or GridSearchCV object. You passed "
                                   "a %s object" % obj.__class__.__name__)
 
-    return grid.best_params_
+    return obj.best_params_
 
 
 def score_surfaces_gridsearch(grid, param_grid=None, indep_vars=None, pivot=None,
