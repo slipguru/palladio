@@ -3,6 +3,8 @@
 """Palladio script for summaries and plot generation."""
 
 import numpy as np
+from scipy import stats
+import pandas as pd
 import os
 
 from sklearn.base import is_regressor
@@ -17,6 +19,10 @@ from palladio.metrics import __MULTICLASS_CLASSIFICATION_METRICS__
 from palladio.utils import get_selected_list
 from palladio.utils import save_signature
 
+try:
+    import cPickle as pkl
+except:
+    import pickle as pkl
 
 def performance_metrics(cv_results, labels, target='regression', metric=None):
     """Evaluate metrics on the external splits results.
@@ -80,6 +86,7 @@ def analyse_results(
         threshold=.75, model_assessment_options=None,
         score_surfaces_options=None):
     """Summary and plot generation."""
+
     # learning_task follows the convention of
     # sklearn.utils.multiclass.type_of_target
     if learning_task is None:
@@ -87,6 +94,11 @@ def analyse_results(
             learning_task = 'continuous'
         else:
             learning_task = type_of_target(labels)
+
+    # Create an empty dictionary which will contain the key results
+    # of the analysis
+    analysis_summary = dict()
+
     # Run the appropriate analysis according to the learning_task
     is_regression = learning_task.lower() in ('continuous', 'regression')
     if is_regression:
@@ -167,8 +179,19 @@ def analyse_results(
                     analysis_folder, 'signature_%s.txt' % batch_name),
                     selected[batch_name], threshold)
 
-        # sorted_keys_regular = sorted(
-        #     selected['regular'], key=selected['regular'].__getitem__)
+            # Also save the frequency list as an entry of the analysis summary
+
+            # Create an empty pandas dataframe to store the frequencies
+            df_tmp = pd.DataFrame(columns=['Frequency'])
+
+            for k in reversed(sorted(
+                    selected[batch_name], key=selected[batch_name].__getitem__)):
+
+                    df_tmp.loc[k] = selected[batch_name][k] * 100
+
+            # Add the dataframe to the analysis summary
+            analysis_summary['selection_frequency_{}'.format(batch_name)] = df_tmp
+
 
         feat_arr_r = np.array(list(iteritems(selected['regular'])), dtype=object)
         feat_arr_p = np.array(list(iteritems(selected['permutation'])), dtype=object)
@@ -190,7 +213,10 @@ def analyse_results(
             feat_arr_r, feat_arr_p, analysis_folder,
             threshold=threshold)
 
+
+
     # Generate distribution plots
+    # And save distributions in analysis summary
     for i, metric in enumerate(performance_regular):
         plotting.distributions(
             v_regular=performance_regular[metric],
@@ -199,6 +225,27 @@ def analyse_results(
             metric=metric,
             first_run=i == 0,
             is_regression=is_regression)
+
+        v_regular = performance_regular[metric]
+        v_permutation = performance_permutation.get(metric, [])
+
+        metric_values = dict()
+        metric_values['values_regular'] = v_regular
+        metric_values['values_permutation'] = v_permutation
+
+        r_mean, r_sd = np.nanmean(v_regular), np.nanstd(v_regular)
+        p_mean, p_sd = np.nanmean(v_permutation), np.nanstd(v_permutation)
+        rstest = stats.ks_2samp(v_regular, v_permutation)
+
+        metric_values['mean_regular'] = r_mean
+        metric_values['sd_regular'] = r_sd
+
+        metric_values['mean_permutation'] = p_mean
+        metric_values['sd_permutation'] = p_sd
+
+        metric_values['rstest'] = rstest
+
+        analysis_summary['metric_{}'.format(metric)] = metric_values
 
     # Generate surfaces
     # This has meaning only if the estimator is an istance of GridSearchCV
@@ -211,3 +258,12 @@ def analyse_results(
             base_folder=analysis_folder,
             is_regression=is_regression,
             **score_surfaces_options)
+
+
+    # Finally, save in the analysis folder the pickled summary
+    if analysis_folder is not None:
+
+        with open(os.path.join(
+            analysis_folder, 'summary.pkl'.format(batch_name)), 'w') as af:
+
+            pkl.dump(analysis_summary, af)
