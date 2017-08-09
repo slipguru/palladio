@@ -9,6 +9,7 @@ import warnings
 from itertools import combinations, product
 from scipy import stats
 from six import iteritems
+from sklearn.model_selection import GridSearchCV
 
 matplotlib.use('Agg')  # create plots from remote
 matplotlib.rcParams['pdf.fonttype'] = 42  # avoid bitmapped fonts in pdf
@@ -21,6 +22,7 @@ from matplotlib import cm  # noqa
 from matplotlib.patches import Rectangle  # noqa
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 
+from palladio.model_assessment import ModelAssessment  #noqa
 from palladio.colors import COLORS_HEX  # noqa
 from palladio.utils import safe_run  # noqa
 
@@ -539,24 +541,25 @@ def score_surfaces(param_grid, results, indep_var=None, pivoting_var=None,
                 plt.show()
 
 
-def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
+def _get_best_params(obj):
+    # if obj is a ModelAssessment, then get the first GridSearch
+    if isinstance(obj, ModelAssessment):
+        grid = pd.DataFrame(obj.cv_results_).sort_values(
+            'test_score', ascending=False).iloc[0].estimator
+    elif not isinstance(obj, GridSearchCV):
+        raise NotImplementedError("This can only work with a ModelAssessment "
+                                  "or GridSearchCV object. You passed "
+                                  "a %s object" % obj.__class__.__name__)
+
+    return grid.best_params_
+
+
+def score_surfaces_gridsearch(grid, param_grid=None, indep_vars=None, pivot=None,
                               base_folder=None, logspace=None,
                               plot_errors=False, is_regression=False,
                               filename=None):
-    try:
-        # if grid is a ModelAssessment object, then get the first GridSearch
-        grid = pd.DataFrame(grid).sort_values(
-            'test_score', ascending=False).iloc[0]
 
-        ordered_df = pd.DataFrame(grid.cv_results_).sort_values(
-            "mean_test_score", ascending=False)
-        dd = dict(ordered_df.loc[:, ordered_df.columns.str.startswith("param_")].iloc[0])
-        best_params_ = {k[6:]: dd[k] for k in dd}
-
-    except:
-        best_params_ = grid.best_params_
-
-    df_result = pd.DataFrame(grid.cv_results_)
+    param_grid = param_grid or grid.param_grid
     if not indep_vars:
         float_values = dict([(k, v) for k, v in iteritems(param_grid)
                              if isinstance(v[0], np.float)])
@@ -576,6 +579,8 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
             filename=filename)
 
     comb = combinations(vv, 2)
+    df_result = pd.DataFrame(grid.cv_results_)
+    best_params_ = _get_best_params(grid)
 
     if pivot is None:
         pivot = []
@@ -675,24 +680,13 @@ def score_surfaces_gridsearch(grid, param_grid, indep_vars=None, pivot=None,
                 plt.show()
 
 
-def score_plot_gridsearch(grid, param_grid, indep_var=None, pivot=None,
-                              base_folder=None, logspace=None,
-                              plot_errors=False, is_regression=False,
-                              filename=None):
-    try:
-        # if grid is a ModelAssessment object, then get the first GridSearch
-        grid = pd.DataFrame(grid).sort_values(
-            'test_score', ascending=False).iloc[0]
-
-        ordered_df = pd.DataFrame(grid.cv_results_).sort_values(
-            "mean_test_score", ascending=False)
-        dd = dict(ordered_df.loc[:,ordered_df.columns.str.startswith("param_")].iloc[0])
-        best_params_ = {k[6:]: dd[k] for k in dd}
-
-    except:
-        best_params_ = grid.best_params_
-
+def score_plot_gridsearch(grid, param_grid=None, indep_var=None, pivot=None,
+                          base_folder=None, logspace=None,
+                          plot_errors=False, is_regression=False,
+                          filename=None):
+    best_params_ = _get_best_params(grid)
     df_result = pd.DataFrame(grid.cv_results_)
+    param_grid = param_grid or grid.param_grid
     if not indep_var:
         float_values = dict([(k, v) for k, v in iteritems(param_grid)
                              if isinstance(v[0], np.float)])
@@ -760,8 +754,6 @@ def score_plot_gridsearch(grid, param_grid, indep_var=None, pivot=None,
                     base_folder, '.'.join((filename, img_type))))
         else:
             plt.show()
-
-
 
 
 def score_plot(param_grid, results, indep_var=None, pivoting_var=None,
