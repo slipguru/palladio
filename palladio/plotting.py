@@ -596,7 +596,7 @@ def score_surfaces_gridsearch(grid, param_grid=None, indep_vars=None, pivot=None
 
     conditions = [_multicond(fixed_conditions, *i) for i in list(product(*cond_pivots))]
 
-    plt.close('all')
+    # plt.close('all')
     scoring = 'error' if plot_errors else 'score'
     legend_labels = np.array(['Train ', 'Validation '], dtype=object) + scoring
     for i, variables in enumerate(comb):
@@ -706,7 +706,7 @@ def score_plot_gridsearch(grid, param_grid=None, indep_var=None, pivot=None,
 
     conditions = [_multicond(fixed_conditions, *i) for i in list(product(*cond_pivots))]
 
-    plt.close('all')
+    # plt.close('all')
     scoring = 'error' if plot_errors else 'score'
     legend_labels = np.array(['Train ', 'Validation '], dtype=object) + scoring
     for j, condition in enumerate(conditions):
