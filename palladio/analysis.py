@@ -192,7 +192,6 @@ def analyse_results(
             # Add the dataframe to the analysis summary
             analysis_summary['selection_frequency_{}'.format(batch_name)] = df_tmp
 
-
         feat_arr_r = np.array(list(iteritems(selected['regular'])), dtype=object)
         feat_arr_p = np.array(list(iteritems(selected['permutation'])), dtype=object)
 
@@ -212,8 +211,6 @@ def analyse_results(
         plotting.select_over_threshold(
             feat_arr_r, feat_arr_p, analysis_folder,
             threshold=threshold)
-
-
 
     # Generate distribution plots
     # And save distributions in analysis summary
@@ -259,11 +256,7 @@ def analyse_results(
             is_regression=is_regression,
             **score_surfaces_options)
 
-
     # Finally, save in the analysis folder the pickled summary
     if analysis_folder is not None:
-
-        with open(os.path.join(
-            analysis_folder, 'summary.pkl'.format(batch_name)), 'w') as af:
-
+        with open(os.path.join(analysis_folder, 'summary.pkl'), 'w') as af:
             pkl.dump(analysis_summary, af)

@@ -11,7 +11,11 @@ from scipy import stats
 from six import iteritems
 from sklearn.model_selection import GridSearchCV
 
-matplotlib.use('Agg')  # create plots from remote
+with warnings.catch_warnings(record=True) as w:
+    # Cause all warnings to always be triggered.
+    warnings.simplefilter("always")
+    matplotlib.use('Agg')  # create plots from remote
+
 matplotlib.rcParams['pdf.fonttype'] = 42  # avoid bitmapped fonts in pdf
 matplotlib.rcParams['ps.fonttype'] = 42
 
@@ -557,7 +561,7 @@ def _get_best_params(obj):
 def score_surfaces_gridsearch(grid, param_grid=None, indep_vars=None, pivot=None,
                               base_folder=None, logspace=None,
                               plot_errors=False, is_regression=False,
-                              filename=None):
+                              filename=None, zlim=None):
 
     param_grid = param_grid or grid.param_grid
     if not indep_vars:
@@ -667,7 +671,8 @@ def score_surfaces_gridsearch(grid, param_grid=None, indep_vars=None, pivot=None
             ax.set_xlabel(log10_x + variables[0][0])
             ax.set_ylabel(log10_y + variables[1][0])
             ax.set_zlabel("avg kcv %s" % scoring)
-            ax.set_zlim([0., 1])
+            if zlim is not None:
+                ax.set_zlim(zlim)
             plt.tight_layout()
 
             if filename is None:
@@ -710,7 +715,9 @@ def score_plot_gridsearch(grid, param_grid=None, indep_var=None, pivot=None,
     scoring = 'error' if plot_errors else 'score'
     legend_labels = np.array(['Train ', 'Validation '], dtype=object) + scoring
     for j, condition in enumerate(conditions):
-        df_small = df_result[condition]
+        if condition is True:
+            condition = slice(0,None)
+        df_small = df_result.loc[condition, :]
         fixed_pivot_dict = dict(df_small.loc[:, df_result.columns.isin([
             'param_' + x for x in pivot + fixed_pivot])].iloc[0])
 
@@ -719,6 +726,8 @@ def score_plot_gridsearch(grid, param_grid=None, indep_var=None, pivot=None,
         f, ax = plt.subplots(1)
         if logspace is not None:
             plot = ax.semilogx if indep_var in logspace else ax.plot
+        else:
+            plot = ax.plot
 
         colors = ('darkorange', 'navy')
         for s, c, label in zip(('train', 'test'), colors, legend_labels):
