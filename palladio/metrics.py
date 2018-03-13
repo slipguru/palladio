@@ -89,7 +89,7 @@ def balanced_accuracy_multiclass(y_true, y_pred):
 # List of callables for classification metrics
 __CLASSIFICATION_METRICS__ = (
     accuracy_score, precision_score, recall_score, f1_score,
-    matthews_corrcoef, balanced_accuracy)
+    matthews_corrcoef, balanced_accuracy_score)
 
 
 def micro_precision_score(y_true, y_pred, labels=None, pos_label=1,
@@ -120,4 +120,4 @@ def micro_f1_score(y_true, y_pred, labels=None, pos_label=1,
 __MULTICLASS_CLASSIFICATION_METRICS__ = (
     accuracy_score, micro_precision_score,
     micro_recall_score, micro_f1_score,
-    balanced_accuracy)
+    balanced_accuracy_multiclass)
