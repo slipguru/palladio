@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.metrics import (accuracy_score, precision_score,
                              recall_score, f1_score)
 from sklearn.metrics import matthews_corrcoef
-from sklearn.metrics import _check_targets
+from sklearn.metrics.classification import _check_targets
 from sklearn.metrics.regression import *
 from sklearn.metrics.regression import __ALL__ as rmetrics
 
