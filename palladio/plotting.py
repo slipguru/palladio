@@ -9,7 +9,7 @@ import warnings
 from itertools import combinations, product
 from scipy import stats
 from six import iteritems
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection._search import BaseSearchCV
 
 with warnings.catch_warnings(record=True) as w:
     # Cause all warnings to always be triggered.
@@ -26,7 +26,7 @@ from matplotlib import cm  # noqa
 from matplotlib.patches import Rectangle  # noqa
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 
-from palladio.model_assessment import ModelAssessment  #noqa
+from palladio.model_assessment import ModelAssessment  # noqa
 from palladio.colors import COLORS_HEX  # noqa
 from palladio.utils import safe_run  # noqa
 
@@ -550,20 +550,47 @@ def _get_best_params(obj):
     if isinstance(obj, ModelAssessment):
         obj = pd.DataFrame(obj.cv_results_).sort_values(
             'test_score', ascending=False).iloc[0].estimator
-    elif not isinstance(obj, GridSearchCV):
+    elif not isinstance(obj, BaseSearchCV):
         raise NotImplementedError("This can only work with a ModelAssessment "
-                                  "or GridSearchCV object. You passed "
+                                  "or BaseSearchCV-based object. You passed "
                                   "a %s object" % obj.__class__.__name__)
 
     return obj.best_params_
 
 
-def score_surfaces_gridsearch(grid, param_grid=None, indep_vars=None, pivot=None,
-                              base_folder=None, logspace=None,
-                              plot_errors=False, is_regression=False,
-                              filename=None, zlim=None):
+def score_surfaces_searchcv(
+    mdl, param_grid=None, indep_vars=None, pivot=None, base_folder=None,
+    logspace=None, plot_errors=False, is_regression=False, filename=None,
+        zlim=None):
+    """Plot training and validation score for a generic search CV class.
 
-    param_grid = param_grid or grid.param_grid
+    This produces a 3D plot.
+
+    Parameters
+    ----------
+    mdl : type
+        BaseSearchCV-derived object.
+    param_grid : type
+        Description of parameter `param_grid` (the default is None).
+    indep_vars : type
+        Description of parameter `indep_vars` (the default is None).
+    pivot : type
+        Description of parameter `pivot` (the default is None).
+    base_folder : type
+        Description of parameter `base_folder` (the default is None).
+    logspace : type
+        Description of parameter `logspace` (the default is None).
+    plot_errors : type
+        Description of parameter `plot_errors` (the default is False).
+    is_regression : type
+        Description of parameter `is_regression` (the default is False).
+    filename : type
+        Description of parameter `filename` (the default is None).
+    zlim : type
+        Description of parameter `zlim` (the default is None).
+
+    """
+    param_grid = param_grid or mdl.param_grid
     if not indep_vars:
         float_values = dict([(k, v) for k, v in iteritems(param_grid)
                              if isinstance(v[0], np.float)])
@@ -576,15 +603,15 @@ def score_surfaces_gridsearch(grid, param_grid=None, indep_vars=None, pivot=None
         warnings.warn("No grid parameters, cannot create validation plot")
         return
     elif len(indep_vars) < 2:
-        return score_plot_gridsearch(
-            grid, param_grid, indep_vars[0], pivot,
+        return score_plot_searchcv(
+            mdl, param_grid, indep_vars[0], pivot,
             base_folder=base_folder, logspace=logspace,
             plot_errors=plot_errors, is_regression=is_regression,
             filename=filename)
 
     comb = combinations(vv, 2)
-    df_result = pd.DataFrame(grid.cv_results_)
-    best_params_ = _get_best_params(grid)
+    df_result = pd.DataFrame(mdl.cv_results_)
+    best_params_ = _get_best_params(mdl)
 
     if pivot is None:
         pivot = []
@@ -685,21 +712,54 @@ def score_surfaces_gridsearch(grid, param_grid=None, indep_vars=None, pivot=None
                 plt.show()
 
 
-def score_plot_gridsearch(grid, param_grid=None, indep_var=None, pivot=None,
-                          base_folder=None, logspace=None,
-                          plot_errors=False, is_regression=False,
-                          filename=None):
-    best_params_ = _get_best_params(grid)
-    df_result = pd.DataFrame(grid.cv_results_)
-    param_grid = param_grid or grid.param_grid
+def score_plot_searchcv(
+    mdl, indep_var=None, pivot=None, base_folder=None, logspace=None,
+        plot_errors=False, is_regression=False, filename=None):
+    """Plot training and validation score in a generic search CV class.
+
+    This produces a 2D plot.
+
+    Parameters
+    ----------
+    mdl : type
+        Description of parameter `mdl`.
+    indep_var : type
+        Description of parameter `indep_var` (the default is None).
+    pivot : type
+        Description of parameter `pivot` (the default is None).
+    base_folder : type
+        Description of parameter `base_folder` (the default is None).
+    logspace : type
+        Description of parameter `logspace` (the default is None).
+    plot_errors : type
+        Description of parameter `plot_errors` (the default is False).
+    is_regression : type
+        Description of parameter `is_regression` (the default is False).
+    filename : type
+        Description of parameter `filename` (the default is None).
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+    best_params_ = _get_best_params(mdl)
+    df_result = pd.DataFrame(mdl.cv_results_)
+    params = [k for k in mdl.cv_results_['params'][0]]
+
     if not indep_var:
-        float_values = dict([(k, v) for k, v in iteritems(param_grid)
-                             if isinstance(v[0], np.float)])
-        indep_var = sorted(list(iteritems(float_values)), key=lambda item: len(item[1]))[-1][0]
+        float_values = [
+            k for k in params
+            if isinstance(mdl.cv_results_['params'][0][k], float)]
+        # float_values = dict([(k, v) for k, v in iteritems(param_grid)
+        #                      if isinstance(v[0], np.float)])
+        # indep_var = sorted(list(iteritems(float_values)), key=lambda item: len(item[1]))[-1][0]
+        indep_var = float_values[0]
 
     if pivot is None:
         pivot = []
-    possible_pivot = list(set(param_grid.keys()).difference(set([indep_var])))
+    possible_pivot = list(set(params).difference(set([indep_var])))
     fixed_pivot = list(set(possible_pivot).difference(set(pivot)))
     fixed_conditions = _multicond(*[
         df_result['param_' + p] == best_params_[p] for p in fixed_pivot])
@@ -716,12 +776,15 @@ def score_plot_gridsearch(grid, param_grid=None, indep_var=None, pivot=None,
     legend_labels = np.array(['Train ', 'Validation '], dtype=object) + scoring
     for j, condition in enumerate(conditions):
         if condition is True:
-            condition = slice(0,None)
+            condition = slice(0, None)
         df_small = df_result.loc[condition, :]
         fixed_pivot_dict = dict(df_small.loc[:, df_result.columns.isin([
             'param_' + x for x in pivot + fixed_pivot])].iloc[0])
 
         x = df_small["param_" + indep_var].values.astype(float)
+        # in the case they are not ordered
+        idx = np.argsort(x)
+        x = x[idx]
 
         f, ax = plt.subplots(1)
         if logspace is not None:
@@ -732,8 +795,11 @@ def score_plot_gridsearch(grid, param_grid=None, indep_var=None, pivot=None,
         colors = ('darkorange', 'navy')
         for s, c, label in zip(('train', 'test'), colors, legend_labels):
             # The score is the mean of each external split
-            mean_score = df_small['mean_%s_score' % s].values
-            std_score = df_small['std_%s_score' % s].values
+            try:
+                mean_score = df_small['mean_%s_score' % s].values[idx]
+            except:
+                continue
+            std_score = df_small['std_%s_score' % s].values[idx]
             if plot_errors:
                 mean_score = -mean_score if is_regression else 1 - mean_score
 
@@ -749,14 +815,14 @@ def score_plot_gridsearch(grid, param_grid=None, indep_var=None, pivot=None,
 
         # fig.colorbar()
         ax.legend()
-        ax.set_title('average KCV %s' % (scoring))
+        ax.set_title('average CV %s' % (scoring))
         f.text(0.1, 0.005, fixed_pivot_dict, fontsize=10)
         ax.set_xlabel(indep_var)
         ax.set_ylabel("avg kcv %s" % scoring)
         plt.tight_layout()
 
         if filename is None:
-            filename = 'kcv_{}_piv{}_comb{}'.format(scoring, j, i)
+            filename = 'cv_{}_piv{}_comb{}'.format(scoring, j, i)
         if base_folder is not None:
             for img_type in ('pdf', 'png'):
                 plt.savefig(os.path.join(
@@ -886,7 +952,7 @@ def validation_curve_plot(train_scores, test_scores, estimator=None,
     ax.set_title(title + title_footer)
     ax.set_xlabel(param_name)
     ax.set_ylabel("Score" + " (%s)" % score.__name__ if score is not None else "")
-    ax.set_ylim(0.4, 1.1)
+    # ax.set_ylim(0.4, 1.1)
     lw = 2
     ax.semilogx(param_range, train_scores_mean, label="Training score",
                 color="darkorange", lw=lw)
