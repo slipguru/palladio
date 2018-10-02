@@ -100,64 +100,52 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
             "Cannot create {} plot due to some nan values".format(metric))
         return
 
+    # color_regular = 'C0'
+    # kde = True
     if is_regression:
         # scaling factor for percentage plot
         scale = 1
         x_min = np.min(v_regular)
         x_max = np.max(v_regular)
-        _bins = 20
-        kde = True
-        color_regular = COLORS_HEX['lightBlue']
+        # _bins = 20
     else:
-        kde = False
-        color_regular = COLORS_HEX['lightBlue']
-        color_permutation = COLORS_HEX['lightRed']
+        # kde = False
+        # color_permutation = 'C1'
 
         # XXX do we need to separate mcc from the rest?
         if metric.lower() == 'matthews_corrcoef':
             scale = 1
-            _bins = np.arange(-1, 1, 0.05)
+            # _bins = np.arange(-1, 1, 0.05)
             x_min = -1.0
         else:
-            scale = 100
-            _bins = np.arange(0, 105, 5)
+            scale = 1
+            # _bins = np.arange(0, 105, 5)
             x_min = 0.0
         x_max = 1.0
 
     # plt.close('all')
     if ax is None:
         fig, ax = plt.subplots(figsize=(18, 10))
-        # single_figure = True
-    # else:
-    #     single_figure = False
-
-    kwargs = {
-        'norm_hist': False,
-        'kde': kde,
-        'bins': _bins,
-        'hist_kws': {'alpha': 0.8},
-        'kde_kws': {'color': COLORS_HEX['darkBlue']}
-    }
 
     # Compute mean and standard deviation for both batches
     v_regular, v_permutation = np.array(v_regular), np.array(v_permutation)
     r_mean, r_std = np.nanmean(v_regular), np.nanstd(v_regular)
     p_mean, p_std = np.nanmean(v_permutation), np.nanstd(v_permutation)
 
+    sns.distplot(v_regular[~np.isnan(v_regular)] * scale,
+                 # label="Regular batch \nMean = {0:.2f}, STD = {1:.2f}"
+                 #        .format(reg_mean, reg_std),
+                 label="Regular batch \nMean = {0:2.3f}, SD = {1:2.3f}"
+                       .format(r_mean, r_std),
+                 ax=ax)
+
     if len(v_permutation) > 0:
         sns.distplot(v_permutation[~np.isnan(v_permutation)] * scale,
                      # label="Permutation batch\nMean = {0:.2f}, STD = {1:.2f}"
                      # .format(perm_mean, perm_std),
-                     label="Permutation batch\nMean = {0:2.1f}, SD = {1:2.1f}"
+                     label="Permutation batch\nMean = {0:2.3f}, SD = {1:2.3f}"
                            .format(p_mean, p_std),
-                     color=color_permutation, ax=ax, **kwargs)
-
-    sns.distplot(v_regular[~np.isnan(v_regular)] * scale,
-                 # label="Regular batch \nMean = {0:.2f}, STD = {1:.2f}"
-                 #        .format(reg_mean, reg_std),
-                 label="Regular batch \nMean = {0:2.1f}, SD = {1:2.1f}"
-                       .format(r_mean, r_std),
-                 color=color_regular, ax=ax, **kwargs)
+                     ax=ax)
 
     if len(v_permutation) > 0:
         # rstest = stats.wilcoxon(v_regular, v_permutation)
@@ -179,8 +167,10 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
     # see above
 
     ax.set_xlim([x_min * scale, x_max * scale])
-    ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='upper right',
-              ncol=2, mode="expand", borderaxespad=0., fontsize="large")
+    ax.legend(
+        # bbox_to_anchor=(0., 1.02, 1., .102), loc='upper right',
+        # ncol=2, mode="expand", borderaxespad=0., fontsize="large"
+    )
 
     if rstest is not None:
         fig.text(0.1, 0.005,
@@ -188,20 +178,16 @@ def distributions(v_regular, v_permutation, base_folder=None, metric='nd',
                  .format(rstest[1]), fontsize=18)
 
     if base_folder is not None:
-        for img_type in ('pdf', 'png'):
-            plt.savefig(os.path.join(
-                        base_folder, 'figures_{}'.format(img_type),  '{}_distribution.{}'.format(metric, img_type)),
-                        bbox_inches='tight', dpi=300)
-    else:
-        pass
-        # plt.show()
+        img_type = 'pdf'
+        fig.savefig('{}_distribution.{}'.format(metric, img_type),
+                    bbox_inches='tight', dpi=600, transparent=True)
 
     # XXX save to txt; maybe not here?
     if base_folder is not None:
         # Only if base_folder is defined
         stats_to_file(rstest, r_mean, r_std, p_mean, p_std,
                       metric, base_folder, first_run)
-
+    return fig
 
 @safe_run
 def features_manhattan(feat_arr_r, feat_arr_p, base_folder, threshold=.75):

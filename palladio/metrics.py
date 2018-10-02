@@ -85,11 +85,13 @@ def balanced_accuracy_multiclass(y_true, y_pred):
         perclass_balanced_accuracy[i] = (sensitivity + specificity) / 2.
     return np.mean(perclass_balanced_accuracy)
 
+def balanced_accuracy(y_true, y_pred):
+    return balanced_accuracy_multiclass(y_true, y_pred)
 
 # List of callables for classification metrics
 __CLASSIFICATION_METRICS__ = (
     accuracy_score, precision_score, recall_score, f1_score,
-    matthews_corrcoef, balanced_accuracy_score)
+    matthews_corrcoef, balanced_accuracy_score, balanced_accuracy)
 
 
 def micro_precision_score(y_true, y_pred, labels=None, pos_label=1,
